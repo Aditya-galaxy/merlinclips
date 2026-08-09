@@ -1,20 +1,22 @@
 /**
  * The product, as a person uses it.
  *
- * Until this existed the platform was reachable only by `curl`. Every
- * invariant held, settlement worked on-chain, and a creator still had no way
- * to be paid without writing HTTP by hand. An engine that nobody can operate
- * is not a product, however correct it is.
+ * Shaped as a statement rather than a marketing page, because that is what it
+ * is: a record of what you posted, what survived, and what you were paid. The
+ * numbers are set in monospace at display size and everything else gets out of
+ * their way — on a payout ledger the figures are the argument, so they are the
+ * typography rather than an afterthought inside it.
  *
- * Deliberately one file, no framework, no build step. The whole app is
- * fetch calls against the same public API an agent would use — which is the
- * honest demonstration that the API is the product and this is a client of
- * it, not a privileged view with a private back door.
+ * A wait and a refusal never look alike. The gate returns `blocked` for a clip
+ * awaiting its first check and for one that failed the brief; rendering those
+ * the same way would tell a creator their work was rejected when it is merely
+ * queued, which is the single most damaging thing this interface could get
+ * wrong.
  *
- * A creator's identity is their payout address and their submission ids live
- * in localStorage. There is no account, no password, and nothing to recover,
- * because the only thing we could tie to an account is a wallet that already
- * belongs to them.
+ * No framework, no build step, no external request — not minimalism for its
+ * own sake, but because every call this page makes is one an agent could make
+ * against the same public API. The interface is a client of the product, not a
+ * privileged view into it.
  */
 
 export const APP_HTML = `<!doctype html>
@@ -22,273 +24,316 @@ export const APP_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Merlin Clips — get paid for views that survived</title>
+<title>Merlin Clips — paid for views that survived</title>
+<meta name="description" content="Post a clip. Twenty-four hours later you are paid in USDC for every view that survived, at the rate you were promised." />
 <style>
-  :root{
-    --bg:#FAF7F2; --card:#FFFFFF; --line:#E8E1D7; --line-2:#D6CCBE;
-    --ink:#17130F; --ink-2:#6B6157; --muted:#948A7E;
-    --accent:#5B2FD6; --accent-2:#7C4DFF; --accent-soft:#F0EAFF;
-    --ok:#0E7A4F; --ok-soft:#E4F5ED;
-    --wait:#9A5B00; --wait-soft:#FDF0DC;
-    --no:#A8281E; --no-soft:#FBE9E7;
-    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
-  }
-  *,*::before,*::after{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-       font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1080px;margin-inline:auto;padding-inline:22px}
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
+:root{
+  --paper:#F7F7F9; --card:#FFFFFF; --sunk:#F1F1F4;
+  --line:#E4E4EA; --line-2:#D2D2DB;
+  --ink:#0E0E11; --ink-2:#5A5A66; --ink-3:#8A8A96;
+  --violet:#5B2FD6; --violet-2:#7C52F0; --violet-wash:#F0ECFE;
+  --settled:#0F7B4F; --settled-wash:#E7F4EE;
+  --waiting:#8A6100; --waiting-wash:#FBF1DF;
+  --refused:#A32820; --refused-wash:#FBECEA;
+  --ui:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --num:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);
+     font-size:15.5px;line-height:1.5;font-weight:450;-webkit-font-smoothing:antialiased;
+     font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin-inline:auto;padding-inline:28px}
+a{color:var(--violet);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-  header{border-bottom:1px solid var(--line);background:rgba(250,247,242,.9);
-         backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
-  header .wrap{display:flex;align-items:center;gap:14px;height:62px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px;
-        letter-spacing:-.02em;color:var(--ink);margin-right:auto}
-  .logo i{width:22px;height:22px;border-radius:7px;flex:none;
-          background:linear-gradient(140deg,var(--accent-2),var(--accent))}
-  header a.l{font-size:14px;color:var(--ink-2);font-weight:500}
+/* ── masthead ── */
+.bar{border-bottom:1px solid var(--line);background:rgba(247,247,249,.88);
+     backdrop-filter:blur(12px);position:sticky;top:0;z-index:20}
+.bar .wrap{display:flex;align-items:center;gap:26px;height:60px}
+.mark{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15.5px;
+      letter-spacing:-.02em;color:var(--ink);margin-right:auto}
+.mark i{width:20px;height:20px;border-radius:6px;flex:none;background:var(--violet);
+        position:relative}
+.mark i::after{content:"";position:absolute;inset:6px 6px auto auto;width:5px;height:5px;
+        border-radius:50%;background:#fff}
+.bar a.nav{font-size:14px;color:var(--ink-2);font-weight:480}
+.bar a.nav:hover{color:var(--ink);text-decoration:none}
 
-  h1{font-size:clamp(32px,5.2vw,52px);line-height:1.04;letter-spacing:-.035em;
-     font-weight:700;margin:0 0 14px}
-  h2{font-size:21px;letter-spacing:-.02em;margin:0 0 4px;font-weight:650}
-  .lede{font-size:17.5px;color:var(--ink-2);margin:0;max-width:56ch}
-  .hero{padding:52px 0 30px}
-  section{padding:26px 0}
-  .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+/* ── statement head ── */
+.head{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--num);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+         color:var(--ink-3);margin:0 0 20px}
+h1{font-size:clamp(34px,4.4vw,50px);line-height:1.06;letter-spacing:-.028em;font-weight:500;
+   margin:0 0 18px;max-width:16ch;text-wrap:balance}
+.stand{font-size:17.5px;color:var(--ink-2);margin:0;max-width:58ch;line-height:1.5}
+.terms{display:flex;gap:0;margin-top:34px;border:1px solid var(--line);border-radius:10px;
+       background:var(--card);overflow:hidden;max-width:640px}
+.terms div{padding:14px 20px;flex:1;border-right:1px solid var(--line)}
+.terms div:last-child{border-right:0}
+.terms b{display:block;font-family:var(--num);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.terms span{font-size:11.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
-  .card h3{margin:0 0 8px;font-size:16.5px;letter-spacing:-.015em;font-weight:650}
-  .brief{color:var(--ink-2);font-size:14.5px;margin:0 0 16px;min-height:44px}
+/* ── sections ── */
+section{padding:44px 0}
+.shead{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+h2{font-size:19px;font-weight:550;letter-spacing:-.018em;margin:0}
+.count{font-family:var(--num);font-size:12.5px;color:var(--ink-3)}
+.note{font-size:14.5px;color:var(--ink-2);margin:0 0 22px;max-width:62ch}
 
-  .meta{display:flex;gap:22px;margin-bottom:14px}
-  .meta div{display:flex;flex-direction:column}
-  .meta b{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.02em}
-  .meta span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+/* ── offers (campaigns) ── */
+.offers{border-top:1px solid var(--line)}
+.offer{display:grid;grid-template-columns:1fr auto;gap:26px;align-items:center;
+       padding:20px 0;border-bottom:1px solid var(--line)}
+.offer .brief{font-size:15.5px;margin:0 0 9px;max-width:60ch}
+.offer .id{font-family:var(--num);font-size:11.5px;color:var(--ink-3);letter-spacing:.03em}
+.offer .facts{display:flex;gap:26px;align-items:flex-end}
+.offer .fact{text-align:right}
+.offer .fact b{display:block;font-family:var(--num);font-size:17px;font-weight:500}
+.offer .fact span{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.pool{width:150px}
+.pool .track{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-bottom:6px}
+.pool .fill{display:block;height:100%;background:var(--violet)}
+.pool .cap{display:flex;justify-content:space-between;font-family:var(--num);font-size:11px;color:var(--ink-3)}
 
-  .bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden}
-  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
-  .barcap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:7px}
+/* ── form ── */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;max-width:560px}
+label{display:block;font-size:12.5px;font-weight:550;color:var(--ink-2);margin:0 0 7px;
+      letter-spacing:.01em}
+input,select{width:100%;font-family:var(--ui);font-size:15px;font-weight:450;padding:11px 13px;
+      border:1px solid var(--line-2);border-radius:9px;background:var(--card);color:var(--ink)}
+input::placeholder{color:var(--ink-3)}
+input:focus,select:focus{outline:2px solid var(--violet);outline-offset:-1px;border-color:transparent}
+.f{margin-bottom:16px}
+.hint{font-size:12.5px;color:var(--ink-3);margin:7px 0 0;line-height:1.45}
+button.go{font-family:var(--ui);font-size:15px;font-weight:550;padding:12px 22px;border:0;
+      border-radius:9px;background:var(--violet);color:#fff;cursor:pointer}
+button.go:hover{background:var(--violet-2)}
+button.go[disabled]{opacity:.45;cursor:not-allowed}
+.said{margin-top:14px;font-size:14px;border-radius:9px;padding:12px 14px;line-height:1.45}
+.said.ok{background:var(--violet-wash);color:#3A1B9E}
+.said.bad{background:var(--refused-wash);color:var(--refused)}
 
-  .btn{display:inline-block;background:var(--accent);color:#fff;border:0;cursor:pointer;
-       font-family:var(--sans);font-size:15px;font-weight:600;padding:12px 20px;border-radius:10px}
-  .btn:hover{background:var(--accent-2)}
-  .btn[disabled]{opacity:.5;cursor:not-allowed}
-  .btn.small{font-size:13.5px;padding:9px 15px;border-radius:9px}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line-2)}
+/* ── statement lines (your clips) ── */
+.lines{border-top:1px solid var(--line)}
+.line{display:grid;grid-template-columns:3px 1fr auto;gap:18px;align-items:center;
+      padding:18px 0 18px 0;border-bottom:1px solid var(--line)}
+.stripe{align-self:stretch;border-radius:99px;background:var(--line-2)}
+.line.is-settled .stripe{background:var(--settled)}
+.line.is-waiting .stripe{background:var(--waiting)}
+.line.is-refused .stripe{background:var(--refused)}
+.line .what{min-width:0}
+.line .ref{font-family:var(--num);font-size:12px;color:var(--ink-3);margin-bottom:5px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line .why{font-size:14.5px;color:var(--ink-2);margin:0;max-width:56ch}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:5px;
+     letter-spacing:.02em;margin-bottom:6px}
+.tag.settled{background:var(--settled-wash);color:var(--settled)}
+.tag.waiting{background:var(--waiting-wash);color:var(--waiting)}
+.tag.refused{background:var(--refused-wash);color:var(--refused)}
+.ledger{display:flex;gap:28px;text-align:right}
+.ledger div b{display:block;font-family:var(--num);font-size:16px;font-weight:500}
+.ledger div span{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.ledger .paid b{color:var(--settled)}
 
-  label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 6px}
-  input,select{width:100%;font-family:var(--sans);font-size:15px;padding:12px 14px;
-        border:1px solid var(--line-2);border-radius:10px;background:#fff;color:var(--ink)}
-  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
-  .field{margin-bottom:14px}
-  .hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
-
-  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:650;
-        padding:5px 11px;border-radius:99px;letter-spacing:.01em}
-  .pill.ok{background:var(--ok-soft);color:var(--ok)}
-  .pill.wait{background:var(--wait-soft);color:var(--wait)}
-  .pill.no{background:var(--no-soft);color:var(--no)}
-
-  .clip{background:var(--card);border:1px solid var(--line);border-radius:14px;
-        padding:16px 18px;margin-bottom:12px}
-  .clip .top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  .clip .url{font-size:14px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;
-             white-space:nowrap;flex:1}
-  .clip .why{font-size:14px;color:var(--ink-2);margin:0}
-  .nums{display:flex;gap:26px;margin-top:12px}
-  .nums div{display:flex;flex-direction:column}
-  .nums b{font-family:var(--mono);font-size:16px;font-weight:600}
-  .nums span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-
-  .empty{border:1px dashed var(--line-2);border-radius:14px;padding:30px;text-align:center;
-         color:var(--muted);font-size:14.5px;background:#fff}
-  .note{background:var(--accent-soft);border-radius:12px;padding:14px 16px;font-size:14px;
-        color:#3A1E8C;margin-top:18px}
-  footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 50px;
-         color:var(--muted);font-size:13.5px}
-  .err{background:var(--no-soft);color:var(--no);border-radius:10px;padding:11px 14px;
-       font-size:14px;margin-top:12px}
+.blank{border:1px dashed var(--line-2);border-radius:11px;padding:34px;text-align:center;
+       color:var(--ink-3);font-size:14.5px;background:var(--card)}
+footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
+       color:var(--ink-3);font-size:13px}
+@media(max-width:760px){
+  .offer{grid-template-columns:1fr;gap:14px}
+  .offer .facts{justify-content:space-between}
+  .pool{width:auto;flex:1}
+  .line{grid-template-columns:3px 1fr;gap:14px}
+  .ledger{grid-column:2;justify-content:flex-start;text-align:left;margin-top:10px}
+  .terms{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
 
-<header><div class="wrap">
-  <span class="logo"><i></i>Merlin Clips</span>
-  <a class="l" href="/console">Operator console</a>
-  <a class="l" href="/openapi.json">API</a>
-</div></header>
+<div class="bar"><div class="wrap">
+  <span class="mark"><i></i>Merlin Clips</span>
+  <a class="nav" href="/console">Console</a>
+  <a class="nav" href="/openapi.json">API</a>
+</div></div>
 
 <main class="wrap">
 
-  <div class="hero">
-    <h1>Get paid for views<br />that actually stayed.</h1>
-    <p class="lede">Post a clip against an open campaign. Twenty-four hours later you are paid in
-      USDC for every view that survived — at the rate you were promised.</p>
+  <div class="head">
+    <p class="eyebrow">Clipping campaigns · paid in USDC</p>
+    <h1>Get paid for the views that stay.</h1>
+    <p class="stand">Clip content you enjoy, submit it to a campaign, and earn on every view that is
+      still there a day later — at the CPM you were quoted, paid straight to your wallet.</p>
+    <div class="terms">
+      <div><b>24h</b><span>Views must hold</span></div>
+      <div><b>Locked</b><span>CPM on approval</span></div>
+      <div><b>0%</b><span>Fee on your earnings</span></div>
+    </div>
   </div>
 
   <section>
-    <h2>Open campaigns</h2>
-    <p class="sub">The remaining pool is shown before you spend an evening editing.</p>
-    <div class="grid" id="campaigns"></div>
+    <div class="shead"><h2>Live campaigns</h2><span class="count" id="ccount"></span></div>
+    <p class="note">Every campaign shows its remaining budget up front, so you know what is left to
+      earn before you start editing. When a budget runs out, it runs out.</p>
+    <div class="offers" id="campaigns"></div>
   </section>
 
   <section>
-    <h2>Submit a clip</h2>
-    <p class="sub">No signup. Your wallet is your identity, because it is the thing that gets paid.</p>
-    <div class="card" style="max-width:560px">
-      <div class="field">
+    <div class="shead"><h2>Submit your clip</h2></div>
+    <p class="note">No signup and no follower minimum. Your wallet address is your account, because it
+      is the thing that gets paid.</p>
+    <div class="panel">
+      <div class="f">
         <label for="camp">Campaign</label>
         <select id="camp"></select>
       </div>
-      <div class="field">
-        <label for="url">YouTube link</label>
-        <input id="url" placeholder="https://www.youtube.com/watch?v=..." />
-        <p class="hint">YouTube only for now. We refuse links we cannot verify rather than promise a check we cannot perform.</p>
+      <div class="f">
+        <label for="url">Link to your post</label>
+        <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
+        <p class="hint">YouTube for now — TikTok and Instagram need platform review we do not yet hold. We
+          turn down links we cannot verify rather than promise a check we cannot perform.</p>
       </div>
-      <div class="field">
-        <label for="addr">Your USDC wallet address</label>
-        <input id="addr" placeholder="0x..." spellcheck="false" />
-        <p class="hint">Paid straight here. Nothing is held by us.</p>
+      <div class="f">
+        <label for="addr">Payout wallet</label>
+        <input id="addr" placeholder="0x…" spellcheck="false" />
+        <p class="hint">Paid directly here. We never hold your balance.</p>
       </div>
-      <button class="btn" id="go">Submit clip</button>
-      <div id="err"></div>
+      <button class="go" id="go">Submit &amp; start earning</button>
+      <div id="said"></div>
     </div>
   </section>
 
   <section>
-    <h2>Your clips</h2>
-    <p class="sub">Status updates as the agent runs. Refusals say why, in words rather than codes.</p>
-    <div id="clips"></div>
+    <div class="shead"><h2>Your submissions</h2><span class="count" id="lcount"></span></div>
+    <p class="note">Your balance updates as the agent runs. When a submission is not paid, the reason
+      says why in plain words — and a clip still counting down is never shown as a rejection.</p>
+    <div class="lines" id="clips"></div>
   </section>
 
 </main>
 
 <footer><div class="wrap">
-  Every decision is written to an append-only record ·
-  <a href="/console">operator console</a> ·
-  <a href="https://github.com/Aditya-galaxy/merlinclips">source</a>
+  Create, post and earn on YouTube. Every payout decision is written to an append-only record. ·
+  <a href="/console">Operator console</a> ·
+  <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
 </div></footer>
 
 <script>
-var STORE = 'merlinclips.submissions';
-var esc = function (s) {
-  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-  });
-};
-var mine = function () { try { return JSON.parse(localStorage.getItem(STORE) || '[]'); } catch (e) { return []; } };
-var remember = function (id) {
-  var a = mine(); if (a.indexOf(id) < 0) { a.push(id); localStorage.setItem(STORE, JSON.stringify(a)); }
-};
+var KEY = 'merlinclips.submissions';
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function mine(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];}}
+function keep(id){var a=mine();if(a.indexOf(id)<0){a.push(id);localStorage.setItem(KEY,JSON.stringify(a));}}
+function money(n){var v=parseFloat(n||'0');return v.toLocaleString('en-US',{maximumFractionDigits:2});}
+function count(n){return parseInt(n||'0',10).toLocaleString('en-US');}
 
-function pillFor(s) {
-  // A clip awaiting its first check and a clip that failed the brief are both
-  // \`blocked\`. Showing them the same way tells a creator their work was
-  // rejected when it is only queued.
-  if (parseFloat(s.paidForViews || '0') > 0) return '<span class="pill ok">Paid</span>';
-  if (s.settled === false) return '<span class="pill wait">In progress</span>';
-  if (s.status === 'held') return '<span class="pill wait">Waiting</span>';
-  if (s.status === 'blocked') return '<span class="pill no">Not paid</span>';
-  if (s.status === 'auto_pay') return '<span class="pill ok">Paying</span>';
-  return '<span class="pill wait">' + esc(s.status || 'pending') + '</span>';
+/* Three states, not two. A clip waiting for its first check and a clip that
+   failed the brief are both refused by the gate; showing them alike tells a
+   creator their work was rejected when it is only queued. */
+function stateOf(s){
+  if(parseFloat(s.paidForViews||'0')>0) return 'settled';
+  if(s.settled===false) return 'waiting';
+  if(s.status==='held') return 'waiting';
+  if(s.status==='blocked') return 'refused';
+  return 'waiting';
+}
+function labelFor(st,s){
+  if(st==='settled') return 'Paid';
+  if(st==='refused') return 'Not paid';
+  return s.settled===false && s.control==='dwell_unmet' ? 'Counting down' : 'In progress';
 }
 
-async function loadCampaigns() {
-  var r = await fetch('/api/campaign');
-  var d = await r.json();
-  var list = d.campaigns || [];
-  var host = document.getElementById('campaigns');
-  var sel = document.getElementById('camp');
-
-  if (!list.length) {
-    host.innerHTML = '<div class="empty">No campaigns are open right now.</div>';
-    sel.innerHTML = '<option value="">No open campaigns</option>';
+async function loadCampaigns(){
+  var host=document.getElementById('campaigns');
+  var sel=document.getElementById('camp');
+  var d;
+  try{ d=await (await fetch('/api/campaign')).json(); }catch(e){ d={campaigns:[]}; }
+  var list=d.campaigns||[];
+  document.getElementById('ccount').textContent=list.length?list.length+' live':'';
+  if(!list.length){
+    host.innerHTML='<div class="blank">No live campaigns right now. Check back shortly.</div>';
+    sel.innerHTML='<option value="">No live campaigns</option>';
     return;
   }
-
-  host.innerHTML = list.map(function (c) {
-    var pool = parseFloat(c.poolUsdc || '0');
-    var left = parseFloat(c.remainingUsdc != null ? c.remainingUsdc : c.poolUsdc || '0');
-    var pct = pool > 0 ? Math.max(0, Math.min(100, (left / pool) * 100)) : 0;
-    return '<div class="card">'
-      + '<h3>' + esc(c.campaignId) + '</h3>'
-      + '<p class="brief">' + esc(c.brief) + '</p>'
-      + '<div class="meta">'
-      +   '<div><b>' + esc(c.cpmUsdc) + '</b><span>USDC / 1k views</span></div>'
-      +   '<div><b>' + esc(c.dwellHours != null ? c.dwellHours : 24) + 'h</b><span>must survive</span></div>'
-      + '</div>'
-      + '<div class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>'
-      + '<div class="barcap"><span>' + esc(left) + ' USDC left</span><span>of ' + esc(pool) + '</span></div>'
-      + '</div>';
+  host.innerHTML=list.map(function(c){
+    var pool=parseFloat(c.poolUsdc||'0');
+    var left=parseFloat(c.remainingUsdc!=null?c.remainingUsdc:c.poolUsdc||'0');
+    var pct=pool>0?Math.max(0,Math.min(100,left/pool*100)):0;
+    return '<div class="offer">'
+      + '<div><p class="brief">'+esc(c.brief)+'</p><span class="id">'+esc(c.campaignId)+'</span></div>'
+      + '<div class="facts">'
+      +   '<div class="fact"><b>'+esc(c.cpmUsdc)+'</b><span>per 1k views</span></div>'
+      +   '<div class="fact"><b>'+esc(c.dwellHours!=null?c.dwellHours:24)+'h</b><span>views must hold</span></div>'
+      +   '<div class="pool"><span class="track"><i class="fill" style="width:'+pct.toFixed(1)+'%"></i></span>'
+      +     '<span class="cap"><span>$'+money(left)+' left</span><span>of $'+money(pool)+'</span></span></div>'
+      + '</div></div>';
   }).join('');
-
-  sel.innerHTML = list.map(function (c) {
-    return '<option value="' + esc(c.campaignId) + '">' + esc(c.campaignId) + ' — ' + esc(c.cpmUsdc) + ' USDC/1k</option>';
+  sel.innerHTML=list.map(function(c){
+    return '<option value="'+esc(c.campaignId)+'">'+esc(c.brief.slice(0,54))+(c.brief.length>54?'…':'')+' — '+esc(c.cpmUsdc)+'/1k</option>';
   }).join('');
 }
 
-async function loadClips() {
-  var ids = mine();
-  var host = document.getElementById('clips');
-  if (!ids.length) {
-    host.innerHTML = '<div class="empty">Nothing submitted yet. Your clips will appear here.</div>';
-    return;
-  }
-  var rows = await Promise.all(ids.map(async function (id) {
-    try { var r = await fetch('/api/submissions/' + encodeURIComponent(id)); return await r.json(); }
-    catch (e) { return { submissionId: id, status: 'unknown', reason: 'could not load' }; }
+async function loadClips(){
+  var ids=mine(), host=document.getElementById('clips');
+  document.getElementById('lcount').textContent=ids.length?ids.length+' submitted':'';
+  if(!ids.length){ host.innerHTML='<div class="blank">No submissions yet. Pick a campaign above to start earning.</div>'; return; }
+  var rows=await Promise.all(ids.map(async function(id){
+    try{ return await (await fetch('/api/submissions/'+encodeURIComponent(id))).json(); }
+    catch(e){ return {submissionId:id,status:'unknown',reason:'Could not load this clip.'}; }
   }));
-
-  host.innerHTML = rows.map(function (s) {
-    return '<div class="clip">'
-      + '<div class="top">' + pillFor(s) + '<span class="url">' + esc(s.url || s.submissionId) + '</span></div>'
-      + (s.reason ? '<p class="why">' + esc(s.reason) + '</p>' : '')
-      + '<div class="nums">'
-      +   '<div><b>' + esc(s.confirmedViews || '0') + '</b><span>views survived</span></div>'
-      +   '<div><b>' + esc(s.paidForViews || '0') + '</b><span>paid for</span></div>'
-      +   '<div><b>' + esc(s.earnedUsdc || '0') + '</b><span>USDC earned</span></div>'
+  host.innerHTML=rows.map(function(s){
+    var st=stateOf(s);
+    return '<div class="line is-'+st+'">'
+      + '<span class="stripe"></span>'
+      + '<div class="what">'
+      +   '<span class="tag '+st+'">'+esc(labelFor(st,s))+'</span>'
+      +   '<div class="ref">'+esc(s.url||s.submissionId)+'</div>'
+      +   (s.reason?'<p class="why">'+esc(s.reason)+'</p>':'')
+      + '</div>'
+      + '<div class="ledger">'
+      +   '<div><b>'+count(s.confirmedViews)+'</b><span>views held</span></div>'
+      +   '<div><b>'+count(s.paidForViews)+'</b><span>paid for</span></div>'
+      +   '<div class="paid"><b>$'+money(s.earnedUsdc)+'</b><span>earned</span></div>'
       + '</div></div>';
   }).join('');
 }
 
-document.getElementById('go').addEventListener('click', async function () {
-  var btn = this;
-  var errBox = document.getElementById('err');
-  errBox.innerHTML = '';
-  var body = {
-    campaignId: document.getElementById('camp').value,
-    url: document.getElementById('url').value.trim(),
-    payoutAddress: document.getElementById('addr').value.trim()
-  };
-  btn.disabled = true; btn.textContent = 'Submitting…';
-  try {
-    var r = await fetch('/api/submissions', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
-    });
-    var d = await r.json();
-    if (!r.ok) {
-      errBox.innerHTML = '<div class="err">' + esc(d.error || 'Could not submit') + '</div>';
-    } else {
-      remember(d.submissionId);
-      document.getElementById('url').value = '';
+document.getElementById('go').addEventListener('click',async function(){
+  var btn=this, said=document.getElementById('said');
+  said.innerHTML='';
+  btn.disabled=true; btn.textContent='Submitting…';
+  try{
+    var r=await fetch('/api/submissions',{method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        campaignId:document.getElementById('camp').value,
+        url:document.getElementById('url').value.trim(),
+        payoutAddress:document.getElementById('addr').value.trim()})});
+    var d=await r.json();
+    if(!r.ok){
+      said.innerHTML='<div class="said bad">'+esc(d.error||'Could not submit that clip.')+'</div>';
+    }else{
+      keep(d.submissionId);
+      document.getElementById('url').value='';
       await loadClips();
-      errBox.innerHTML = '<div class="note">Accepted. Your terms are frozen at '
-        + esc(d.agreedTerms && d.agreedTerms.cpmUsdc) + ' USDC per 1,000 views for '
-        + esc(d.agreedTerms && d.agreedTerms.dwellHours) + 'h dwell — the brand cannot change them now.</div>';
+      var t=d.agreedTerms||{};
+      said.innerHTML='<div class="said ok">Approved. Your CPM is locked at $'+esc(t.cpmUsdc)
+        +' per 1,000 views on a '+esc(t.dwellHours)+'-hour hold. The brand cannot change it now.</div>';
     }
-  } catch (e) {
-    errBox.innerHTML = '<div class="err">Network error — try again.</div>';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Submit clip';
+  }catch(e){
+    said.innerHTML='<div class="said bad">Could not reach the server. Check your connection and try again.</div>';
+  }finally{
+    btn.disabled=false; btn.textContent='Submit clip';
   }
 });
 
 loadCampaigns();
 loadClips();
-setInterval(loadClips, 20000);
+setInterval(loadClips,20000);
 </script>
 </body>
-</html>`;
+</html>
+`;

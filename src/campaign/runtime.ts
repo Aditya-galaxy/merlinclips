@@ -35,6 +35,7 @@ import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
 import { standingFor } from './standing';
+import { fundingFor, type BalanceReader } from './funding';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -105,6 +106,13 @@ export class CampaignRuntime {
   private loaded = false;
   private readyPromise?: Promise<void>;
   private lastTick?: TickResult;
+
+  /**
+   * Reads on-chain USDC so a published budget can be checked against money
+   * that exists. Absent in tests and offline, where funding reports `unknown`
+   * rather than pretending a campaign is empty.
+   */
+  public balances?: BalanceReader;
 
   /** Two-phase budget reservation engine for enterprise campaign payouts. */
   public readonly reservations = new ReservationEngine();
@@ -304,7 +312,7 @@ export class CampaignRuntime {
       // clip on `no_verdict`, and one with no oracle never confirms a view.
       verifier: this.verifier ? 'gemini' : 'not configured (set GOOGLE_GENAI_USE_VERTEXAI + GOOGLE_CLOUD_PROJECT, or GOOGLE_API_KEY)',
       viewOracle: this.counts ? 'youtube' : 'not configured (YOUTUBE_API_KEY)',
-      campaigns: state.campaigns.map((c) => {
+      campaigns: await Promise.all(state.campaigns.map(async (c) => {
         // What a creator wants before committing an evening: is anyone else
         // here, is this campaign actually paying, and how much is left. All
         // three are already in the store; publishing them is what turns a
@@ -331,8 +339,22 @@ export class CampaignRuntime {
           creators: creators.size,
           paidViews: views.toString(),
           paidOut: this.store.payoutsFor(c.campaignId).length,
+          // What actually backs the budget. A creator decides whether to spend
+          // an evening on this number, so it is checked rather than asserted.
+          funding: this.balances
+            ? await fundingFor(c, spent, this.balances)
+            : {
+                campaignId: c.campaignId,
+                fundedUsdc: null,
+                poolUsdc: c.poolUsdc.toString(),
+                committedUsdc: spent.toString(),
+                coverage: c.fundingWallet ? ('unknown' as const) : ('no_wallet' as const),
+                summary: c.fundingWallet
+                  ? 'Budget not checked on this deployment.'
+                  : 'This campaign has not named a wallet, so nothing backs its budget yet.',
+              },
         };
-      }),
+      })),
       lastTick: this.lastTick && {
         startedAt: this.lastTick.startedAt,
         paid: this.lastTick.paid,

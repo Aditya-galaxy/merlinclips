@@ -56,7 +56,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 4 \
   --timeout 60s \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
@@ -74,6 +74,15 @@ echo "Health: $(curl -fsS "$URL/healthz" || echo 'FAILED')"
 # every submission is held forever; without a secret the payout endpoint
 # refuses to run at all, which is the correct choice but looks like nothing
 # happening.
+if [ -z "${OPERATOR_SECRET:-}" ]; then
+  echo
+  echo "WARNING: OPERATOR_SECRET unset — POST /api/campaigns returns 503." >&2
+  echo "         Deliberately separate from TICK_SECRET: Cloud Scheduler holds the" >&2
+  echo "         tick secret, and whatever can trigger a tick should not also be" >&2
+  echo "         able to commit money by opening a campaign." >&2
+  echo "           OPERATOR_SECRET=\$(openssl rand -hex 24) ./deploy.sh" >&2
+fi
+
 if [ -z "${TICK_SECRET:-}" ]; then
   echo
   echo "WARNING: TICK_SECRET unset — /api/tick returns 503 and no payouts run." >&2

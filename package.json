@@ -7,7 +7,8 @@
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "sweep": "bun run src/sweep.ts"
+    "sweep": "bun run src/sweep.ts",
+    "mutate": "./mutate.sh"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -491,16 +491,40 @@ export class CampaignRuntime {
     });
   }
 
-  /** Shared operator gate. Same reasoning as the tick: fail closed. */
+  /**
+   * The operator gate — a *different* secret from the tick's.
+   *
+   * These were the same value, and they should not be. The two capabilities
+   * are not comparable: running a tick settles payouts the engine has already
+   * decided, within caps the operator set. Opening a campaign declares a pool,
+   * and a pool is a promise to pay — it is how money gets committed in the
+   * first place.
+   *
+   * Cloud Scheduler holds the tick secret because it must, and it is the least
+   * protected credential in the system: it sits in a scheduler job definition,
+   * it was typed into a shell to create that job, and it travels as a header
+   * on every scheduled request. Granting campaign creation to whatever can
+   * trigger a tick means the weakest credential carries the strongest
+   * capability.
+   *
+   * Fails closed, like the tick. An operator endpoint that is public because
+   * nobody set a variable is worse than one that is switched off.
+   */
   private requireOperator(request: Request): Response | null {
-    const expected = this.env.TICK_SECRET;
+    const expected = this.env.OPERATOR_SECRET;
     if (!expected) {
       return Response.json(
-        { error: 'TICK_SECRET is not configured — refusing operator actions' },
+        {
+          error: 'OPERATOR_SECRET is not configured — refusing operator actions',
+          detail:
+            'Opening a campaign commits money, so it needs its own secret rather ' +
+            'than sharing the one Cloud Scheduler holds. Generate with: ' +
+            'openssl rand -hex 24',
+        },
         { status: 503 },
       );
     }
-    if (!secretMatches(request.headers.get('x-tick-secret'), expected)) {
+    if (!secretMatches(request.headers.get('x-operator-secret'), expected)) {
       return Response.json({ error: 'unauthorised' }, { status: 401 });
     }
     return null;

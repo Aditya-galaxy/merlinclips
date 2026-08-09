@@ -184,3 +184,68 @@ describe('a count that dipped inside the window did not survive it', () => {
     );
   });
 });
+
+/* ───────── boundaries and corrupt records: found by mutation testing ───────── */
+
+describe('the exact moment a clip becomes payable', () => {
+  const DWELL = 86_400_000;
+  const NOW = new Date('2026-08-05T12:00:00.000Z');
+  const atMs = (ms: number, views: bigint): Snapshot => ({
+    submissionId: 'sub', views, source: 'youtube',
+    fetchedAt: new Date(NOW.getTime() - ms).toISOString(),
+  });
+
+  // Flipping `<=` to `<` here changed nothing any test could see, which meant
+  // the moment a creator starts being paid was decided by an operator that
+  // could be edited in either direction without consequence. It is a
+  // millisecond, and it is the difference between an agreement honoured and an
+  // agreement approximated — so it is pinned rather than left to drift.
+  test('a snapshot exactly one dwell old has dwelled', () => {
+    const exact = [atMs(DWELL, 5_000n), atMs(0, 5_000n)];
+    expect(hasDwelled(exact, { dwellMs: DWELL, now: NOW })).toBe(true);
+    expect(confirmedViews(exact, { dwellMs: DWELL, now: NOW })).toBe(5_000n);
+  });
+
+  test('one millisecond short has not', () => {
+    const short = [atMs(DWELL - 1, 5_000n), atMs(0, 5_000n)];
+    expect(hasDwelled(short, { dwellMs: DWELL, now: NOW })).toBe(false);
+    expect(confirmedViews(short, { dwellMs: DWELL, now: NOW })).toBe(0n);
+  });
+
+  test('one millisecond past is comfortably in', () => {
+    const past = [atMs(DWELL + 1, 5_000n), atMs(0, 5_000n)];
+    expect(hasDwelled(past, { dwellMs: DWELL, now: NOW })).toBe(true);
+  });
+});
+
+describe('a record we cannot read cannot decide anything', () => {
+  const DWELL = 86_400_000;
+  const NOW = new Date('2026-08-05T12:00:00.000Z');
+  const good = (h: number, v: bigint): Snapshot => ({
+    submissionId: 'sub', views: v, source: 'youtube',
+    fetchedAt: new Date(NOW.getTime() - h * 3_600_000).toISOString(),
+  });
+  const corrupt = (v: bigint): Snapshot => ({
+    submissionId: 'sub', views: v, source: 'youtube', fetchedAt: 'not-a-date',
+  });
+
+  // views.ts claims an unparseable timestamp "cannot be placed on either side
+  // of the dwell window, and guessing would let a malformed record authorize a
+  // payout". That was a comment, not a test — the skip could be deleted and
+  // the suite stayed green.
+  test('a corrupt timestamp cannot suppress a legitimate payout', () => {
+    const withZero = [good(25, 5_000n), good(1, 5_000n), corrupt(0n)];
+    expect(confirmedViews(withZero, { dwellMs: DWELL, now: NOW })).toBe(5_000n);
+  });
+
+  test('a corrupt timestamp cannot inflate one either', () => {
+    const withHuge = [good(25, 100n), good(1, 100n), corrupt(9_999_999n)];
+    expect(confirmedViews(withHuge, { dwellMs: DWELL, now: NOW })).toBe(100n);
+  });
+
+  test('a corrupt record cannot serve as the aged anchor', () => {
+    // Only corrupt records are old enough to anchor: nothing confirms.
+    expect(confirmedViews([corrupt(5_000n), good(1, 5_000n)], { dwellMs: DWELL, now: NOW })).toBe(0n);
+    expect(hasDwelled([corrupt(5_000n)], { dwellMs: DWELL, now: NOW })).toBe(false);
+  });
+});

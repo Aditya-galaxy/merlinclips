@@ -514,6 +514,18 @@ export class CampaignRuntime {
       submissionId,
       url: submission.url,
       status: decision.disposition,
+      control: decision.control,
+      /**
+       * Whether this is still in progress or genuinely decided.
+       *
+       * `disposition` alone conflates them: a clip awaiting its first
+       * verification and a clip that failed the brief are both `blocked`, and
+       * a UI showing them identically tells a creator their work was rejected
+       * when it is merely queued. The distinction is the difference between
+       * "not yet" and "no", and this product's whole posture is that a wait
+       * must never read as a rejection.
+       */
+      settled: decision.control !== 'no_verdict' && decision.control !== 'dwell_unmet',
       // Written for the creator, not a log parser — including on a refusal.
       reason: decision.reason,
       verdict: verdict && { pass: verdict.pass, reasons: verdict.reasons, at: verdict.at },

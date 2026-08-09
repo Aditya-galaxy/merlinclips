@@ -25,6 +25,7 @@ import {
   type DemoWorld,
   type ScenarioName,
 } from './scenarios';
+import { APP_HTML } from './app';
 import { isExpired } from './mandates';
 import { runJob } from './business/loop';
 import { MARKETPLACE } from './business/tools';
@@ -360,7 +361,14 @@ const server = Bun.serve({
       return json({ result, ...state() });
     }
 
+    // The root is the product a creator uses. Until now it served the
+    // operator console, which meant the only human-usable surface was the one
+    // built for whoever runs the campaign — the person being paid had to
+    // write HTTP by hand.
     if (url.pathname === '/') {
+      return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
+    if (url.pathname === '/console') {
       return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     }
     return new Response('not found', { status: 404 });

@@ -49,10 +49,10 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
 nav{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
     background:rgba(0,0,0,.82);backdrop-filter:blur(10px)}
 nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
-.brand{font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--text);
+nav .brand{font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--text);
        text-decoration:none;margin-right:auto;display:flex;align-items:center;gap:9px}
-.brand:hover{text-decoration:none}
-.brand .dot{width:9px;height:9px;border-radius:50%;
+nav .brand:hover{text-decoration:none}
+nav .brand .dot{width:9px;height:9px;border-radius:50%;
             background:linear-gradient(135deg,#C4B5FD,var(--pop));flex:none}
 nav a.l{font-size:13.5px;color:var(--muted);text-decoration:none}
 nav a.l:hover,nav a.l[aria-current="page"]{color:var(--text)}

@@ -32,6 +32,16 @@
 import { Decimal } from '../decimal';
 import type { Snapshot } from './types';
 
+/**
+ * The shortest dwell that means anything.
+ *
+ * Platforms remove inauthentic views retroactively, on their own schedule —
+ * usually within a day, which is where the 24h default comes from. An hour is
+ * the floor at which "this count survived" is a claim about the world rather
+ * than a restatement of what the API said a moment ago.
+ */
+export const MIN_DWELL_HOURS = 1;
+
 const PER_MILLE = 1_000n;
 
 /**

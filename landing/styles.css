@@ -48,9 +48,18 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
 /* ── nav ── */
 nav{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
     background:rgba(0,0,0,.82);backdrop-filter:blur(10px)}
-nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
+nav .wrap{display:flex;align-items:center;gap:22px;height:62px}
+/* Links sit left of centre and the action sits hard right, which is the
+   arrangement both Content Rewards and MoonPay use: the thing you came to do
+   is never buried among the things you might read. */
+nav .links{display:flex;align-items:center;gap:22px;margin-right:auto}
+nav .cta{font-size:13.5px;font-weight:600;padding:9px 17px;border-radius:99px;
+         background:var(--pop);color:#12071f;white-space:nowrap}
+nav .cta:hover{background:#C4B5FD;text-decoration:none}
+@media(max-width:900px){nav .links{gap:16px}}
+@media(max-width:760px){nav .links a.opt{display:none}}
 nav .brand{font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--text);
-       text-decoration:none;margin-right:auto;display:flex;align-items:center;gap:9px}
+       text-decoration:none;display:flex;align-items:center;gap:9px;margin-right:26px}
 nav .brand:hover{text-decoration:none}
 nav .brand .dot{width:9px;height:9px;border-radius:50%;
             background:linear-gradient(135deg,#C4B5FD,var(--pop));flex:none}

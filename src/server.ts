@@ -361,15 +361,48 @@ const server = Bun.serve({
       return json({ result, ...state() });
     }
 
-    // The root is the product a creator uses. Until now it served the
-    // operator console, which meant the only human-usable surface was the one
-    // built for whoever runs the campaign — the person being paid had to
-    // write HTTP by hand.
-    if (url.pathname === '/') {
+    // One service, three surfaces, one origin.
+    //
+    // `/` is the marketing site, `/app` is the product and `/console` is the
+    // operator view. Hosting the first somewhere else would mean every link
+    // between them is absolute and cross-origin — and a relative link works
+    // perfectly in local preview, then 404s the moment the two are deployed
+    // apart. That is the worst kind of broken link: it passes every check you
+    // run before shipping.
+    if (url.pathname === '/app') {
       return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     }
     if (url.pathname === '/console') {
       return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
+
+    // Static marketing pages, served from an allowlist rather than by joining
+    // user input onto a path. A traversal bug here would read anything the
+    // container can, and an allowlist cannot be traversed.
+    const LANDING: Record<string, string> = {
+      '/': 'landing/index.html',
+      '/index.html': 'landing/index.html',
+      '/styles.css': 'landing/styles.css',
+      '/architecture.html': 'landing/architecture.html',
+      '/security.html': 'landing/security.html',
+      '/testing.html': 'landing/testing.html',
+    };
+    const asset = LANDING[url.pathname];
+    if (asset) {
+      const file = Bun.file(asset);
+      if (await file.exists()) {
+        return new Response(file, {
+          headers: {
+            'content-type': asset.endsWith('.css')
+              ? 'text/css; charset=utf-8'
+              : 'text/html; charset=utf-8',
+          },
+        });
+      }
+      // Missing marketing asset must not take the API down with it.
+      if (url.pathname === '/') {
+        return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+      }
     }
     return new Response('not found', { status: 404 });
   },

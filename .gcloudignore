@@ -15,8 +15,7 @@ node_modules/
 .env
 .env.*
 
-# Not needed at runtime. The server serves its own HTML from src/.
-landing/
+# The server serves the marketing site as well as the app, so landing/ ships.
 docs/
 *.md
 !README.md

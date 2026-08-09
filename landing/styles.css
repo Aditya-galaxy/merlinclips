@@ -14,11 +14,17 @@
    the second.
 
    So: the dark, hairline, monospace-numbers base stays — that is
-   what reads as legitimate — and colour is added deliberately,
-   carrying meaning rather than decorating. Green is money that
-   moved. Amber is money held. Red is money refused. Violet marks
-   the creator side, cyan the brand side. Nothing pulses, nothing
-   floats. The numbers are still the argument.
+   what reads as legitimate — and colour is added deliberately.
+
+   One brand colour, and it is violet. Three competing accents read
+   as decoration; one reads as identity. Violet is the creator-economy
+   register without being the incumbent's orange, and it is the colour
+   the name already implies — Merlin is a wizard. Cyan survives only
+   as the brand-side marker in the two-sided split, where it has a job.
+
+   Everything else carries meaning rather than mood: green is money
+   that moved, amber money held, red money refused. Nothing pulses,
+   nothing floats. The numbers are still the argument.
    ============================================================ */
 
 :root{
@@ -47,33 +53,33 @@ nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
        text-decoration:none;margin-right:auto;display:flex;align-items:center;gap:9px}
 .brand:hover{text-decoration:none}
 .brand .dot{width:9px;height:9px;border-radius:50%;
-            background:linear-gradient(135deg,var(--pop),var(--accent));flex:none}
+            background:linear-gradient(135deg,#C4B5FD,var(--pop));flex:none}
 nav a.l{font-size:13.5px;color:var(--muted);text-decoration:none}
 nav a.l:hover,nav a.l[aria-current="page"]{color:var(--text)}
 @media(max-width:700px){nav a.l.opt{display:none}}
 
 /* ── type ── */
 h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.03em;line-height:1.15}
-h1{font-size:clamp(32px,6vw,50px);margin-bottom:20px}
+h1{font-size:clamp(28px,4.6vw,42px);margin-bottom:16px}
 h2{font-size:24px;letter-spacing:-.025em;margin:0 0 12px}
 h3{font-size:15px;margin-bottom:6px;letter-spacing:-.01em}
 p{margin:0 0 18px;color:var(--text-2)}
-.lede{font-size:18.5px;color:var(--text-2)}
+.lede{font-size:17px;color:var(--text-2);max-width:62ch}
 .eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--muted);
          letter-spacing:.09em;text-transform:uppercase;margin-bottom:14px;display:block}
 strong{color:var(--text);font-weight:550}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-section{padding:64px 0}
-.hero{padding:84px 0 60px}
+section{padding:52px 0}
+.hero{padding:44px 0 44px}
 hr{height:1px;background:var(--line);border:0;margin:0}
-.grad{background:linear-gradient(100deg,var(--pop) 0%,var(--accent) 55%,var(--lime) 100%);
+.grad{background:linear-gradient(100deg,#C4B5FD 0%,var(--pop) 45%,#7C6BF0 100%);
       -webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ── numbers carry the argument ── */
-.num{font-family:var(--mono);font-size:clamp(34px,7vw,50px);font-weight:500;
+.num{font-family:var(--mono);font-size:clamp(52px,10vw,92px);font-weight:500;
      letter-spacing:-.04em;color:var(--text);line-height:1;display:block;margin-bottom:10px}
-.num-cap{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.03em}
+.num-cap{font-family:var(--mono);font-size:12.5px;color:var(--text-2);letter-spacing:.04em}
 .num.bad{color:var(--bad)}
 .num.ok{color:var(--ok)}
 
@@ -81,11 +87,11 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .btn{display:inline-block;background:var(--text);color:#000;text-decoration:none;
      font-size:14.5px;font-weight:600;padding:12px 22px;border-radius:8px;border:0;cursor:pointer}
 .btn:hover{background:#fff;text-decoration:none}
-.btn.pop{background:linear-gradient(100deg,var(--pop),var(--accent));color:#000}
+.btn.pop{background:linear-gradient(100deg,#C4B5FD,var(--pop));color:#12071f}
 .btn.pop:hover{filter:brightness(1.12)}
 .btn.ghost{background:transparent;color:var(--text-2);border:1px solid var(--line-hi)}
 .btn.ghost:hover{color:var(--text);border-color:var(--muted);background:transparent}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:28px 0 12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:22px 0 10px}
 .fine{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0}
 
 /* ── pills ── */
@@ -100,6 +106,7 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .term{border:1px solid var(--line);border-radius:10px;background:var(--surface);
       font-family:var(--mono);font-size:12.5px;line-height:2;padding:18px 20px;
       overflow-x:auto;white-space:pre;margin:26px 0;color:var(--text-2)}
+@media(max-width:780px){.term{font-size:11px;line-height:1.9;padding:14px 14px}}
 .c-dim{color:#5A5A5A}.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-bad{color:var(--bad)}
 .c-acc{color:var(--accent)}.c-pop{color:var(--pop)}
 
@@ -135,7 +142,7 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .list{border-top:1px solid var(--line);margin-top:30px}
 .item{border-bottom:1px solid var(--line);padding:22px 0;display:grid;
       grid-template-columns:150px 1fr;gap:22px}
-@media(max-width:620px){.item{grid-template-columns:1fr;gap:6px}}
+@media(max-width:780px){.item{grid-template-columns:1fr;gap:6px}}
 .item .k{font-family:var(--mono);font-size:11.5px;color:var(--pop);
          letter-spacing:.08em;text-transform:uppercase;padding-top:3px}
 .item p{margin:0;font-size:15px}
@@ -180,13 +187,18 @@ footer a:hover{color:var(--text)}
    one headline answered neither well. Both panels ship in the HTML, so the
    page still reads completely with JavaScript off. */
 .toggle{position:relative;display:inline-flex;padding:4px;border-radius:100px;
-        border:1px solid var(--line-hi);background:var(--surface);margin-bottom:26px}
+        border:1px solid var(--line-hi);background:var(--surface);margin-bottom:20px}
 .toggle button{position:relative;z-index:1;background:none;border:0;cursor:pointer;
                font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.02em;
-               padding:8px 18px;border-radius:100px;color:var(--muted);transition:color .18s}
+               padding:8px 18px;border-radius:100px;color:var(--muted);transition:color .18s;
+               white-space:nowrap}
 .toggle button[aria-selected="true"]{color:#000}
-.toggle .knob{position:absolute;top:4px;left:4px;height:calc(100% - 8px);width:calc(50% - 4px);
-              border-radius:100px;transition:transform .22s cubic-bezier(.4,0,.2,1),background .22s;
-              background:linear-gradient(100deg,var(--pop),#C4B5FD)}
-.toggle[data-on="brand"] .knob{transform:translateX(100%);
-              background:linear-gradient(100deg,var(--accent),#A5F3FC)}
+.toggle .knob{position:absolute;top:4px;height:calc(100% - 8px);border-radius:100px;
+              /* left and width are set from the active button's own geometry.
+                 A fixed 50% assumed both labels were the same length; they are
+                 not ("For creators" is 9px wider), so the pill sat beside the
+                 word it was meant to sit under. */
+              left:4px;width:0;
+              transition:left .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1),background .22s;
+              background:linear-gradient(100deg,#C4B5FD,var(--pop))}
+.toggle[data-on="brand"] .knob{background:linear-gradient(100deg,var(--accent),#A5F3FC)}

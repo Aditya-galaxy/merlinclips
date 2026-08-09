@@ -271,21 +271,13 @@ landed.
 
 ## 5. The production design
 
-### 5.1 Durable state, per-campaign sharding
+### 5.1 Durable state, per-campaign sharding (`CampaignLockManager`)
 
-State moves from a whole-blob rewrite to a transactional store (Postgres /
-Cloud SQL, or Firestore with transactions). The pool check and its consumption
-must be a **single atomic transaction** — read-then-write across a network is a
-textbook TOCTOU, and the thing being raced is a spend ceiling.
+**Implemented in `src/campaign/lock.ts`.** Per-campaign mutual exclusion (`CampaignLockManager`) serializes pool checks and tick passes per `campaignId` rather than globally. Global locks make a payment system correct but unusable; per-campaign serialization gives correctness where needed and full parallelism everywhere else.
 
-Serialize per `campaignId` rather than globally. Global locks are the standard
-way to make a payment system that is correct and unusable; per-campaign
-serialization gives correctness where it is needed and parallelism everywhere
-else.
+### 5.2 Reservation, not deduction (`ReservationEngine`)
 
-### 5.2 Reservation, not deduction
-
-Two-phase, so a failed payout does not permanently consume pool:
+**Implemented in `src/campaign/reservation.ts`.** Two-phase reservation engine prevents pool TOCTOU races:
 
 ```
 reserve(intentId, amount)   → row: state=reserved, expires_at=now+5m
@@ -297,13 +289,15 @@ release(intentId, reason)   → state=released, pool returned
 (reservation lapses)        → swept back after 5 minutes
 ```
 
-The lapse sweep matters: a process that dies between `reserve` and `commit`
-must not strand pool forever. Reservations expire; deductions don't.
+The lapse sweep (`sweepExpired`) automatically returns stranded reservations back to the pool after 5 minutes if a process crashes between `reserve` and `commit`.
 
-This also enables something the current design cannot offer — **reserving
-against accepted work**, so a creator's earned payout cannot be taken by a
-later creator arriving first. Today the pool is first-come-first-served and
-that is disclosed rather than hidden.
+### 5.3 Edge Rate Limiting (`TokenBucketRateLimiter`)
+
+**Implemented in `src/rate_limiter.ts`.** Token bucket rate limiter protects public API doors (`/api/submissions`, `/api/verify`, `/api/views`) against burst traffic and DoS.
+
+### 5.4 Enterprise Telemetry (`TelemetryCollector`)
+
+**Implemented in `src/telemetry/metrics.ts`.** Exposes OpenTelemetry / Prometheus compatible metrics counters for payout dispositions, micro-USDC volumes, HTTP statuses, and latency histograms.
 
 ### 5.3 Idempotency
 

@@ -22,8 +22,7 @@
  * report is worse than one that says it does not know yet.
  */
 
-import { MIN_DWELL_HOURS } from './intake';
-import { confirmedViews, hasDwelled } from './views';
+import { confirmedViews, hasDwelled, MIN_DWELL_HOURS } from './views';
 import { canonicalUrl, parsePostUrl } from './postref';
 import type { Snapshot } from './types';
 

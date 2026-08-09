@@ -167,7 +167,12 @@ const server = Bun.serve({
     const url = new URL(request.url);
 
     // Cloud Run and any uptime check need a path that touches no state.
-    if (url.pathname === '/healthz') return new Response('ok');
+    // Both spellings. Cloud Run's frontend reserves /healthz and answers it
+    // before the request reaches us, so a deployment that only served that
+    // path looked dead while being perfectly healthy. /health is ours.
+    if (url.pathname === '/health' || url.pathname === '/healthz') {
+      return new Response('ok');
+    }
 
     if (url.pathname === '/api/state') return json(state());
 

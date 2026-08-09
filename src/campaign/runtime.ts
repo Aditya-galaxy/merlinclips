@@ -301,7 +301,7 @@ export class CampaignRuntime {
       ephemeral: this.blobs instanceof MemoryBlobStore,
       // Stated rather than discovered: a campaign with no verifier holds every
       // clip on `no_verdict`, and one with no oracle never confirms a view.
-      verifier: this.verifier ? 'gemini' : 'not configured (GOOGLE_API_KEY)',
+      verifier: this.verifier ? 'gemini' : 'not configured (set GOOGLE_GENAI_USE_VERTEXAI + GOOGLE_CLOUD_PROJECT, or GOOGLE_API_KEY)',
       viewOracle: this.counts ? 'youtube' : 'not configured (YOUTUBE_API_KEY)',
       campaigns: state.campaigns.map((c) => ({
         campaignId: c.campaignId,

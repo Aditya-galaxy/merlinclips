@@ -19,6 +19,10 @@ COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile --production 2>/dev/null || bun install --production
 
 COPY src ./src
+# openapi.json is served at /openapi.json and Circle's marketplace requires it
+# so a buying agent can read our contract itself. Omitting it deployed a 404
+# over the one document whose audience is a machine.
+COPY openapi.json ./
 COPY README.md LICENSE ./
 
 # Cloud Run injects PORT and expects the container to honour it. 8080 is the

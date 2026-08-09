@@ -56,7 +56,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 4 \
   --timeout 60s \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
@@ -66,7 +66,12 @@ gcloud run deploy "$SERVICE" \
 URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format='value(status.url)')"
 echo
 echo "Live: $URL"
-echo "Health: $(curl -fsS "$URL/healthz" || echo 'FAILED')"
+# Not /healthz. Cloud Run's frontend reserves that path and answers it itself
+# with a Google 404, so the request never reaches the container — the first
+# deploy reported a failed health check on a service that was serving fine.
+echo "Health: $(curl -fsS "$URL/health" || echo 'FAILED')"
+echo "Config: $(curl -fsS "$URL/api/campaign" | head -c 200 || echo 'unreachable')"
+
 
 # Both of these are fail-closed rather than fail-quiet, because the ways they
 # fail are silent ones: without a bucket the campaign store is in-memory on a

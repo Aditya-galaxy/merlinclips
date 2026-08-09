@@ -279,3 +279,27 @@ describe('money survives the round trip exactly', () => {
     );
   });
 });
+
+describe('a campaign keeps the wallet its budget lives in', () => {
+  test('fundingWallet survives the log round trip', async () => {
+    // If this is dropped, a restart quietly turns a funded campaign back into
+    // one advertising a budget nothing backs — the exact failure the funding
+    // check exists to catch, reintroduced by serialisation.
+    const wallet = '0x' + 'f'.repeat(40);
+    const log = new EventLog(new MemoryBlobStore());
+    await log.append({ type: 'campaign_upserted', campaign: { ...CAMPAIGN, fundingWallet: wallet } });
+
+    const store = new CampaignStore();
+    await log.hydrate(store);
+    expect(store.campaign(CAMPAIGN.campaignId)?.fundingWallet).toBe(wallet);
+  });
+
+  test('changing only the funding wallet records a new fact', () => {
+    // Campaign events are content-addressed. If the wallet were excluded from
+    // the fingerprint, moving the budget to a different wallet would collide
+    // with the old event and be silently refused as a duplicate.
+    const a = eventIdFor({ type: 'campaign_upserted', campaign: { ...CAMPAIGN, fundingWallet: '0x' + 'a'.repeat(40) } }, '2026-08-05T00:00:00.000Z');
+    const b = eventIdFor({ type: 'campaign_upserted', campaign: { ...CAMPAIGN, fundingWallet: '0x' + 'b'.repeat(40) } }, '2026-08-05T00:00:00.000Z');
+    expect(a).not.toBe(b);
+  });
+});

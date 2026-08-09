@@ -45,6 +45,7 @@ export interface OpenCampaignInput {
   settlementDays?: unknown;
   platforms?: unknown;
   chain?: unknown;
+  fundingWallet?: unknown;
   endsAt?: unknown;
 }
 
@@ -159,6 +160,14 @@ export function openCampaign(
     );
   }
 
+  // The wallet holding the budget. Checked for shape here; whether it holds
+  // anything is a question for funding.ts, which reads the chain.
+  const fundingWallet =
+    typeof input.fundingWallet === 'string' ? input.fundingWallet.trim() : undefined;
+  if (fundingWallet && !ADDRESS.test(fundingWallet)) {
+    return bad('fundingWallet must be a 0x-prefixed 40-character address', 'fundingWallet');
+  }
+
   const endsAt = typeof input.endsAt === 'string' ? input.endsAt : undefined;
   const endsAtMs = endsAt ? Date.parse(endsAt) : now.getTime() + 30 * 86_400_000;
   if (Number.isNaN(endsAtMs)) return bad('endsAt is not a valid date', 'endsAt');
@@ -177,6 +186,7 @@ export function openCampaign(
       settlementWindowMs: settlementWindowMs || DEFAULT_SETTLEMENT_WINDOW_MS,
       platforms,
       chain: chain as Campaign['chain'],
+      fundingWallet,
       status: 'active',
       startsAt: now.toISOString(),
       endsAt: new Date(endsAtMs).toISOString(),

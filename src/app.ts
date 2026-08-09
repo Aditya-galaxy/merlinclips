@@ -94,6 +94,10 @@ h2{font-size:19px;font-weight:550;letter-spacing:-.018em;margin:0}
 .chip{font-size:11px;font-weight:600;letter-spacing:.02em;padding:3px 9px;border-radius:6px;
       background:var(--violet-wash);color:#4A22B8}
 .chip.plain{background:var(--sunk);color:var(--ink-2)}
+.chip.funded{background:var(--settled-wash);color:var(--settled)}
+.chip.partial{background:var(--waiting-wash);color:var(--waiting)}
+.chip.unbacked{background:var(--refused-wash);color:var(--refused)}
+.offer .fundnote{font-size:12px;color:var(--ink-2);margin:10px 0 0;line-height:1.4}
 .offer .age{margin-left:auto;font-size:11.5px;color:var(--ink-3)}
 .offer .title{font-size:15.5px;font-weight:550;letter-spacing:-.012em;margin:0 0 3px;
       line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
@@ -249,6 +253,16 @@ function compact(n){var v=parseInt(n||'0',10);
   if(v>=1e6)return (v/1e6).toFixed(1).replace(/\.0$/,'')+'M';
   if(v>=1e3)return (v/1e3).toFixed(1).replace(/\.0$/,'')+'K';
   return String(v);}
+/* The budget is the number a creator bets an evening on, so whether money is
+   actually behind it belongs on the card, not in a footnote nobody reads. */
+function fundChip(f){
+  if(!f) return '';
+  if(f.coverage==='covered')  return '<span class="chip funded">Funded</span>';
+  if(f.coverage==='partial')  return '<span class="chip partial">Part funded</span>';
+  if(f.coverage==='empty')    return '<span class="chip unbacked">Unfunded</span>';
+  if(f.coverage==='no_wallet')return '<span class="chip unbacked">Unbacked</span>';
+  return '<span class="chip plain">Budget unverified</span>';
+}
 function ago(iso){var t=Date.parse(iso);if(isNaN(t))return '';
   var d=Math.floor((Date.now()-t)/86400000);
   if(d<=0)return 'today'; if(d===1)return '1 day ago';
@@ -292,6 +306,7 @@ async function loadCampaigns(){
     return '<article class="offer">'
       + '<div class="tags"><span class="chip">Clipping</span>'
       +   '<span class="chip plain">'+esc(plat.charAt(0).toUpperCase()+plat.slice(1))+'</span>'
+      +   fundChip(c.funding)
       +   '<span class="age">'+esc(ago(c.startsAt))+'</span></div>'
       + '<h3 class="title">'+esc(c.brief)+'</h3>'
       + '<div class="by">'+esc(c.campaignId)+'</div>'
@@ -302,7 +317,10 @@ async function loadCampaigns(){
       +   '<div><span>Hold</span><b>'+esc(c.dwellHours!=null?c.dwellHours:24)+'h</b></div>'
       +   '<div><span>Views paid</span><b>'+compact(c.paidViews)+'</b></div>'
       +   '<div><span>Creators</span><b>'+count(c.creators)+'</b></div>'
-      + '</div></article>';
+      + '</div>'
+      + (c.funding && c.funding.coverage!=='covered'
+          ? '<p class="fundnote">'+esc(c.funding.summary)+'</p>' : '')
+      + '</article>';
   }).join('');
   sel.innerHTML=list.map(function(c){
     return '<option value="'+esc(c.campaignId)+'">'+esc(c.brief.slice(0,54))+(c.brief.length>54?'…':'')+' — '+esc(c.cpmUsdc)+'/1k</option>';

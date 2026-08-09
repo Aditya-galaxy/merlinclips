@@ -137,6 +137,22 @@ bun test
 bun run src/server.ts     # http://localhost:8080
 ```
 
+### Verifying it
+
+```bash
+bun test          # 374 tests
+bun run sweep     # 600,000 simulated decisions, exits non-zero on a violation
+bun run mutate    # breaks each control on purpose; a survivor is a finding
+```
+
+`mutate` is the one worth explaining. A passing suite says the code does what
+the tests check; it does not say the tests check what matters. Mutation testing
+deletes a control and re-runs everything — if the suite still passes, that
+control is asserted in prose and enforced by nothing. On its first run it found
+three: the dwell cutoff boundary, the `hasDwelled` boundary, and a
+malformed-timestamp guard whose safety property existed only as a comment. All
+17 controls are now caught.
+
 ### Configuration
 
 Gemini runs through **Application Default Credentials**, not an API key — `gcloud auth application-default login`, with the quota project set to the one billing it.

@@ -3,17 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Merlin Clips — pay creators only for views that survived</title>
-<meta name="description" content="Brands run creator campaigns and pay in USDC only for views that were still there 24 hours later. Bought views disappear. Real ones don't." />
+<title>Merlin Clips — get paid for views that survived</title>
+<meta name="description" content="Creators earn on every view that survives 24 hours. Brands only pay for views that were still there. Settled in USDC, on a budget you can verify on-chain." />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Merlin Clips" />
-<meta property="og:title" content="Where attention stays, money flows" />
-<meta property="og:description" content="One brand paid $1,500 for 845,000 views that were 99.999% bots. We only pay for views that were still there the next day." />
+<meta property="og:title" content="Get paid for real views" />
+<meta property="og:description" content="Bought views evaporate within a day. We wait, then pay for what is still standing." />
 <meta property="og:url" content="https://merlinclips.com/" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Where attention stays, money flows" />
-<meta name="twitter:description" content="One brand paid $1,500 for 845,000 views that were 99.999% bots. We only pay for views that were still there the next day." />
-<meta name="theme-color" content="#000000" />
 <link rel="canonical" href="https://merlinclips.com/" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -22,17 +18,14 @@
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
   <a class="l" href="#how">How it works</a>
-  <a class="l opt" href="#sides">Creators &amp; brands</a>
+  <a class="l opt" href="#trust">Standing</a>
   <a class="l opt" href="/architecture.html">Architecture</a>
-  <a class="l" href="/security.html">Security</a>
+  <a class="l" href="#faq">FAQ</a>
 </div></nav>
 
 <main>
 
 <section class="hero"><div class="wrap">
-  <!-- Two audiences, one page. Showing both at once made the hero argue with
-       itself: a creator wants to know they'll be paid, a brand wants to know
-       it won't pay for bots. Same mechanic, opposite anxiety. -->
   <div class="toggle" role="tablist" aria-label="Choose your side">
     <button role="tab" id="t-creator" aria-controls="p-creator" aria-selected="true">For creators</button>
     <button role="tab" id="t-brand" aria-controls="p-brand" aria-selected="false">For brands</button>
@@ -40,27 +33,25 @@
   </div>
 
   <div id="p-creator" role="tabpanel" aria-labelledby="t-creator">
-    <h1>Get paid for views<br />that <span class="grad">actually stayed</span>.</h1>
-    <p class="lede">Post a clip. Twenty-four hours later, you're paid in USDC for every view that
-    survived — <strong>at the rate you were promised</strong>, straight to your wallet, without
-    chasing anyone for it.</p>
+    <h1>Get paid for <span class="grad">real views</span>.</h1>
+    <p class="lede">Clip content for brands and earn on every view that is still there a day later —
+      at the CPM you were quoted, paid in USDC straight to your wallet.</p>
     <div class="row">
-      <a class="btn pop" href="#how">See how you get paid</a>
-      <a class="btn ghost" href="#sides">What you're guaranteed →</a>
+      <a class="btn pop" href="/app">Start earning today</a>
+      <a class="btn ghost" href="/app">Explore campaigns →</a>
     </div>
-    <p class="fine">Terms freeze when your clip is accepted · no contest, no placing</p>
+    <p class="fine">No signup fee · no follower minimum · 0% cut of your earnings</p>
   </div>
 
   <div id="p-brand" role="tabpanel" aria-labelledby="t-brand" hidden>
-    <h1>Stop paying for views<br />that <span class="grad">were never real</span>.</h1>
-    <p class="lede">You're charged only for views still there a day later. Bought views evaporate
-    before settlement, so <strong>you never buy them</strong> — and we don't take a cut of your
-    spend, so we don't profit when you do.</p>
+    <h1>Launch campaigns<br />that <span class="grad">only pay for real</span>.</h1>
+    <p class="lede">Short-form creators make authentic clips for your brand, and you are charged
+      only for the views that outlived the hold. Bought views evaporate before settlement.</p>
     <div class="row">
-      <a class="btn pop" href="#how">See how it works</a>
-      <a class="btn ghost" href="/architecture.html">Read the architecture →</a>
+      <a class="btn pop" href="#how">Launch a campaign</a>
+      <a class="btn ghost" href="/architecture.html">See how it works →</a>
     </div>
-    <p class="fine">Hard pool ceiling · per-creator caps · every decision independently verifiable</p>
+    <p class="fine">Hard budget ceiling · per-creator caps · never a cut of your spend</p>
   </div>
 </div></section>
 
@@ -70,111 +61,139 @@
   <span class="num bad">$1,500</span>
   <span class="num-cap">PAID FOR 845,000 VIEWS THAT WERE 99.999% BOTS</span>
   <p style="margin-top:22px">One brand, one campaign, on a platform that pays the moment a number
-  appears. It is not an outlier — it is what happens when you pay for a number the person being
-  paid can buy.</p>
+    appears. Not an outlier — it is what happens when you pay for a number the person being paid
+    can buy.</p>
   <p><strong>So we changed what is being bought.</strong></p>
 </div></section>
 
 <hr />
 
 <section id="how"><div class="wrap">
-  <h2>The dwell window</h2>
-  <p>Platforms remove inauthentic views, usually within a day. So we don't pay on views. We pay on
-  views that <em>survived</em> — and we wait to find out which.</p>
+  <h2>Get paid in three steps</h2>
+  <p>From submission to payment, with the one delay that makes it work.</p>
 
   <div class="steps">
     <div class="step"><div class="n">1</div>
-      <h3>Post the clip</h3>
-      <p>A creator submits a clip against an open campaign. The rate, dwell window and cap are
-      frozen right then, and the brand can't move them afterwards.</p></div>
+      <h3>Post your clip</h3>
+      <p>Pick a live campaign and submit your link. Your CPM, hold and cap lock the moment it is
+      accepted — the brand cannot move them afterwards.</p></div>
     <div class="step"><div class="n">2</div>
-      <h3>Wait 24 hours</h3>
-      <p>We read the view count from the platform, never from the creator. Then we read it again
-      a day later.</p></div>
+      <h3>The hold</h3>
+      <p>We read the count from the platform, never from you, and read it again a day later.
+      Bought views are gone by then. Yours are not.</p></div>
     <div class="step"><div class="n">3</div>
-      <h3>Pay what's left</h3>
-      <p>You're paid on the <em>lower</em> of the two counts, in USDC, straight to your wallet.
-      Bought views are gone by then. Yours aren't.</p></div>
+      <h3>Get paid</h3>
+      <p>USDC to your own wallet, for every view that survived. No balance sits with us, so there
+      is no minimum and nothing to cash out.</p></div>
   </div>
-
-  <div class="term"><span class="c-dim">campaign agent — hourly pass</span>
-<span class="c-ok">PAID   </span> clip 4f2a  <span class="c-dim">62,400 views survived 24h  →</span>  <span class="c-ok">62.40 USDC</span>
-<span class="c-warn">HELD   </span> clip 3ea1  <span class="c-dim">count fell 812,447 → 53 overnight</span>
-<span class="c-bad">BLOCKED</span> clip 55cf  <span class="c-dim">campaign pool exhausted</span></div>
-
-  <p class="fine">A falling count is not punished — it just is not paid.
-  <a href="/architecture.html">See every decision the agent can make →</a></p>
 </div></section>
 
 <hr />
 
-<section id="sides"><div class="wrap">
-  <h2>One mechanic, two problems</h2>
-  <p>The same rule protects both sides of the deal, which is why neither side has to trust the other.</p>
+<section id="trust"><div class="wrap">
+  <h2>Standing you earn, not a score we award</h2>
+  <p>Every platform here ships a trust score built on ratings and approval rates. Those measure how
+    a platform feels about you, and they can be farmed by posting a lot of anything.</p>
+  <p><strong>Yours is arithmetic.</strong> Your standing is the share of your views that were still
+    there when the hold closed — the same number that decides your payout, shown back to you. It
+    cannot be farmed by volume, because buying views lowers it: the bought ones evaporate and land
+    in the denominator.</p>
 
-  <div class="split">
-    <div class="side creator">
-      <span class="who">For creators</span>
-      <h3>Get paid without asking twice</h3>
-      <p>The complaint was never the rate. It is chasing an invoice for six weeks and being told
-      the terms changed.</p>
-      <p><strong>Your terms freeze the moment your clip is accepted.</strong> Everyone who delivers
-      surviving views gets paid — no contest, no placing.</p>
-    </div>
-    <div class="side brand">
-      <span class="who">For brands</span>
-      <h3>Stop buying deleted views</h3>
-      <p>You cannot tell which half of your campaign was real. This makes the question irrelevant.</p>
-      <p><strong>You are charged only for views that outlived the window</strong> — and we never take
-      a cut of your spend.</p>
-    </div>
-  </div>
-
-  <div class="note">
-    <p>We deliberately don't take a percentage of spend. A percentage means our revenue goes
-    <em>up</em> when you pay for bots — the exact conflict that produced the $1,500 above.</p>
+  <div class="list">
+    <div class="item"><div class="k">Unproven</div><div>
+      <h3>Under three counted clips</h3>
+      <p>You have not proved anything yet, and neither has anyone else at this point. We say so
+      rather than flattering you with a number built on one video.</p></div></div>
+    <div class="item"><div class="k">Reliable</div><div>
+      <h3>Most of your views hold</h3>
+      <p>Brands see this. It is the difference between someone whose audience is real and someone
+      whose numbers arrive in a burst and leave overnight.</p></div></div>
+    <div class="item"><div class="k">Exceptional</div><div>
+      <h3>Almost nothing you post evaporates</h3>
+      <p>A creator who has never bought a view lands here without trying. One who buys them cannot,
+      however much they post.</p></div></div>
   </div>
 </div></section>
 
 <hr />
 
 <section><div class="wrap">
-  <h2>Why you can believe any of this</h2>
-  <p>Settled USDC cannot be recalled, so every guarantee here has to be one the system can actually
-  keep. There is no clawback. Terms cannot move under work already done. And no output the AI
-  produces can release money — its strongest verdict is <em>wait</em>.</p>
-  <p>None of that asks for your trust. Every decision is written to an append-only record, and the
-  reasoning behind each one is public.</p>
+  <h2>Protection that is checked, not promised</h2>
+  <p>Each of these is enforced in code and verified by deliberately breaking it to confirm a test
+    fails. None of them depends on us behaving well.</p>
+
+  <div class="list">
+    <div class="item"><div class="k">For brands</div><div>
+      <h3>A budget that cannot be exceeded</h3>
+      <p>Total payouts never exceed the campaign budget, and no creator can take more than their
+      cap. The agent may allocate inside a rate band; it can never widen it.</p></div></div>
+    <div class="item"><div class="k">For brands</div><div>
+      <h3>You are charged only for what survived</h3>
+      <p>Views that vanish before the hold closes are never paid for. That is the mechanic, not a
+      detection system we ask you to trust.</p></div></div>
+    <div class="item"><div class="k">For creators</div><div>
+      <h3>Terms freeze when your clip is accepted</h3>
+      <p>Rate, hold and cap are copied onto your submission. A brand pausing or ending a campaign
+      refuses new clips — it does not abandon work already taken.</p></div></div>
+    <div class="item"><div class="k">For creators</div><div>
+      <h3>Budgets you can check yourself</h3>
+      <p>Every campaign names the wallet its money sits in, and we read the on-chain balance. A
+      campaign that has not funded is labelled unfunded before you spend an evening on it.</p></div></div>
+  </div>
+</div></section>
+
+<hr />
+
+<section><div class="wrap">
+  <h2>It already runs</h2>
+  <p>Not a prototype. These are things that have happened.</p>
+  <div class="buy">
+    <ul>
+      <li><strong>Real USDC settled on-chain</strong> by the agent, confirmed idempotent by replaying it</li>
+      <li><strong>Live on Google Cloud</strong>, judging real YouTube clips with Gemini</li>
+      <li><strong>423 tests</strong>, plus 600,000 simulated payout decisions with no invariant violated</li>
+      <li><strong>21 invariants</strong>, each verified by deleting it and checking the suite goes red</li>
+    </ul>
+    <p class="hash">0x47dc18c82adcda8d0d99a11999c0837892b4454fd7a88d7aa8457b0ce1dc1224</p>
+  </div>
   <div class="row">
-    <a class="btn ghost" href="/architecture.html">How the decision works →</a>
-    <a class="btn ghost" href="/security.html">What we treat as hostile →</a>
+    <a class="btn ghost" href="https://merlinclips-vtgsa3gdqa-uc.a.run.app">Open the live app →</a>
     <a class="btn ghost" href="/testing.html">How it is tested →</a>
   </div>
 </div></section>
 
 <hr />
 
-<section><div class="wrap">
-  <h2>It already works</h2>
-  <p>Not a mockup. These are things that have actually happened.</p>
+<section id="faq"><div class="wrap">
+  <h2>Your questions, answered</h2>
 
-  <div class="buy">
-    <ul>
-      <li><strong>Real USDC settled on-chain</strong> — Base Sepolia, block 45169923, 0.0025 USDC,
-      confirmed idempotent by replaying it</li>
-      <li><strong>Live view counts</strong> read straight from the YouTube Data API — 1,801,472,645
-      on the clip we tested against</li>
-      <li><strong>405 tests passing</strong>, including property tests over hundreds of thousands of
-      generated payout decisions</li>
-      <li><strong>Prompt injection inside a video</strong> — we generated an attack clip carrying
-      instructions to the verifier, and it refused</li>
-    </ul>
-    <p class="hash">0x47dc18c82acdca8d0d99a11999c0837892b4454fd7a88d7aa8457b0ce1dc1224</p>
-  </div>
-
-  <div class="row">
-    <a class="btn ghost" href="/testing.html">How it's tested →</a>
-    <a class="btn ghost" href="https://github.com/Aditya-galaxy/merlinclips">Read the source →</a>
+  <div class="list">
+    <div class="item"><div class="k">Why wait?</div><div>
+      <h3>Why 24 hours, when other platforms pay sooner?</h3>
+      <p>Because platforms remove inauthentic views retroactively, usually within a day. Paying
+      before that happens is why brands buy bot views without knowing. The wait is the product —
+      if you want paying the second you post, we are the wrong platform, deliberately.</p></div></div>
+    <div class="item"><div class="k">Falling views</div><div>
+      <h3>What if my view count drops?</h3>
+      <p>You are paid on the lowest count observed across the window, so a drop reduces what is
+      owed. It is never clawed back: money already settled stays yours, and a falling count reduces
+      the next payment rather than producing a negative one.</p></div></div>
+    <div class="item"><div class="k">Getting paid</div><div>
+      <h3>When do I get paid, and is there a minimum?</h3>
+      <p>Usually minutes after the hold closes, straight to your wallet. There is no minimum and
+      nothing to withdraw, because no balance ever sits with us.</p></div></div>
+    <div class="item"><div class="k">Fees</div><div>
+      <h3>Is anything taken from my earnings?</h3>
+      <p>No. We charge brands per campaign and per settled payout, never a percentage of spend —
+      a percentage would mean our revenue rises when a brand pays for bots.</p></div></div>
+    <div class="item"><div class="k">Rejections</div><div>
+      <h3>Why was my clip not paid?</h3>
+      <p>Every refusal names its reason in words. A clip still inside its hold says so and is not a
+      rejection; a clip that missed the brief says which part it missed.</p></div></div>
+    <div class="item"><div class="k">Platforms</div><div>
+      <h3>Which platforms can I post on?</h3>
+      <p>YouTube today. Instagram, Facebook and TikTok need platform review we do not hold, and we
+      would rather refuse a link than promise a check we cannot perform.</p></div></div>
   </div>
 </div></section>
 
@@ -183,18 +202,18 @@
 <section class="not"><div class="wrap">
   <h2>What this is not</h2>
   <ul>
-    <li><strong>Not a bot detector.</strong> We don't claim to out-detect fraud farms. We changed
-    what gets bought so that outlasting them isn't necessary.</li>
-    <li><strong>Not a marketplace.</strong> We don't match brands to creators or take a finder's
-    fee. We're the payout engine a campaign runs on.</li>
-    <li><strong>Not instant.</strong> The dwell window is the product. If you want to be paid the
-    second you post, this is the wrong platform — and that's deliberate.</li>
-    <li><strong>Early.</strong> Settlement is proven on testnet, not at scale. You would be among
-    the first campaigns.</li>
+    <li><strong>Not a bot detector.</strong> We do not claim to out-detect fraud farms. We changed
+    what gets bought so that outlasting them is unnecessary.</li>
+    <li><strong>Not a bank.</strong> No balance is held for you, which is why there is no cash-out
+    and no minimum.</li>
+    <li><strong>Not instant.</strong> The hold is the point.</li>
+    <li><strong>Early.</strong> Settlement is proven on testnet. You would be among the first
+    campaigns.</li>
   </ul>
 </div></section>
 
 <footer><div class="wrap">
+  <a href="/app">Open the app</a> ·
   <a href="/architecture.html">Architecture</a> ·
   <a href="/security.html">Security</a> ·
   <a href="/testing.html">Testing</a> ·
@@ -204,23 +223,17 @@
 </main>
 
 <script>
-// Progressive enhancement: both panels are real content in the HTML, so the
-// page is complete with JavaScript off — the toggle only hides one.
 (function () {
   var tabs = [document.getElementById('t-creator'), document.getElementById('t-brand')];
   var wrap = document.querySelector('.toggle');
+  var knob = wrap.querySelector('.knob');
   function select(i) {
     tabs.forEach(function (t, n) {
-      var panel = document.getElementById(t.getAttribute('aria-controls'));
+      document.getElementById(t.getAttribute('aria-controls')).hidden = n !== i;
       t.setAttribute('aria-selected', String(n === i));
-      panel.hidden = n !== i;
     });
     wrap.dataset.on = i === 0 ? 'creator' : 'brand';
-    var knob = wrap.querySelector('.knob');
-    if (knob) {
-      knob.style.left = tabs[i].offsetLeft + 'px';
-      knob.style.width = tabs[i].offsetWidth + 'px';
-    }
+    if (knob) { knob.style.left = tabs[i].offsetLeft + 'px'; knob.style.width = tabs[i].offsetWidth + 'px'; }
   }
   tabs.forEach(function (t, i) {
     t.addEventListener('click', function () { select(i); });
@@ -231,7 +244,6 @@
     });
   });
   select(0);
-  // Fonts load after first paint and change the label widths, so re-measure.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { select(0); });
   addEventListener('resize', function () {
     select(tabs[1].getAttribute('aria-selected') === 'true' ? 1 : 0);

@@ -22,6 +22,7 @@
  * report is worse than one that says it does not know yet.
  */
 
+import { MIN_DWELL_HOURS } from './intake';
 import { confirmedViews, hasDwelled } from './views';
 import { canonicalUrl, parsePostUrl } from './postref';
 import type { Snapshot } from './types';
@@ -119,13 +120,14 @@ export interface PreviewResponse {
   errors: string[];
 }
 
+
 export function previewClip(
   request: { url: string; dwellHours?: number },
   deps: { tracking: TrackingStore; now?: () => Date },
 ): PreviewResponse {
   const now = (deps.now ?? (() => new Date()))();
   const dwellHours = Math.min(
-    Math.max(request.dwellHours ?? DEFAULT_DWELL_HOURS, 0),
+    Math.max(request.dwellHours ?? DEFAULT_DWELL_HOURS, MIN_DWELL_HOURS),
     MAX_DWELL_HOURS,
   );
   const dwellMs = dwellHours * 3_600_000;
@@ -191,7 +193,7 @@ export async function verifyClip(
   const errors: string[] = [];
 
   const dwellHours = Math.min(
-    Math.max(request.dwellHours ?? DEFAULT_DWELL_HOURS, 0),
+    Math.max(request.dwellHours ?? DEFAULT_DWELL_HOURS, MIN_DWELL_HOURS),
     MAX_DWELL_HOURS,
   );
   const dwellMs = dwellHours * 3_600_000;

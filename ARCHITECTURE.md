@@ -299,7 +299,7 @@ The lapse sweep (`sweepExpired`) automatically returns stranded reservations bac
 
 **Implemented in `src/telemetry/metrics.ts`.** Exposes OpenTelemetry / Prometheus compatible metrics counters for payout dispositions, micro-USDC volumes, HTTP statuses, and latency histograms.
 
-### 5.3 Idempotency
+### 5.5 Idempotency
 
 Every intent carries a deterministic key, already derived as
 `pay-<submission>-<confirmed views>`. `reserve` becomes
@@ -307,7 +307,7 @@ Every intent carries a deterministic key, already derived as
 returns the original reservation rather than creating a second one. Circle's
 CLI accepts the same key, so the defence exists on both sides of the boundary.
 
-### 5.4 Ledger under concurrency
+### 5.6 Ledger under concurrency
 
 A hash chain has a single-writer assumption baked in: entry *n* hashes entry
 *n−1*, so two concurrent appends both claim the same predecessor and the chain
@@ -329,7 +329,7 @@ Entries are append-only and never updated. The chain gives
 tamper-*evidence*; write access to the store still permits truncation, and
 claiming otherwise would be dishonest.
 
-### 5.5 Failure posture
+### 5.7 Failure posture
 
 Every dependency failure resolves toward *not paying*:
 
@@ -352,6 +352,26 @@ already bounds.
 
 ---
 
+### 5.8 Verification happens inside the pass
+
+A clip is judged against its brief by the tick itself, before views are
+refreshed and before the gate decides, so a submission can be judged and paid
+in the same pass once it has dwelled.
+
+This was not always true, and the way it failed is worth recording. The
+verifier existed, worked, and was wired only to the paid `/api/verify`
+endpoint that outside agents call — never to our own creators' submissions.
+Nothing in production ever wrote a verdict, so the gate refused every payout
+forever with `no_verdict` while every individual component passed its tests.
+It was found by driving the HTTP API end to end, because a unit test cannot
+observe that nobody calls the unit.
+
+A clip is judged once and never re-judged: a verdict costs a model call, and
+re-judging a clip that already passed would let a flaky model retract a
+promise the creator has been paid against. A verifier outage leaves the clip
+blocked on `no_verdict`, which is the correct fail-closed outcome — an
+unjudged clip must not be paid because the model was unavailable.
+
 ## 6. Testing strategy
 
 **Example tests** cover the cases we thought of — the happy path, each refusal
@@ -360,7 +380,7 @@ control, and the *ordering* of the ladder.
 **Property tests** cover the ones we didn't. Every invariant in §2 is asserted
 over generated campaigns: view trajectories that collapse, counts that spike to
 a cap, several creators drawing on one pool, verdicts failing partway through.
-221 tests, ~16,400 assertions per run.
+405 tests, ~19,000 assertions per run.
 
 **The generator is itself tested.** An earlier version produced 74
 authorizations against 2,110 pool blocks — monotonicity and authorization were
@@ -386,6 +406,20 @@ view oracle, the executor, the blob store, the command runner.
   code.
 
 ---
+
+### Wiring is asserted, not assumed
+
+Four separate modules here were written, tested, documented, and called by
+nothing: the agent loop, `acceptSubmission`, the clip verifier, and the
+reservation engine. Each had passing unit tests, because a module in isolation
+behaves identically whether or not production ever calls it.
+
+`src/wiring.test.ts` walks the real import graph from `src/server.ts` and
+fails on any source file nothing reaches. Files outside the served application
+are excused by name with a reason, and a second test fails if an excused file
+disappears — a drifting allowlist eventually excuses something real. It also
+asserts that `runTick` receives every dependency whose absence degrades the
+system quietly rather than loudly.
 
 ## 7. Why the deterministic core is small
 

@@ -69,12 +69,10 @@
 <section><div class="wrap">
   <span class="num bad">$1,500</span>
   <span class="num-cap">PAID FOR 845,000 VIEWS THAT WERE 99.999% BOTS</span>
-  <p style="margin-top:22px">That is one brand, on one campaign, on an existing creator payout
-  platform. It is not an outlier — it is what happens when a platform pays on a number the
-  person being paid can buy for less than the payout.</p>
-  <p>The incumbents take a percentage of what brands spend. Read that again: <strong>when a brand
-  pays for bots, the platform earns more.</strong> Nobody in that arrangement is paid to care.</p>
-  <p><strong>So we changed what's being bought.</strong> Not the detection — the product.</p>
+  <p style="margin-top:22px">One brand, one campaign, on a platform that pays the moment a number
+  appears. It is not an outlier — it is what happens when you pay for a number the person being
+  paid can buy.</p>
+  <p><strong>So we changed what is being bought.</strong></p>
 </div></section>
 
 <hr />
@@ -100,16 +98,12 @@
   </div>
 
   <div class="term"><span class="c-dim">campaign agent — hourly pass</span>
-<span class="c-ok">PAID   </span> clip 4f2a  <span class="c-dim">62,400 views held for 24h  →</span>  <span class="c-ok">62.40 USDC</span>
-<span class="c-ok">PAID   </span> clip 91be  <span class="c-dim">18,900 views held for 24h  →</span>  <span class="c-ok">18.90 USDC</span>
-<span class="c-warn">HELD   </span> clip c07d  <span class="c-dim">dwell window not elapsed — 9h to go</span>
+<span class="c-ok">PAID   </span> clip 4f2a  <span class="c-dim">62,400 views survived 24h  →</span>  <span class="c-ok">62.40 USDC</span>
 <span class="c-warn">HELD   </span> clip 3ea1  <span class="c-dim">count fell 812,447 → 53 overnight</span>
-<span class="c-bad">BLOCKED</span> clip 55cf  <span class="c-dim">campaign pool exhausted</span>
+<span class="c-bad">BLOCKED</span> clip 55cf  <span class="c-dim">campaign pool exhausted</span></div>
 
-<span class="c-dim">the creator who actually got watched is paid first, not loudest.</span></div>
-
-  <p class="fine">A falling count isn't punished — it just isn't paid. Views that never survived were
-  never earned.</p>
+  <p class="fine">A falling count is not punished — it just is not paid.
+  <a href="/architecture.html">See every decision the agent can make →</a></p>
 </div></section>
 
 <hr />
@@ -121,27 +115,18 @@
   <div class="split">
     <div class="side creator">
       <span class="who">For creators</span>
-      <h3>Get paid, without asking twice</h3>
-      <p>The complaint isn't rates. It's chasing an invoice for six weeks and being told the terms
-      changed.</p>
-      <ul>
-        <li>Terms freeze when your clip is accepted — the brand cannot lower your rate afterwards</li>
-        <li>Paid in USDC to your own wallet, usually minutes after the window closes</li>
-        <li>No contest, no placing — everyone who delivers surviving views gets paid</li>
-        <li>The remaining pool is public before you start, so you know if it's worth the edit</li>
-      </ul>
+      <h3>Get paid without asking twice</h3>
+      <p>The complaint was never the rate. It is chasing an invoice for six weeks and being told
+      the terms changed.</p>
+      <p><strong>Your terms freeze the moment your clip is accepted.</strong> Everyone who delivers
+      surviving views gets paid — no contest, no placing.</p>
     </div>
     <div class="side brand">
       <span class="who">For brands</span>
       <h3>Stop buying deleted views</h3>
-      <p>You already can't tell which half of the campaign was real. This makes that question
-      irrelevant.</p>
-      <ul>
-        <li>You are only ever charged for views that outlived the dwell window</li>
-        <li>Hard pool ceiling and per-creator caps — the agent cannot exceed either</li>
-        <li>Every decision is written to an append-only log you can verify yourself</li>
-        <li>We charge per campaign and per settled payout — never a cut of your spend</li>
-      </ul>
+      <p>You cannot tell which half of your campaign was real. This makes the question irrelevant.</p>
+      <p><strong>You are charged only for views that outlived the window</strong> — and we never take
+      a cut of your spend.</p>
     </div>
   </div>
 
@@ -154,27 +139,16 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>What holds it together</h2>
-
-  <div class="list">
-    <div class="item"><div class="k">No clawback</div><div>
-      <h3>Settled money stays settled</h3>
-      <p>USDC can't be recalled, so we don't pretend otherwise. If a count falls after we've paid,
-      the next payout goes to zero instead — the creator is never chased for money already in
-      their wallet.</p></div></div>
-    <div class="item"><div class="k">Frozen terms</div><div>
-      <h3>The brand can't move the goalposts</h3>
-      <p>Rate, dwell and cap are captured at acceptance and stored with the submission. Changing the
-      campaign later changes nothing about work already accepted.</p></div></div>
-    <div class="item"><div class="k">Agent leash</div><div>
-      <h3>The AI proposes, the engine disposes</h3>
-      <p>An agent sets rates and investigates suspicious growth — but a rate outside the operator's
-      band is <em>refused, not clamped</em>, and the investigator's strongest verdict is "wait".
-      Nothing the model can return releases money.</p></div></div>
-    <div class="item"><div class="k">Evidence</div><div>
-      <h3>An append-only record</h3>
-      <p>Every snapshot, decision and payout is one immutable event. The hash chain is derived on
-      read, so altering any past entry breaks verification of every entry after it.</p></div></div>
+  <h2>Why you can believe any of this</h2>
+  <p>Settled USDC cannot be recalled, so every guarantee here has to be one the system can actually
+  keep. There is no clawback. Terms cannot move under work already done. And no output the AI
+  produces can release money — its strongest verdict is <em>wait</em>.</p>
+  <p>None of that asks for your trust. Every decision is written to an append-only record, and the
+  reasoning behind each one is public.</p>
+  <div class="row">
+    <a class="btn ghost" href="/architecture.html">How the decision works →</a>
+    <a class="btn ghost" href="/security.html">What we treat as hostile →</a>
+    <a class="btn ghost" href="/testing.html">How it is tested →</a>
   </div>
 </div></section>
 

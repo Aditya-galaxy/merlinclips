@@ -15,6 +15,16 @@ REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-merlinclips}"
 BUCKET="${GCS_BUCKET:-merlinclips-state}"
 
+# The identity the service runs as, not the identity that builds it.
+#
+# Cloud Run defaults to the project's compute service account, which is shared
+# and accumulates whatever roles anything else in the project needed — ours
+# picked up cloudbuild.builds.builder simply so `--source` deploys would work.
+# A public payout service does not need permission to run builds. This account
+# gets Vertex for the clip verifier and write access to the one state bucket,
+# and nothing else.
+RUNTIME_SA="${RUNTIME_SA:-merlinclips-run@${PROJECT}.iam.gserviceaccount.com}"
+
 if [ -z "$PROJECT" ] || [ "$PROJECT" = "(unset)" ]; then
   echo "No GCP project set. Run: gcloud config set project <project-id>" >&2
   exit 1
@@ -45,10 +55,33 @@ echo "Deploying $SERVICE to $PROJECT ($REGION)"
 
 # --allow-unauthenticated is a competition requirement, not laziness: judges
 # must reach a working instance "free of charge and without any restriction".
+if ! gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT" >/dev/null 2>&1; then
+  cat >&2 <<MISSINGSA
+Runtime service account $RUNTIME_SA does not exist.
+
+Cloud Run would otherwise run as the default compute account, which currently
+also holds build permissions — far more than a payout service should carry.
+Create it and grant only what it needs:
+
+  gcloud iam service-accounts create merlinclips-run \\
+    --project ${PROJECT} --display-name "Merlin Clips runtime"
+
+  gcloud projects add-iam-policy-binding ${PROJECT} \\
+    --member "serviceAccount:${RUNTIME_SA}" --role roles/aiplatform.user
+
+  gcloud storage buckets add-iam-policy-binding gs://${BUCKET} \\
+    --project ${PROJECT} --member "serviceAccount:${RUNTIME_SA}" \\
+    --role roles/storage.objectAdmin
+
+MISSINGSA
+  exit 1
+fi
+
 gcloud run deploy "$SERVICE" \
   --source . \
   --project "$PROJECT" \
   --region "$REGION" \
+  --service-account "$RUNTIME_SA" \
   --allow-unauthenticated \
   --port 8080 \
   --cpu 1 \

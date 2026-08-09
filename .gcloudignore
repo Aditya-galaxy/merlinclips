@@ -1,0 +1,27 @@
+# What Cloud Build must never receive.
+#
+# Without this file gcloud falls back to .gitignore, which is a different
+# question: .gitignore answers "what should not be in version control", and
+# this answers "what should not be uploaded to a build server". They overlap
+# but they are not the same list — tests and docs belong in git and have no
+# business in a container build.
+
+.git/
+.gitignore
+node_modules/
+
+# Secrets. Belt and braces: .env is gitignored too, but a build upload is the
+# wrong place to find out that a rule was missing.
+.env
+.env.*
+
+# Not needed at runtime. The server serves its own HTML from src/.
+landing/
+docs/
+*.md
+!README.md
+
+# Tests and tooling never run in the image.
+**/*.test.ts
+mutate.sh
+skills-lock.json

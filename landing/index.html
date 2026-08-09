@@ -242,6 +242,11 @@
       panel.hidden = n !== i;
     });
     wrap.dataset.on = i === 0 ? 'creator' : 'brand';
+    var knob = wrap.querySelector('.knob');
+    if (knob) {
+      knob.style.left = tabs[i].offsetLeft + 'px';
+      knob.style.width = tabs[i].offsetWidth + 'px';
+    }
   }
   tabs.forEach(function (t, i) {
     t.addEventListener('click', function () { select(i); });
@@ -251,7 +256,12 @@
       }
     });
   });
-  wrap.dataset.on = 'creator';
+  select(0);
+  // Fonts load after first paint and change the label widths, so re-measure.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { select(0); });
+  addEventListener('resize', function () {
+    select(tabs[1].getAttribute('aria-selected') === 'true' ? 1 : 0);
+  });
 })();
 </script>
 </body>

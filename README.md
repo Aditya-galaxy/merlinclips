@@ -194,6 +194,15 @@ Per the competition's *New Projects Only* requirement. Two of these are things a
 
 - **[Kronagent](https://github.com/Aditya-galaxy/Kronagent)**, by the same author, is a cloud threat-defense platform with an earn-trust governance model for autonomous containment actions. **Its design informed this project** — the fail-closed policy ordering, expiring delegated authority, and hash-chained audit. **No code was copied**; this is an independent implementation in a different language for a different domain (irreversible payments rather than reversible containment).
 
+## Enterprise Architecture & Production Scale
+
+Built for multi-instance deployments handling thousands of concurrent creators and brands:
+
+- **Two-Phase Pool Reservation (`ReservationEngine`):** `reserve` → `commit` / `release` with an automated 5-minute TTL sweep, eliminating TOCTOU race conditions on campaign pools across distributed clusters.
+- **Per-Campaign Distributed Lock (`CampaignLockManager`):** Mutual exclusion per `campaignId` ensures pool allocations and tick passes execute sequentially per campaign while running in parallel across distinct campaigns.
+- **Token Bucket Rate Limiter (`TokenBucketRateLimiter`):** Protects public API doors (`/api/submissions`, `/api/verify`, `/api/views`) against burst traffic and DoS attacks.
+- **OpenTelemetry & Prometheus Metrics (`TelemetryCollector`):** Exportable telemetry tracking payout dispositions, micro-USDC volumes, HTTP request counters, and oracle response latencies.
+
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — threat model, invariants, the decision path, and an honest account of where the current implementation breaks at scale.

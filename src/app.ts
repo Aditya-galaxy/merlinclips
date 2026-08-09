@@ -84,19 +84,32 @@ h2{font-size:19px;font-weight:550;letter-spacing:-.018em;margin:0}
 .note{font-size:14.5px;color:var(--ink-2);margin:0 0 22px;max-width:62ch}
 
 /* ── offers (campaigns) ── */
-.offers{border-top:1px solid var(--line)}
-.offer{display:grid;grid-template-columns:1fr auto;gap:26px;align-items:center;
-       padding:20px 0;border-bottom:1px solid var(--line)}
-.offer .brief{font-size:15.5px;margin:0 0 9px;max-width:60ch}
-.offer .id{font-family:var(--num);font-size:11.5px;color:var(--ink-3);letter-spacing:.03em}
-.offer .facts{display:flex;gap:26px;align-items:flex-end}
-.offer .fact{text-align:right}
-.offer .fact b{display:block;font-family:var(--num);font-size:17px;font-weight:500}
-.offer .fact span{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
-.pool{width:150px}
-.pool .track{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-bottom:6px}
-.pool .fill{display:block;height:100%;background:var(--violet)}
-.pool .cap{display:flex;justify-content:space-between;font-family:var(--num);font-size:11px;color:var(--ink-3)}
+/* Campaign cards, framed the way this market already reads them: what kind of
+   work it is, how old, whose brand, how much of the budget is gone, the rate,
+   and who else is here. A creator scans six of these and picks one. */
+.offers{display:grid;grid-template-columns:repeat(auto-fill,minmax(324px,1fr));gap:16px}
+.offer{background:var(--card);border:1px solid var(--line);border-radius:14px;
+       padding:18px 20px 16px;display:flex;flex-direction:column;gap:0}
+.offer .tags{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.chip{font-size:11px;font-weight:600;letter-spacing:.02em;padding:3px 9px;border-radius:6px;
+      background:var(--violet-wash);color:#4A22B8}
+.chip.plain{background:var(--sunk);color:var(--ink-2)}
+.offer .age{margin-left:auto;font-size:11.5px;color:var(--ink-3)}
+.offer .title{font-size:15.5px;font-weight:550;letter-spacing:-.012em;margin:0 0 3px;
+      line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      overflow:hidden}
+.offer .by{font-family:var(--num);font-size:11.5px;color:var(--ink-3);margin-bottom:14px}
+.offer .money{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+.offer .spent{font-family:var(--num);font-size:15px;font-weight:500}
+.offer .spent em{font-style:normal;color:var(--ink-3);font-weight:400}
+.offer .cpm{font-family:var(--num);font-size:13px;color:var(--ink-2)}
+.track{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.fill{display:block;height:100%;background:var(--violet);border-radius:99px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;
+       padding-top:14px;border-top:1px solid var(--line)}
+.stats div span{display:block;font-size:10.5px;color:var(--ink-3);text-transform:uppercase;
+       letter-spacing:.06em;margin-bottom:2px}
+.stats div b{font-family:var(--num);font-size:14.5px;font-weight:500}
 
 /* ── form ── */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;max-width:560px}
@@ -228,7 +241,19 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
 function mine(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];}}
 function keep(id){var a=mine();if(a.indexOf(id)<0){a.push(id);localStorage.setItem(KEY,JSON.stringify(a));}}
 function money(n){var v=parseFloat(n||'0');return v.toLocaleString('en-US',{maximumFractionDigits:2});}
+function rate(n){var v=parseFloat(n||'0');
+  return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function count(n){return parseInt(n||'0',10).toLocaleString('en-US');}
+function compact(n){var v=parseInt(n||'0',10);
+  if(v>=1e9)return (v/1e9).toFixed(1).replace(/\.0$/,'')+'B';
+  if(v>=1e6)return (v/1e6).toFixed(1).replace(/\.0$/,'')+'M';
+  if(v>=1e3)return (v/1e3).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(v);}
+function ago(iso){var t=Date.parse(iso);if(isNaN(t))return '';
+  var d=Math.floor((Date.now()-t)/86400000);
+  if(d<=0)return 'today'; if(d===1)return '1 day ago';
+  if(d<30)return d+' days ago';
+  var m=Math.floor(d/30); return m===1?'1 month ago':m+' months ago';}
 
 /* Three states, not two. A clip waiting for its first check and a clip that
    failed the brief are both refused by the gate; showing them alike tells a
@@ -260,16 +285,24 @@ async function loadCampaigns(){
   }
   host.innerHTML=list.map(function(c){
     var pool=parseFloat(c.poolUsdc||'0');
+    var spent=parseFloat(c.spentUsdc||'0');
     var left=parseFloat(c.remainingUsdc!=null?c.remainingUsdc:c.poolUsdc||'0');
-    var pct=pool>0?Math.max(0,Math.min(100,left/pool*100)):0;
-    return '<div class="offer">'
-      + '<div><p class="brief">'+esc(c.brief)+'</p><span class="id">'+esc(c.campaignId)+'</span></div>'
-      + '<div class="facts">'
-      +   '<div class="fact"><b>'+esc(c.cpmUsdc)+'</b><span>per 1k views</span></div>'
-      +   '<div class="fact"><b>'+esc(c.dwellHours!=null?c.dwellHours:24)+'h</b><span>views must hold</span></div>'
-      +   '<div class="pool"><span class="track"><i class="fill" style="width:'+pct.toFixed(1)+'%"></i></span>'
-      +     '<span class="cap"><span>$'+money(left)+' left</span><span>of $'+money(pool)+'</span></span></div>'
-      + '</div></div>';
+    var pct=pool>0?Math.max(0,Math.min(100,spent/pool*100)):0;
+    var plat=(c.platforms&&c.platforms[0])||'youtube';
+    return '<article class="offer">'
+      + '<div class="tags"><span class="chip">Clipping</span>'
+      +   '<span class="chip plain">'+esc(plat.charAt(0).toUpperCase()+plat.slice(1))+'</span>'
+      +   '<span class="age">'+esc(ago(c.startsAt))+'</span></div>'
+      + '<h3 class="title">'+esc(c.brief)+'</h3>'
+      + '<div class="by">'+esc(c.campaignId)+'</div>'
+      + '<div class="money"><span class="spent">$'+money(spent)+' <em>/ $'+money(pool)+'</em></span>'
+      +   '<span class="cpm">$'+esc(c.cpmUsdc)+' / 1k views</span></div>'
+      + '<span class="track"><i class="fill" style="width:'+pct.toFixed(1)+'%"></i></span>'
+      + '<div class="stats">'
+      +   '<div><span>Hold</span><b>'+esc(c.dwellHours!=null?c.dwellHours:24)+'h</b></div>'
+      +   '<div><span>Views paid</span><b>'+compact(c.paidViews)+'</b></div>'
+      +   '<div><span>Creators</span><b>'+count(c.creators)+'</b></div>'
+      + '</div></article>';
   }).join('');
   sel.innerHTML=list.map(function(c){
     return '<option value="'+esc(c.campaignId)+'">'+esc(c.brief.slice(0,54))+(c.brief.length>54?'…':'')+' — '+esc(c.cpmUsdc)+'/1k</option>';

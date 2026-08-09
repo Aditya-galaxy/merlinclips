@@ -303,19 +303,35 @@ export class CampaignRuntime {
       // clip on `no_verdict`, and one with no oracle never confirms a view.
       verifier: this.verifier ? 'gemini' : 'not configured (set GOOGLE_GENAI_USE_VERTEXAI + GOOGLE_CLOUD_PROJECT, or GOOGLE_API_KEY)',
       viewOracle: this.counts ? 'youtube' : 'not configured (YOUTUBE_API_KEY)',
-      campaigns: state.campaigns.map((c) => ({
-        campaignId: c.campaignId,
-        brief: c.brief,
-        status: c.status,
-        cpmUsdc: c.cpmUsdc.toString(),
-        poolUsdc: c.poolUsdc.toString(),
-        remainingUsdc: this.store.remainingPool(c.campaignId).toString(),
-        perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
-        dwellHours: Math.round(c.dwellMs / 3_600_000),
-        platforms: c.platforms,
-        endsAt: c.endsAt,
-        paidOut: this.store.payoutsFor(c.campaignId).length,
-      })),
+      campaigns: state.campaigns.map((c) => {
+        // What a creator wants before committing an evening: is anyone else
+        // here, is this campaign actually paying, and how much is left. All
+        // three are already in the store; publishing them is what turns a
+        // listing into something someone can judge.
+        const subs = state.submissions.filter((s) => s.campaignId === c.campaignId);
+        const creators = new Set(subs.map((s) => s.creatorId));
+        let views = 0n;
+        for (const s of subs) views += this.store.viewsPaidTo(s.submissionId);
+        const spent = this.store.spentOnCampaign(c.campaignId);
+        return {
+          campaignId: c.campaignId,
+          brief: c.brief,
+          status: c.status,
+          cpmUsdc: c.cpmUsdc.toString(),
+          poolUsdc: c.poolUsdc.toString(),
+          spentUsdc: spent.toString(),
+          remainingUsdc: this.store.remainingPool(c.campaignId).toString(),
+          perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
+          dwellHours: Math.round(c.dwellMs / 3_600_000),
+          platforms: c.platforms,
+          startsAt: c.startsAt,
+          endsAt: c.endsAt,
+          submissions: subs.length,
+          creators: creators.size,
+          paidViews: views.toString(),
+          paidOut: this.store.payoutsFor(c.campaignId).length,
+        };
+      }),
       lastTick: this.lastTick && {
         startedAt: this.lastTick.startedAt,
         paid: this.lastTick.paid,

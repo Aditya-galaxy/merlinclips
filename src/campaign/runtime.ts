@@ -34,6 +34,7 @@ import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
+import { standingFor } from './standing';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -551,6 +552,12 @@ export class CampaignRuntime {
       paidForViews: this.store.viewsPaidTo(submissionId).toString(),
       earnedUsdc: this.store.spentOnCreator(submission.campaignId, submission.creatorId).toString(),
       guaranteedUntil: submission.acceptedTerms.settlementDeadline,
+      // Their standing, from the same arithmetic that decides the payout.
+      standing: standingFor(
+        submission.creatorId,
+        this.store.exportState().submissions.filter((x) => x.creatorId === submission.creatorId),
+        this.store,
+      ),
     });
   }
 

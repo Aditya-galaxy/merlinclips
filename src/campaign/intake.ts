@@ -24,18 +24,11 @@
 import { Decimal } from '../decimal';
 import { parsePostUrl } from './postref';
 import { acceptSubmission, DEFAULT_SETTLEMENT_WINDOW_MS } from './terms';
+import { MIN_DWELL_HOURS } from './views';
 
 import type { Campaign, Creator, Platform, Submission } from './types';
 
-/**
- * The shortest dwell that means anything.
- *
- * Platforms remove inauthentic views retroactively, on their own schedule —
- * usually within a day, which is where the 24h default comes from. An hour is
- * the floor at which "this count survived" is a claim about the world rather
- * than a restatement of what the API said a moment ago.
- */
-export const MIN_DWELL_HOURS = 1;
+export { MIN_DWELL_HOURS };
 
 /** An EVM address, which is all a creator needs to be paid. */
 const ADDRESS = /^0x[a-fA-F0-9]{40}$/;

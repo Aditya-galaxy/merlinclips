@@ -39,6 +39,10 @@ import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
 import { acquireTickLease, DEFAULT_LEASE_WINDOW_MS } from './lease';
 import { DryRunExecutor, runTick, skippedTick, type PayoutExecutor, type TickResult, type ViewOracle } from './tick';
+import { ReservationEngine } from './reservation';
+import { CampaignLockManager } from './lock';
+import { TokenBucketRateLimiter } from '../rate_limiter';
+import { telemetry } from '../telemetry/metrics';
 
 /** No oracle configured yet: report "cannot tell", never a fabricated count. */
 export const NULL_ORACLE: ViewOracle = { fetch: async () => undefined };
@@ -100,6 +104,13 @@ export class CampaignRuntime {
   private loaded = false;
   private readyPromise?: Promise<void>;
   private lastTick?: TickResult;
+
+  /** Two-phase budget reservation engine for enterprise campaign payouts. */
+  public readonly reservations = new ReservationEngine();
+  /** Per-campaign distributed lock manager for mutual exclusion. */
+  public readonly locks = new CampaignLockManager();
+  /** Token bucket rate limiter for public API doors. */
+  public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
 
   constructor(options: CampaignRuntimeOptions = {}) {
     this.env = options.env ?? Bun.env;
@@ -435,41 +446,56 @@ export class CampaignRuntime {
    */
   async handleSubmit(request: Request): Promise<Response> {
     await this.ready();
-    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const campaign = this.store.campaign(String(body.campaignId ?? ''));
-    const result = submitClip(campaign, body);
-    if (!result.ok) {
-      return Response.json({ error: result.error, field: result.field }, { status: 400 });
+
+    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    if (!this.rateLimiter.consume(clientIp)) {
+      telemetry.recordHttpRequest('/api/submissions', 429);
+      return Response.json({ error: 'Rate limit exceeded — try again shortly' }, { status: 429 });
     }
 
-    const { submission, creator } = result.value;
-    await this.record({ type: 'creator_upserted', creator });
-    const isNew = await this.record({ type: 'submission_accepted', submission });
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const campaignId = String(body.campaignId ?? '');
 
-    const terms = submission.acceptedTerms;
-    return Response.json(
-      {
-        submissionId: submission.submissionId,
-        alreadySubmitted: !isNew,
-        url: submission.url,
-        platform: submission.platform,
-        // The deal, echoed back. It is frozen from this moment and the brand
-        // cannot change it under work already accepted.
-        agreedTerms: {
-          cpmUsdc: terms.cpmUsdc.toString(),
-          perCreatorCapUsdc: terms.perCreatorCapUsdc.toString(),
-          dwellHours: Math.round(terms.dwellMs / 3_600_000),
-          acceptedAt: terms.acceptedAt,
-          guaranteedUntil: terms.settlementDeadline,
+    return await this.locks.withLock(campaignId || 'global', async () => {
+      const campaign = this.store.campaign(campaignId);
+      const result = submitClip(campaign, body);
+      if (!result.ok) {
+        telemetry.recordHttpRequest('/api/submissions', 400);
+        return Response.json({ error: result.error, field: result.field }, { status: 400 });
+      }
+
+      const { submission, creator } = result.value;
+      await this.record({ type: 'creator_upserted', creator });
+      const isNew = await this.record({ type: 'submission_accepted', submission });
+
+      const terms = submission.acceptedTerms;
+      const status = isNew ? 201 : 200;
+      telemetry.recordHttpRequest('/api/submissions', status);
+
+      return Response.json(
+        {
+          submissionId: submission.submissionId,
+          alreadySubmitted: !isNew,
+          url: submission.url,
+          platform: submission.platform,
+          // The deal, echoed back. It is frozen from this moment and the brand
+          // cannot change it under work already accepted.
+          agreedTerms: {
+            cpmUsdc: terms.cpmUsdc.toString(),
+            perCreatorCapUsdc: terms.perCreatorCapUsdc.toString(),
+            dwellHours: Math.round(terms.dwellMs / 3_600_000),
+            acceptedAt: terms.acceptedAt,
+            guaranteedUntil: terms.settlementDeadline,
+          },
+          poolRemainingUsdc: this.store.remainingPool(submission.campaignId).toString(),
+          next:
+            'your views are counted from now. nothing pays until they have held ' +
+            `for ${Math.round(terms.dwellMs / 3_600_000)}h — check /api/submissions/` +
+            submission.submissionId,
         },
-        poolRemainingUsdc: this.store.remainingPool(submission.campaignId).toString(),
-        next:
-          'your views are counted from now. nothing pays until they have held ' +
-          `for ${Math.round(terms.dwellMs / 3_600_000)}h — check /api/submissions/` +
-          submission.submissionId,
-      },
-      { status: isNew ? 201 : 200 },
-    );
+        { status },
+      );
+    });
   }
 
   /** `GET /api/submissions/:id` — what a creator sees about their own clip. */
@@ -554,6 +580,7 @@ export class CampaignRuntime {
       return Response.json({ error: 'unauthorised' }, { status: 401 });
     }
 
+    this.reservations.sweepExpired();
     const result = await this.tick();
     return Response.json({
       ...result,

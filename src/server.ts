@@ -28,6 +28,7 @@ import {
 import { isExpired } from './mandates';
 import { runJob } from './business/loop';
 import { MARKETPLACE } from './business/tools';
+import { telemetry } from './telemetry/metrics';
 import { Decimal, USDC } from './decimal';
 import { encodePayment, paymentRequiredBody, verifyPayment } from './x402';
 import { CampaignRuntime } from './campaign/runtime';
@@ -208,6 +209,12 @@ const server = Bun.serve({
       return (await spec.exists())
         ? new Response(spec, { headers: { 'content-type': 'application/json; charset=utf-8' } })
         : json({ error: 'spec not found' }, 404);
+    }
+
+    if (url.pathname === '/metrics') {
+      return new Response(telemetry.toPrometheusFormat(), {
+        headers: { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' },
+      });
     }
 
     // Free, and deliberately so. It answers "can you handle this link, are you

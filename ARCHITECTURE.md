@@ -277,7 +277,7 @@ landed.
 
 ### 5.2 Reservation, not deduction (`ReservationEngine`)
 
-**Implemented in `src/campaign/reservation.ts`.** Two-phase reservation engine prevents pool TOCTOU races:
+**Built in `src/campaign/reservation.ts`, and not yet on the payout path.** Only `sweepExpired` runs today; nothing calls `reserve`, so no pool allocation currently flows through it. The pool ceiling is enforced by the gate's own check, which is mutation-tested. Two-phase reservation is the intended replacement at multi-instance scale:
 
 ```
 reserve(intentId, amount)   → row: state=reserved, expires_at=now+5m
@@ -293,7 +293,7 @@ The lapse sweep (`sweepExpired`) automatically returns stranded reservations bac
 
 ### 5.3 Edge Rate Limiting (`TokenBucketRateLimiter`)
 
-**Implemented in `src/rate_limiter.ts`.** Token bucket rate limiter protects public API doors (`/api/submissions`, `/api/verify`, `/api/views`) against burst traffic and DoS.
+**Implemented in `src/rate_limiter.ts`.** Token bucket rate limiter on `/api/submissions` — the one unauthenticated write, and so the only endpoint where burst traffic costs us storage and log growth for free. `/api/verify` and `/api/views` are x402-paid, where the payment is itself the limiter.
 
 ### 5.4 Enterprise Telemetry (`TelemetryCollector`)
 

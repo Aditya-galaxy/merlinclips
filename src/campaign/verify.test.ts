@@ -163,6 +163,14 @@ describe('refusing to claim what it cannot check', () => {
     );
     expect(res.views.dwellHours).toBe(168);
   });
+
+  test('a zero dwell window is clamped to the minimum floor', async () => {
+    const res = await verifyClip(
+      { url: URL_IN, dwellHours: 0 },
+      { tracking: new MemoryTrackingStore(), oracle: oracleOf(1n) },
+    );
+    expect(res.views.dwellHours).toBe(1);
+  });
 });
 
 describe('the free preview tier', () => {

@@ -26,6 +26,28 @@
 set -uo pipefail
 export PATH="$HOME/.bun/bin:$PATH"
 
+# Restoration is git-based and verified, not cp/mv bookkeeping.
+#
+# An earlier version copied each file aside and moved it back. It left five
+# live mutations in the working tree — the kill switch disabled, the rolling
+# window cap disabled, the settlement deadline disabled, the negative-payout
+# guard removed, and single-flight off — and reported "0 survived" while doing
+# it. A mutation tool that silently disarms the controls it is auditing is
+# worse than no tool, so the restore path is now one that cannot fail quietly:
+# git holds the truth, and the tree is re-checked after every single mutant.
+#
+# The cost is that this refuses to run on a dirty tree. That is the point:
+# `git checkout --` is only safe when there is nothing of yours to lose.
+if [ -n "$(git status --porcelain -- src/ 2>/dev/null)" ]; then
+  echo "Refusing to run: src/ has uncommitted changes." >&2
+  echo "This restores by discarding edits to src/, which would take yours with them." >&2
+  echo "Commit or stash first." >&2
+  exit 2
+fi
+
+# Even an interrupt must not leave a control disabled.
+trap 'git checkout -- src/ 2>/dev/null; echo; echo "interrupted — src/ restored" >&2; exit 130' INT TERM
+
 # file :: original :: replacement :: label
 MUTANTS=(
   "src/policy.ts::if (s.killSwitch) {::if (false && s.killSwitch) {::I4  kill switch admits no exceptions"
@@ -62,7 +84,6 @@ for m in "${MUTANTS[@]}"; do
   FROM="${rest%%::*}"; rest="${rest#*::}"
   TO="${rest%%::*}"; LABEL="${rest#*::}"
 
-  cp "$FILE" "$FILE.mutorig"
   if ! python3 - "$FILE" "$FROM" "$TO" <<'PY'
 import sys, pathlib
 p = pathlib.Path(sys.argv[1]); s = p.read_text()
@@ -70,14 +91,24 @@ if sys.argv[2] not in s: sys.exit(9)
 p.write_text(s.replace(sys.argv[2], sys.argv[3], 1))
 PY
   then
-    mv "$FILE.mutorig" "$FILE"
+    git checkout -- "$FILE"
     printf "  %-50s SKIP (pattern moved — update the catalogue)\n" "$LABEL"
     skipped=$((skipped + 1))
     continue
   fi
 
   bun test >/dev/null 2>&1; code=$?
-  mv "$FILE.mutorig" "$FILE"
+  git checkout -- "$FILE"
+
+  # The post-condition. Without it a failed restore is invisible, which is
+  # exactly how the previous version reported success while leaving the kill
+  # switch disabled.
+  if [ -n "$(git status --porcelain -- "$FILE")" ]; then
+    echo >&2
+    echo "FATAL: $FILE did not restore after mutating for '$LABEL'." >&2
+    echo "Run: git checkout -- src/" >&2
+    exit 3
+  fi
 
   if [ $code -ne 0 ]; then
     printf "  %-50s caught\n" "$LABEL"

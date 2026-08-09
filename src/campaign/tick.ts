@@ -37,6 +37,7 @@ import { Decimal } from '../decimal';
 import type { PaymentOutcome } from '../schemas';
 import type { PayoutDecision, PayoutGate } from './payout';
 import type { EventLog } from './eventlog';
+import type { ClipVerifier } from './verify';
 import type { FraudInvestigator, RateProposer } from './agent';
 import { proposeRateFor } from './agent';
 import { applyRate } from './rate';
@@ -73,6 +74,11 @@ export interface TickDeps {
   sink?: DecisionSink;
   /** Judgment, both halves optional. Absent means the pass is purely mechanical. */
   agent?: { rate?: RateProposer; investigator?: FraudInvestigator };
+  /**
+   * Judges a clip against its brief. Without it, submissions accumulate
+   * verdicts from nowhere and the gate blocks every one of them forever.
+   */
+  verifier?: ClipVerifier;
 }
 
 export interface TickResult {
@@ -95,6 +101,8 @@ export interface TickResult {
   readonly needsApproval: number;
   readonly totalPaidUsdc: Decimal;
   readonly decisions: readonly PayoutDecision[];
+  /** Clips judged against their brief on this pass. */
+  readonly verdictsRecorded: readonly string[];
   /** Per-submission failures, so one bad clip is visible without hiding the rest. */
   readonly errors: readonly string[];
 }
@@ -104,12 +112,13 @@ export async function runTick(
   options: { agentId: string; now?: Date } = { agentId: 'campaign-agent' },
 ): Promise<TickResult> {
   const now = options.now ?? new Date();
-  const { store, gate, oracle, executor, log, sink, agent } = deps;
+  const { store, gate, oracle, executor, log, sink, agent, verifier } = deps;
 
   const decisions: PayoutDecision[] = [];
   const errors: string[] = [];
   const rateChanges: string[] = [];
   const investigationsHeld: string[] = [];
+  const verdictsRecorded: string[] = [];
   let paid = 0;
   let held = 0;
   let blocked = 0;
@@ -153,6 +162,45 @@ export async function runTick(
       submissionCount += 1;
 
       try {
+        // Judge the clip before anything else can pay for it.
+        //
+        // This was the hole in the middle of the pipeline: a creator could
+        // submit, views could accrue and dwell, and the gate would refuse
+        // forever with `no_verdict` because nothing ever produced one. The
+        // verifier existed and worked — it was wired only to the paid
+        // /api/verify endpoint that outside agents call, never to our own
+        // creators' submissions.
+        //
+        // Once per submission, never re-judged: a verdict costs a model call,
+        // and re-judging a clip that already passed would let a flaky model
+        // retract a promise the creator has already been paid against.
+        if (verifier && !store.latestVerdict(submission.submissionId)) {
+          try {
+            const judged = await verifier.judge({ url: submission.url, brief: campaign.brief });
+            const verdict = {
+              verdictId: `vdt-${submission.submissionId}`,
+              submissionId: submission.submissionId,
+              pass: judged.pass,
+              reasons: judged.reasons,
+              confidence: judged.confidence,
+              model: judged.model,
+              at: now.toISOString(),
+            };
+            await log?.append({ type: 'verdict_recorded', verdict }, now);
+            store.addVerdict(verdict);
+            verdictsRecorded.push(
+              `${submission.submissionId}: ${judged.pass ? 'pass' : 'fail'}`,
+            );
+          } catch (error) {
+            // A verifier outage must not pay an unjudged clip. The gate will
+            // refuse on `no_verdict`, which is the correct fail-closed
+            // outcome, and the next pass tries again.
+            errors.push(
+              `${submission.submissionId}: verification failed — ${(error as Error).message}`,
+            );
+          }
+        }
+
         const views = await oracle.fetch(submission);
         if (views !== undefined) {
           const snapshot = {
@@ -272,6 +320,7 @@ export async function runTick(
     errors,
     rateChanges,
     investigationsHeld,
+    verdictsRecorded,
   };
 }
 
@@ -291,6 +340,7 @@ export function skippedTick(now: Date, reason: string): TickResult {
     errors: [],
     rateChanges: [],
     investigationsHeld: [],
+    verdictsRecorded: [],
   };
 }
 

@@ -199,10 +199,23 @@ export interface SubmitInput {
  * whether the clip meets the brief — that needs the video, and it happens
  * after acceptance under terms already frozen.
  */
+/**
+ * Who already claimed a post in this campaign, if anyone.
+ *
+ * Returns the creator id of the first submitter, or undefined. Injected rather
+ * than looked up here so intake stays a pure function of its inputs.
+ */
+export type ClaimLookup = (
+  campaignId: string,
+  platform: Platform,
+  postId: string,
+) => string | undefined;
+
 export function submitClip(
   campaign: Campaign | undefined,
   input: SubmitInput,
   now: Date = new Date(),
+  claimedBy?: ClaimLookup,
 ): Result<{ submission: Submission; creator: Creator }> {
   if (!campaign) return bad('unknown campaignId', 'campaignId');
 
@@ -226,6 +239,29 @@ export function submitClip(
   // The wallet is the identity. A creator who has never been here before is
   // simply a wallet we have not paid yet.
   const creatorId = `cre-${address.toLowerCase()}`;
+
+  // One post, one claimant, per campaign.
+  //
+  // Without this, nothing tied a submission to the person who made the video.
+  // Three wallets could claim the same clip and all three would be paid for
+  // the same views — and unlike bought views, these are real, so the dwell
+  // window does nothing about it. The attack is not botting; it is submitting
+  // someone else's viral clip from fifty wallets and draining the pool at
+  // fifty times the rate one video should ever cost.
+  //
+  // This does not prove authorship, and it is not meant to. It removes the
+  // multiplication, which is the part that scales. Proving a creator owns a
+  // channel needs a code in the description or an OAuth handshake, and that
+  // buys much less than this does.
+  const already = claimedBy?.(campaign.campaignId, ref.platform, ref.postId);
+  if (already && already !== creatorId) {
+    return bad(
+      'this post was already submitted to this campaign by someone else. Each ' +
+        'clip pays one creator — if it is yours, submit from the wallet that ' +
+        'claimed it first.',
+      'url',
+    );
+  }
   const handle = typeof input.handle === 'string' ? input.handle.trim().slice(0, 64) : undefined;
 
   const accepted = acceptSubmission(

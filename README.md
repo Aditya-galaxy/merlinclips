@@ -198,9 +198,9 @@ Per the competition's *New Projects Only* requirement. Two of these are things a
 
 Built for multi-instance deployments handling thousands of concurrent creators and brands:
 
-- **Two-Phase Pool Reservation (`ReservationEngine`):** `reserve` → `commit` / `release` with an automated 5-minute TTL sweep, eliminating TOCTOU race conditions on campaign pools across distributed clusters.
+- **Two-Phase Pool Reservation (`ReservationEngine`):** `reserve` → `commit` / `release` with a 5-minute TTL sweep. **Built and tested, not yet wired to the payout path** — the pool ceiling is currently enforced by the gate's own check. Intended to replace it when more than one instance settles concurrently.
 - **Per-Campaign Distributed Lock (`CampaignLockManager`):** Mutual exclusion per `campaignId` ensures pool allocations and tick passes execute sequentially per campaign while running in parallel across distinct campaigns.
-- **Token Bucket Rate Limiter (`TokenBucketRateLimiter`):** Protects public API doors (`/api/submissions`, `/api/verify`, `/api/views`) against burst traffic and DoS attacks.
+- **Token Bucket Rate Limiter (`TokenBucketRateLimiter`):** Applied to `POST /api/submissions`, the only unauthenticated write. The paid endpoints are limited by their own price.
 - **OpenTelemetry & Prometheus Metrics (`TelemetryCollector`):** Exportable telemetry tracking payout dispositions, micro-USDC volumes, HTTP request counters, and oracle response latencies.
 
 ## Documentation

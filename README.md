@@ -27,13 +27,16 @@ We do not try to out-detect a fraud ring. A platform with a fraud team and full 
 We changed what is being bought instead. **A view is payable once it has survived.**
 
 ```
-confirmed = min(views_now, views_at_least_24h_ago)
+confirmed = min(every count observed from 24h ago until now)
 payable   = confirmed − already_paid_for
 amount    = payable × cpm ÷ 1000
 ```
 
 - **Views still climbing** — the older, smaller number wins, so nothing pays until it sticks.
-- **Views scrubbed by the platform** — the newer, smaller number wins, so inflation that got removed is never paid for.
+- **Views scrubbed by the platform** — the scrubbed count wins, so inflation that got removed is never paid for.
+- **Views scrubbed and then rebought** — also caught, and this is the case that matters. Comparing only the two endpoints of the window would confirm the full amount for a count that went `10,000 → 0 → 10,000`, because it was that high then and is that high now. Those are two different sets of bought views, neither of which lasted a day. Taking the minimum across the *whole* window is what makes "survived" mean present at the start and never absent since.
+
+A dip suppresses payment for one dwell window and no longer: the anchor advances past it, and views that genuinely held afterwards are paid normally.
 
 The asymmetry is the point. Inflating a count costs an attacker nothing; keeping it inflated through the platform's own retro-scrubbing for a full day is materially harder — and it is the platform's fraud team doing that work, not ours.
 
@@ -134,6 +137,22 @@ bun test
 bun run src/server.ts     # http://localhost:8080
 ```
 
+### Verifying it
+
+```bash
+bun test          # 374 tests
+bun run sweep     # 600,000 simulated decisions, exits non-zero on a violation
+bun run mutate    # breaks each control on purpose; a survivor is a finding
+```
+
+`mutate` is the one worth explaining. A passing suite says the code does what
+the tests check; it does not say the tests check what matters. Mutation testing
+deletes a control and re-runs everything — if the suite still passes, that
+control is asserted in prose and enforced by nothing. On its first run it found
+three: the dwell cutoff boundary, the `hasDwelled` boundary, and a
+malformed-timestamp guard whose safety property existed only as a comment. All
+17 controls are now caught.
+
 ### Configuration
 
 Gemini runs through **Application Default Credentials**, not an API key — `gcloud auth application-default login`, with the quota project set to the one billing it.
@@ -144,7 +163,8 @@ Gemini runs through **Application Default Credentials**, not an API key — `gcl
 | `GOOGLE_GENAI_USE_VERTEXAI` / `GOOGLE_CLOUD_PROJECT` | Vertex via ADC. |
 | `CAMPAIGN_WALLET` | Circle agent wallet on **testnet**. |
 | `MAINNET_CAMPAIGN_WALLET` | Circle agent wallet on **mainnet**. |
-| `TICK_SECRET` | Guards `/api/tick`. Unset returns 503 — the service is public by requirement, and this endpoint must not be. |
+| `TICK_SECRET` | Guards `/api/tick`, via `x-tick-secret`. Unset returns 503 — the service is public by requirement, and this endpoint must not be. |
+| `OPERATOR_SECRET` | Guards `POST /api/campaigns`, via `x-operator-secret`. Unset returns 503. **Deliberately a different value from `TICK_SECRET`** — Cloud Scheduler holds the tick secret, and whatever can trigger a tick should not also be able to commit money by opening a campaign. |
 | `GCS_BUCKET` | Durable state. Without it the store is in-memory on a service that scales to zero. |
 
 Two flags govern real money, and **both** are required for any of it to move on mainnet:

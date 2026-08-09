@@ -98,6 +98,7 @@ export class CampaignRuntime {
    *  tick stays purely deterministic rather than falling back to a stub. */
   private readonly agent: { rate?: RateProposer; investigator?: FraudInvestigator };
   private loaded = false;
+  private readyPromise?: Promise<void>;
   private lastTick?: TickResult;
 
   constructor(options: CampaignRuntimeOptions = {}) {
@@ -184,8 +185,13 @@ export class CampaignRuntime {
   /** Replay the log into the store. Idempotent, so every route may call it. */
   async ready(): Promise<void> {
     if (this.loaded) return;
-    await this.log.hydrate(this.store);
-    this.loaded = true;
+    if (this.readyPromise) return this.readyPromise;
+    this.readyPromise = this.log.hydrate(this.store).then(() => {
+      this.loaded = true;
+    }).finally(() => {
+      this.readyPromise = undefined;
+    });
+    return this.readyPromise;
   }
 
   /**

@@ -197,6 +197,114 @@
           }
         }
       }
+    },
+    "/api/campaign": {
+      "get": {
+        "operationId": "getCampaignPublicView",
+        "summary": "Public view of active campaigns and remaining pools",
+        "description": "Returns campaign configurations, total pool allocations, remaining funds, dwell requirements, and tick status.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Campaign summary and remaining pool."
+          }
+        }
+      }
+    },
+    "/api/campaigns": {
+      "post": {
+        "operationId": "openCampaign",
+        "summary": "Open a new creator marketing campaign (Operator-gated)",
+        "description": "Requires `x-operator-secret` header matching `OPERATOR_SECRET`.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully."
+          },
+          "401": {
+            "description": "Unauthorised."
+          },
+          "503": {
+            "description": "`OPERATOR_SECRET` not configured."
+          }
+        }
+      }
+    },
+    "/api/submissions": {
+      "post": {
+        "operationId": "submitClip",
+        "summary": "Submit a creator clip for a campaign",
+        "description": "Public door for creators. Accepts post URL, payout wallet address, and campaignId. Freezes accepted terms.",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Clip accepted under frozen terms."
+          },
+          "400": {
+            "description": "Invalid submission payload or unsupported platform."
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}": {
+      "get": {
+        "operationId": "getSubmissionStatus",
+        "summary": "Check status of a submitted clip",
+        "description": "Returns current disposition (auto_pay, held, blocked, no_op), verdict status, confirmed views, and earned USDC.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission status detail."
+          },
+          "404": {
+            "description": "Unknown submission."
+          }
+        }
+      }
+    },
+    "/api/tick": {
+      "post": {
+        "operationId": "runTickPass",
+        "summary": "Execute one agent tick pass (Cloud Scheduler-gated)",
+        "description": "Requires `x-tick-secret` header matching `TICK_SECRET`. Refreshes views, evaluates payout gate, and triggers settlement.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Tick execution summary."
+          },
+          "401": {
+            "description": "Unauthorised."
+          },
+          "503": {
+            "description": "`TICK_SECRET` not configured."
+          }
+        }
+      }
+    },
+    "/api/job": {
+      "post": {
+        "operationId": "runResearchJob",
+        "summary": "Execute an autonomous research job (x402-gated)",
+        "description": "Requires x402 payment header `X-PAYMENT`. Agent researches, prices, buys data, and answers.",
+        "responses": {
+          "200": {
+            "description": "Researched answer and P&L margin."
+          },
+          "402": {
+            "description": "Payment required."
+          }
+        }
+      }
     }
   },
   "components": {

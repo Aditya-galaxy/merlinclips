@@ -53,7 +53,7 @@ const submission = (id: string, c: Campaign = campaign()): Submission => ({
 });
 
 /** A store with `ids` submissions, each already verified and dwelled. */
-function world(ids: string[], over: Partial<Campaign> = {}) {
+function world(ids: string[], over: Partial<Campaign> = {}, opts: { verdicts?: boolean } = {}) {
   const c = campaign(over);
   const store = new CampaignStore();
   store.putCampaign(c);
@@ -62,7 +62,7 @@ function world(ids: string[], over: Partial<Campaign> = {}) {
   for (const id of ids) {
     store.putCreator({ creatorId: `cre-${id}`, payoutAddress: `0x${id}`, handles: {} });
     store.putSubmission(submission(id, c));
-    store.addVerdict({
+    if (opts.verdicts !== false) store.addVerdict({
       verdictId: `v-${id}`,
       submissionId: id,
       pass: true,
@@ -434,5 +434,75 @@ describe('two passes overlapping', () => {
     ]);
     expect(first.paid + second.paid).toBe(1);
     expect([...first.errors, ...second.errors].join()).toContain('concurrent pass');
+  });
+});
+
+describe('the clip is judged, or the pipeline has a hole in the middle', () => {
+  /** A verifier that answers as told and counts how often it was asked. */
+  const verifierSaying = (pass: boolean) => ({
+    calls: 0,
+    async judge() {
+      this.calls += 1;
+      return { pass, reasons: [pass ? 'meets the brief' : 'product never shown'], confidence: 0.9, model: 'test' };
+    },
+  });
+
+  test('an unjudged clip gets judged, and can then be paid', async () => {
+    // Found by driving the real HTTP API end to end: a creator could submit,
+    // views could accrue and dwell, and the gate refused forever with
+    // `no_verdict` because nothing in production ever produced one. The
+    // verifier was wired only to the paid endpoint outside agents call.
+    const { store, gate } = world(['a'], {}, { verdicts: false });
+    const v = verifierSaying(true);
+    const result = await runTick(
+      { store, gate, oracle: oracleReturning(5_000n), executor: new DryRunExecutor(), verifier: v },
+      { agentId: 'agent', now: NOW },
+    );
+    expect(v.calls).toBe(1);
+    expect(result.verdictsRecorded[0]).toContain('pass');
+  });
+
+  test('a clip that fails the brief is blocked, not paid', async () => {
+    const { store, gate } = world(['a'], {}, { verdicts: false });
+    const result = await runTick(
+      { store, gate, oracle: oracleReturning(5_000n), executor: new DryRunExecutor(), verifier: verifierSaying(false) },
+      { agentId: 'agent', now: NOW },
+    );
+    expect(result.paid).toBe(0);
+    expect(result.blocked).toBe(1);
+  });
+
+  test('a clip already judged is not judged again', async () => {
+    // A verdict costs a model call, and re-judging a clip that passed would
+    // let a flaky model retract a promise already paid against.
+    const { store, gate } = world(['a']); // world() seeds a passing verdict
+    const v = verifierSaying(true);
+    await runTick(
+      { store, gate, oracle: oracleReturning(5_000n), executor: new DryRunExecutor(), verifier: v },
+      { agentId: 'agent', now: NOW },
+    );
+    expect(v.calls).toBe(0);
+  });
+
+  test('a verifier outage blocks rather than paying an unjudged clip', async () => {
+    const { store, gate } = world(['a'], {}, { verdicts: false });
+    const result = await runTick(
+      {
+        store, gate, oracle: oracleReturning(5_000n), executor: new DryRunExecutor(),
+        verifier: { async judge() { throw new Error('gemini 503'); } },
+      },
+      { agentId: 'agent', now: NOW },
+    );
+    expect(result.paid).toBe(0);
+    expect(result.errors.join()).toContain('gemini 503');
+  });
+
+  test('no verifier configured leaves the pass mechanical', async () => {
+    const { store, gate } = world(['a']);
+    const result = await runTick(
+      { store, gate, oracle: oracleReturning(5_000n), executor: new DryRunExecutor() },
+      { agentId: 'agent', now: NOW },
+    );
+    expect(result.verdictsRecorded).toEqual([]);
   });
 });

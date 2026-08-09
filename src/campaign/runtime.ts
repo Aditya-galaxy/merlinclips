@@ -279,6 +279,7 @@ export class CampaignRuntime {
         executor: this.executor,
         log: this.log,
         agent: this.agent,
+        verifier: this.verifier,
       },
       { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
     );

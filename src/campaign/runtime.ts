@@ -459,7 +459,9 @@ export class CampaignRuntime {
 
     return await this.locks.withLock(campaignId || 'global', async () => {
       const campaign = this.store.campaign(campaignId);
-      const result = submitClip(campaign, body);
+      const result = submitClip(campaign, body, new Date(), (cid, platform, postId) =>
+        this.store.claimantOf(cid, platform, postId),
+      );
       if (!result.ok) {
         telemetry.recordHttpRequest('/api/submissions', 400);
         return Response.json({ error: result.error, field: result.field }, { status: 400 });

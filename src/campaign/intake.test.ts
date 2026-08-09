@@ -206,3 +206,67 @@ describe('submitting a clip', () => {
     if (a.ok && b.ok) expect(a.value.submission.submissionId).toBe(b.value.submission.submissionId);
   });
 });
+
+describe('one post, one claimant', () => {
+  const url = 'https://www.youtube.com/shorts/abc123XYZ_1';
+  const wallet = (c: string) => '0x' + c.repeat(40);
+
+  /** Stands in for the store: remembers who claimed what. */
+  const claims = () => {
+    const held = new Map<string, string>();
+    const lookup = (cid: string, platform: string, postId: string) =>
+      held.get(cid + '|' + platform + '|' + postId);
+    const record = (cid: string, platform: string, postId: string, creatorId: string) =>
+      held.set(cid + '|' + platform + '|' + postId, creatorId);
+    return { lookup: lookup as any, record };
+  };
+
+  test('a second wallet cannot claim a post the first already submitted', () => {
+    // The attack this closes is not botting. The views are real, so the dwell
+    // window does nothing: take someone else's viral clip, submit it from
+    // fifty wallets, and the pool pays fifty times for one video.
+    const c = campaignOr();
+    const { lookup, record } = claims();
+
+    const first = submitClip(c, { payoutAddress: wallet('a'), url }, NOW, lookup);
+    expect(first.ok).toBe(true);
+    if (first.ok) record(c.campaignId, 'youtube', first.value.submission.postId, first.value.submission.creatorId);
+
+    const second = submitClip(c, { payoutAddress: wallet('b'), url }, NOW, lookup);
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.field).toBe('url');
+      expect(second.error).toMatch(/already submitted/);
+    }
+  });
+
+  test('the original claimant may resubmit — it is the same claim, not a second one', () => {
+    const c = campaignOr();
+    const { lookup, record } = claims();
+    const first = submitClip(c, { payoutAddress: wallet('a'), url }, NOW, lookup);
+    if (first.ok) record(c.campaignId, 'youtube', first.value.submission.postId, first.value.submission.creatorId);
+
+    const again = submitClip(c, { payoutAddress: wallet('a'), url }, NOW, lookup);
+    expect(again.ok).toBe(true);
+    if (again.ok && first.ok) {
+      expect(again.value.submission.submissionId).toBe(first.value.submission.submissionId);
+    }
+  });
+
+  test('the same post may be claimed in a different campaign', () => {
+    // Campaigns are separate deals. A creator who clipped for one brand is not
+    // barred from entering the same clip elsewhere.
+    const a = campaignOr({ campaignId: 'camp-a' });
+    const b = campaignOr({ campaignId: 'camp-b' });
+    const { lookup, record } = claims();
+
+    const first = submitClip(a, { payoutAddress: wallet('a'), url }, NOW, lookup);
+    if (first.ok) record('camp-a', 'youtube', first.value.submission.postId, first.value.submission.creatorId);
+
+    expect(submitClip(b, { payoutAddress: wallet('a'), url }, NOW, lookup).ok).toBe(true);
+  });
+
+  test('without a lookup nothing is refused — the check is the caller’s to supply', () => {
+    expect(submitClip(campaignOr(), { payoutAddress: wallet('b'), url }, NOW).ok).toBe(true);
+  });
+});

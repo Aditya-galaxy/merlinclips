@@ -66,6 +66,21 @@ export class CampaignStore implements CampaignView {
     this.creators.set(creator.creatorId, creator);
   }
 
+  /**
+   * The creator who first claimed this post in this campaign, if any.
+   *
+   * Scanned rather than indexed: submissions per campaign are small, and an
+   * index is another thing that can disagree with the log it is derived from.
+   */
+  claimantOf(campaignId: string, platform: string, postId: string): string | undefined {
+    for (const s of this.exportState().submissions) {
+      if (s.campaignId === campaignId && s.platform === platform && s.postId === postId) {
+        return s.creatorId;
+      }
+    }
+    return undefined;
+  }
+
   submission(submissionId: string): Submission | undefined {
     return this.submissions.get(submissionId);
   }

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terms of Service — Merlin Clips</title>
+<meta name="description" content="How Merlin Clips works, what we owe you, and what we do not promise. Written in plain language." />
+<meta name="theme-color" content="#FAF8F5" />
+<link rel="canonical" href="https://merlinclips.com/terms.html" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+  <div class="links" id="navlinks">
+    <a class="l" href="/brands.html">For brands</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/architecture.html">Architecture</a>
+  </div>
+  <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
+</div></nav>
+
+<main>
+
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Terms</b> Draft, pending legal review</span></div>
+  <h1>Terms of <span class="grad">Service</span></h1>
+  <p class="lede">Written to be read. If any of this is unclear, that is our fault and we would
+    like to hear about it.</p>
+  <p class="fine">Last updated 10 August 2026</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="note"><p><strong>This is a draft.</strong> It has not been reviewed by a lawyer.
+    It describes honestly how the product behaves today, and it is not yet a binding agreement
+    we would ask anyone to rely on. Sections marked <em>needs review</em> are the ones where the
+    gap between "true" and "enforceable" matters most.</p></div>
+
+  <div class="list">
+    <div class="item"><div class="k">Who we are</div><div>
+      <h3>Merlin Clips, and what we do</h3>
+      <p>We run campaigns where brands pay creators for views on short-form clips. We hold no
+      balances for anyone. Payments settle in USDC directly from a brand's wallet to a creator's
+      wallet.</p></div></div>
+
+    <div class="item"><div class="k">Your account</div><div>
+      <h3>Google sign-in, and nothing else</h3>
+      <p>You sign in with Google. We store the account identifier Google gives us, your name and
+      your email address. We store no password and we hold no token that lets us act on your
+      behalf.</p>
+      <p>You are responsible for the Google account you sign in with. If you lose access to it,
+      you lose access to the standing attached to it, because that is the only thing tying the
+      two together.</p></div></div>
+
+    <div class="item"><div class="k">Getting paid</div><div>
+      <h3>What we owe a creator</h3>
+      <p>When a clip is accepted into a campaign, the rate, the waiting period and the per-creator
+      cap are copied onto that submission and frozen. A brand cannot change them afterwards, and
+      neither can we.</p>
+      <p>You are paid on the <strong>lowest view count observed</strong> between acceptance and the
+      end of the waiting period. Money already paid is never taken back. If your count falls, the
+      next payment is smaller — never negative.</p>
+      <p>Payment goes to the wallet address you gave when you submitted. We cannot reverse a
+      payment sent to an address you typed incorrectly, and neither can anyone else.
+      <em>Needs review.</em></p></div></div>
+
+    <div class="item"><div class="k">Paying</div><div>
+      <h3>What a brand owes</h3>
+      <p>A campaign is funded from a wallet you name. We read its balance and publish whether the
+      budget is covered. Total payouts never exceed the budget you set.</p>
+      <p>Ending a campaign stops new clips being accepted. It does not cancel work already
+      accepted: a creator who posted under your terms is still owed for views that survive, until
+      the settlement deadline. <em>Needs review.</em></p></div></div>
+
+    <div class="item"><div class="k">Refusals</div><div>
+      <h3>When a clip is not paid</h3>
+      <p>A clip may be refused because it does not meet the brief, because the campaign budget or
+      a cap is reached, because the waiting period has not closed, or because the whole system has
+      been stopped. Every refusal names its reason.</p>
+      <p>A clip still inside its waiting period is not a rejection, and we do not describe it as
+      one.</p></div></div>
+
+    <div class="item"><div class="k">What we do not promise</div><div>
+      <h3>Stated rather than buried</h3>
+      <p>We do not promise your clip will be accepted, that a campaign will still have budget when
+      you finish editing, or that any particular amount will be earned.</p>
+      <p>We do not promise to detect every fake view. The product is built so that outlasting the
+      people who sell them is unnecessary, which is a different claim.</p>
+      <p>This is early software. It can be unavailable, and a payment can be delayed by something
+      outside our control — a platform's API, a blockchain, a cloud provider.</p></div></div>
+
+    <div class="item"><div class="k">Ending it</div><div>
+      <h3>Either side, at any time</h3>
+      <p>You can stop using this whenever you like. We can close an account we believe is being
+      used to defraud a brand or another creator.</p>
+      <p>Closing an account does not cancel a payment already owed for views that survived.
+      <em>Needs review.</em></p></div></div>
+
+    <div class="item"><div class="k">Changes</div><div>
+      <h3>Terms already accepted do not move</h3>
+      <p>We may change these terms. Changes do not apply retroactively to a submission already
+      accepted — those are governed by the terms frozen onto it, which is the same principle the
+      product runs on.</p></div></div>
+  </div>
+
+  <p>Questions about any of this: <a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a>.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span><a href="/">Home</a> &middot; <a href="/compliance.html">Compliance Terms</a> &middot;
+      <a href="/#contact">Contact</a></span>
+  </div>
+</div></footer>
+
+</main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+  burger.addEventListener('click', function () { setOpen(nav.dataset.open !== 'true'); });
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Compliance Terms — Merlin Clips</title>
+<meta name="description" content="Who can use Merlin Clips, what we check, and what we are not yet licensed to do." />
+<meta name="theme-color" content="#FAF8F5" />
+<link rel="canonical" href="https://merlinclips.com/compliance.html" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+  <div class="links" id="navlinks">
+    <a class="l" href="/brands.html">For brands</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/architecture.html">Architecture</a>
+  </div>
+  <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
+</div></nav>
+
+<main>
+
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Compliance</b> Draft, pending legal review</span></div>
+  <h1>Compliance <span class="grad">Terms</span></h1>
+  <p class="lede">Who can use this, what we check, and — more importantly — what we are not yet
+    licensed to do.</p>
+  <p class="fine">Last updated 10 August 2026</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="note"><p><strong>This is a draft and the gap here is wider than on the Terms page.</strong>
+    Moving money across borders is regulated, the rules differ by country, and we are not
+    licensed as a money transmitter anywhere. Read this as a description of how we behave, not
+    as a statement that we have obtained permissions we have not obtained.</p></div>
+
+  <div class="list">
+    <div class="item"><div class="k">Who can use this</div><div>
+      <h3>You must be 18 or over</h3>
+      <p>You must be old enough to enter a contract where you live, and at least 18. You must not
+      be on a sanctions list, and you must not be in a country subject to comprehensive
+      sanctions.</p>
+      <p>We currently check this by asking. That is weaker than verifying it, and we would rather
+      say so than imply a check we do not perform. <em>Needs review.</em></p></div></div>
+
+    <div class="item"><div class="k">What we are not</div><div>
+      <h3>We are not a bank, a broker, or a money transmitter</h3>
+      <p>We never take custody of your funds. A payment goes from a brand's wallet to a creator's
+      wallet, and we have no ability to hold, freeze, or redirect it in between.</p>
+      <p>We hold no licence to transmit money, exchange currency, or provide financial advice.
+      Nothing on this site is financial advice. <em>Needs review — the analysis of whether this
+      product needs a licence in any given country has not been done.</em></p></div></div>
+
+    <div class="item"><div class="k">Tax</div><div>
+      <h3>Yours to handle</h3>
+      <p>Money you earn here is very likely taxable income where you live. We do not withhold tax,
+      we do not file anything on your behalf, and we do not issue tax documents.</p>
+      <p>The record of what you were paid is available to you, which is the part we can
+      genuinely help with.</p></div></div>
+
+    <div class="item"><div class="k">Content</div><div>
+      <h3>The clip has to be yours to post</h3>
+      <p>You must have the right to publish what you submit, and it must comply with the rules of
+      the platform you posted it on. We check clips against a brand's brief; we do not check
+      whether you had the right to use the music in them.</p>
+      <p>We will refuse a clip that is unlawful, and we will remove a campaign whose brief asks
+      for something unlawful.</p></div></div>
+
+    <div class="item"><div class="k">Your data</div><div>
+      <h3>What we keep and why</h3>
+      <p>From Google: an account identifier, your name and your email. From you: a payout wallet
+      address and the links you submit. From the platform: view counts on those links.</p>
+      <p>Payout records are permanent. They are the audit trail that lets a creator prove what
+      they were owed, and deleting them would remove the evidence protecting the person asking.
+      Account details can be deleted on request. <em>Needs review — this is a real tension with
+      erasure rights under GDPR and it deserves a proper answer.</em></p></div></div>
+
+    <div class="item"><div class="k">Fraud</div><div>
+      <h3>What happens if views are bought</h3>
+      <p>Buying views does not get you paid, because payment is based on the views still present
+      after the waiting period, and bought views generally are not. It also lowers your standing,
+      since the ones that evaporate still count in the total.</p>
+      <p>We may refuse payment and close an account where we have good reason to believe views
+      were purchased. We will say which submission and why.</p></div></div>
+
+    <div class="item"><div class="k">Reporting</div><div>
+      <h3>If you find a way to break this</h3>
+      <p>If you find a way to move money that should not have moved, write to
+      <a href="mailto:security@merlinclips.com">security@merlinclips.com</a>. We would much rather
+      hear it from you than read about it.</p></div></div>
+  </div>
+
+  <p>Questions: <a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a>.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span><a href="/">Home</a> &middot; <a href="/terms.html">Terms of Service</a> &middot;
+      <a href="/#contact">Contact</a></span>
+  </div>
+</div></footer>
+
+</main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+  burger.addEventListener('click', function () { setOpen(nav.dataset.open !== 'true'); });
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
+})();
+</script>
+</body>
+</html>

@@ -491,6 +491,10 @@ const server = Bun.serve({
       '/styles.css': 'landing/styles.css',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
+      '/signup.html': 'landing/signup.html',
+      '/signup': 'landing/signup.html',
+      '/terms.html': 'landing/terms.html',
+      '/compliance.html': 'landing/compliance.html',
       '/security.html': 'landing/security.html',
       '/testing.html': 'landing/testing.html',
     };

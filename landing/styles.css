@@ -764,3 +764,62 @@ nav[data-open="true"] .burger span:nth-child(3){transform:translateY(-8px) rotat
 @media(min-width:821px) and (max-height:620px){
   .fan{display:none}
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ONE SURFACE
+
+   The page used to be a stack of panels separated by rules: a hairline under
+   the header, another between every block. Each line is a small instruction to
+   stop reading, and eight of them turn one argument into eight leaflets.
+
+   The seams are gone. Depth now comes from where things sit and how much air
+   is around them, which is the difference between a page you read through and
+   a page you page through.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+hr{display:none}
+
+/* The header floats on the page rather than sitting on a shelf above it. It
+   still gains a background once content scrolls under — without that, text
+   passes through the wordmark — but it gains it as a blur, not a border. */
+nav{border-bottom:0;background:transparent;backdrop-filter:none;
+    transition:background-color .2s ease,backdrop-filter .2s ease}
+nav[data-stuck="true"]{background:rgba(250,248,245,.72);backdrop-filter:blur(14px) saturate(1.4)}
+@media(max-width:640px){
+  /* The panel needs an edge to sit against; a shadow gives it one. */
+  nav[data-open="true"]{background:rgba(250,248,245,.96);backdrop-filter:blur(14px)}
+}
+
+/* Alternating grounds instead of lines. The shift is barely perceptible on its
+   own, which is the point: it separates without announcing that it has. */
+.band{border-block:0}
+.tint{border-block:0}
+footer{border-top:0}
+.list,.faq{border-top:0}
+.item,.qa{border-bottom:1px solid var(--line)}
+.item:last-child,.qa:last-child{border-bottom:0}
+
+/* ── type scale ──
+   The display sizes were set for a headline of three or four words. At the
+   length these actually run — "Only pay for views that stayed" — they filled
+   the screen and left the sentence under them looking like a footnote. */
+h1{font-size:clamp(38px,6.4vw,74px);line-height:1.0;letter-spacing:-.035em}
+h2{font-size:clamp(26px,3.2vw,38px);letter-spacing:-.028em}
+.lede{font-size:clamp(17.5px,1.5vw,21px)}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ONE BLOCK, ONE SCREEN
+
+   Every major block is sized against the viewport rather than against a fixed
+   pixel padding, so a block ends near where the screen does instead of the
+   next one peeking in by a random amount. `svh` rather than `vh`: on a phone
+   `vh` measures the viewport with the browser chrome retracted, so a block
+   sized in `vh` is always taller than what you can actually see.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+section{padding:clamp(56px,9vh,104px) 0}
+.band{padding:clamp(30px,5vh,46px) 0}
+.showcase{padding:0 0 clamp(56px,9vh,104px)}
+
+@media(max-width:1024px){section{padding:clamp(48px,7vh,76px) 0}}
+@media(max-width:640px){section{padding:clamp(40px,6vh,60px) 0}}

@@ -86,7 +86,11 @@ p{margin:0 0 20px;color:var(--text-2);font-size:17.5px}
 .eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--muted);
          letter-spacing:.09em;text-transform:uppercase;margin-bottom:14px;display:block}
 strong{color:var(--text);font-weight:550}
-a{color:var(--accent);text-decoration:none}
+/* Body links are violet, not cyan. Cyan is the brand-side marker in the
+   two-sided split, where it distinguishes one audience from the other. Spent
+   on every inline link it stops meaning that and starts competing with the
+   one colour the page is trying to own. */
+a{color:var(--pop);text-decoration:none}
 a:hover{text-decoration:underline}
 section{padding:96px 0}
 .hero{padding:96px 0 84px}
@@ -344,7 +348,12 @@ footer a:hover{color:var(--pop);text-decoration:underline}
 .wc .amt b{font-family:var(--mono);font-size:14px;font-weight:600}
 .wc .amt b em{font-style:normal;color:var(--muted);font-weight:400}
 .wc .amt span{font-family:var(--mono);font-size:11.5px;color:var(--text-2)}
-.wc .bar{height:4px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+/* `display:block` is load-bearing: .bar is a <span>, and height does not apply
+   to an inline box. Without it the fill resolved height:100% against nothing,
+   rendered as a tall violet column bursting out of the card, and shoved the
+   stat row below it out of the frame. */
+.wc .bar{display:block;height:4px;border-radius:99px;background:var(--surface-2);
+         overflow:hidden}
 .wc .bar i{display:block;height:100%;background:var(--pop);border-radius:99px}
 .wc .st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px;
         padding-top:11px;border-top:1px solid var(--line)}

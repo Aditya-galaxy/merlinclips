@@ -18,12 +18,13 @@
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
   <div class="links">
-    <a class="l" href="#brands">For brands</a>
+    <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
-    <a class="l" href="#faq">FAQ</a>
-    <a class="l opt" href="#agencies">Agencies</a>
-    <a class="l opt" href="#contact">Contact</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/#agencies">Agencies</a>
     <a class="l opt" href="/architecture.html">Architecture</a>
+    <a class="l opt" href="/security.html">Security</a>
+    <a class="l opt" href="/testing.html">Testing</a>
   </div>
   <a class="cta" href="/app">Start earning today</a>
 </div></nav>
@@ -65,7 +66,6 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
   </a>
-</div>
 </div></section>
 
 <section class="showcase" id="showcase"><div class="wrap">
@@ -209,33 +209,39 @@
 <section id="faq"><div class="wrap">
   <h2>Your questions, answered</h2>
 
-  <div class="list">
-    <div class="item"><div class="k">Why wait?</div><div>
-      <h3>Why 24 hours, when other platforms pay sooner?</h3>
-      <p>Because platforms remove inauthentic views retroactively, usually within a day. Paying
+  <div class="faq">
+        <details class="qa">
+      <summary><span class="k">Why wait?</span><span class="q">Why 24 hours, when other platforms pay sooner?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Because platforms remove inauthentic views retroactively, usually within a day. Paying
       before that happens is why brands buy bot views without knowing. The wait is the product —
-      if you want paying the second you post, we are the wrong platform, deliberately.</p></div></div>
-    <div class="item"><div class="k">Falling views</div><div>
-      <h3>What if my view count drops?</h3>
-      <p>You are paid on the lowest count observed across the window, so a drop reduces what is
+      if you want paying the second you post, we are the wrong platform, deliberately.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Falling views</span><span class="q">What if my view count drops?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>You are paid on the lowest count observed across the window, so a drop reduces what is
       owed. It is never clawed back: money already settled stays yours, and a falling count reduces
-      the next payment rather than producing a negative one.</p></div></div>
-    <div class="item"><div class="k">Getting paid</div><div>
-      <h3>When do I get paid, and is there a minimum?</h3>
-      <p>Usually minutes after the hold closes, straight to your wallet. There is no minimum and
-      nothing to withdraw, because no balance ever sits with us.</p></div></div>
-    <div class="item"><div class="k">Fees</div><div>
-      <h3>Is anything taken from my earnings?</h3>
-      <p>No. We charge brands per campaign and per settled payout, never a percentage of spend —
-      a percentage would mean our revenue rises when a brand pays for bots.</p></div></div>
-    <div class="item"><div class="k">Rejections</div><div>
-      <h3>Why was my clip not paid?</h3>
-      <p>Every refusal names its reason in words. A clip still inside its hold says so and is not a
-      rejection; a clip that missed the brief says which part it missed.</p></div></div>
-    <div class="item"><div class="k">Platforms</div><div>
-      <h3>Which platforms can I post on?</h3>
-      <p>YouTube today. Instagram, Facebook and TikTok need platform review we do not hold, and we
-      would rather refuse a link than promise a check we cannot perform.</p></div></div>
+      the next payment rather than producing a negative one.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Getting paid</span><span class="q">When do I get paid, and is there a minimum?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Usually minutes after the hold closes, straight to your wallet. There is no minimum and
+      nothing to withdraw, because no balance ever sits with us.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Fees</span><span class="q">Is anything taken from my earnings?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>No. We charge brands per campaign and per settled payout, never a percentage of spend —
+      a percentage would mean our revenue rises when a brand pays for bots.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Rejections</span><span class="q">Why was my clip not paid?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Every refusal names its reason in words. A clip still inside its hold says so and is not a
+      rejection; a clip that missed the brief says which part it missed.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Platforms</span><span class="q">Which platforms can I post on?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>YouTube today. Instagram, Facebook and TikTok need platform review we do not hold, and we
+      would rather refuse a link than promise a check we cannot perform.</p></div>
+    </details>
   </div>
 </div></section>
 
@@ -279,11 +285,44 @@
 </div></section>
 
 <footer><div class="wrap">
-  <a href="/app">Open the app</a> ·
-  <a href="/architecture.html">Architecture</a> ·
-  <a href="/security.html">Security</a> ·
-  <a href="/testing.html">Testing</a> ·
-  <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/app">Discover campaigns</a></li>
+        <li><a href="/brands.html">For brands</a></li>
+        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>How it works</h4>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/openapi.json">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <ul>
+        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
 </div></footer>
 
 </main>

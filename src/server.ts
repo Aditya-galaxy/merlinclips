@@ -384,6 +384,7 @@ const server = Bun.serve({
       '/index.html': 'landing/index.html',
       '/styles.css': 'landing/styles.css',
       '/architecture.html': 'landing/architecture.html',
+      '/brands.html': 'landing/brands.html',
       '/security.html': 'landing/security.html',
       '/testing.html': 'landing/testing.html',
     };

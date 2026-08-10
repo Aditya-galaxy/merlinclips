@@ -7,7 +7,7 @@
 <meta name="description" content="The threat model: what is trusted, what is not, the attacks in scope, the twenty-one invariants, and what this deliberately does not defend against." />
 <meta property="og:title" content="Merlin Clips — threat model" />
 <meta property="og:description" content="The agent is not trusted. That is the founding assumption, and everything else follows from it." />
-<meta name="theme-color" content="#000000" />
+<meta name="theme-color" content="#FAF8F5" />
 <link rel="canonical" href="https://merlinclips.com/security.html" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -16,7 +16,7 @@
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
   <div class="links">
-    <a class="l" href="/#brands">For brands</a>
+    <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
     <a class="l opt" href="/#agencies">Agencies</a>
@@ -29,12 +29,17 @@
 
 <main>
 
-<section class="hero"><div class="wrap">
-  <span class="eyebrow">Threat model</span>
-  <h1>The agent is not trusted</h1>
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Threat model</b> Written assuming we lose</span></div>
+  <h1>The agent is <span class="grad">not trusted</span></h1>
   <p class="lede">That is the founding assumption. A sufficiently well-crafted clip — or campaign brief — will
   convince a model to approve a payout to an attacker, and no amount of prompt engineering makes that
-  reliably false.</p>
+    reliably false.</p>
+  <div class="row">
+    <a class="btn ghost" href="#invariants">The twenty-one invariants →</a>
+    <a class="btn ghost" href="/testing.html">How they are proved</a>
+  </div>
+  <p class="fine">What is trusted · what is not · and what this does not defend against</p>
 </div></section>
 
 <hr />
@@ -98,7 +103,7 @@
 
 <hr />
 
-<section><div class="wrap">
+<section id="invariants"><div class="wrap">
   <h2>The twenty-one invariants</h2>
   <p>These are the promises. Each is enforced in code and checked against generated inputs rather
   than chosen examples — see <a href="/testing.html">testing</a>.</p>
@@ -168,11 +173,54 @@
 </div></section>
 
 <footer><div class="wrap">
-  <a href="/">Home</a> · <a href="/architecture.html">Architecture</a> ·
-  <a href="/testing.html">Testing</a> ·
-  <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/app">Discover campaigns</a></li>
+        <li><a href="/brands.html">For brands</a></li>
+        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>How it works</h4>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/openapi.json">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <ul>
+        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
 </div></footer>
 
 </main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+})();
+</script>
 </body>
 </html>

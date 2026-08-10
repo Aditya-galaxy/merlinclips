@@ -7,7 +7,7 @@
 <meta name="description" content="Property-based invariants and deterministic simulation testing: 600,000 decisions across 372 simulated years, every run reproducible from its seed." />
 <meta property="og:title" content="Merlin Clips — how it is tested" />
 <meta property="og:description" content="Example tests prove the cases we thought of. For the component that decides whether money moves, that is the weaker claim." />
-<meta name="theme-color" content="#000000" />
+<meta name="theme-color" content="#FAF8F5" />
 <link rel="canonical" href="https://merlinclips.com/testing.html" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -16,7 +16,7 @@
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
   <div class="links">
-    <a class="l" href="/#brands">For brands</a>
+    <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
     <a class="l opt" href="/#agencies">Agencies</a>
@@ -29,11 +29,16 @@
 
 <main>
 
-<section class="hero"><div class="wrap">
-  <span class="eyebrow">Testing</span>
-  <h1>Proven, not sampled</h1>
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Testing</b> Every invariant, every run</span></div>
+  <h1>Proven, <span class="grad">not sampled</span></h1>
   <p class="lede">Example tests prove the engine handles the cases we thought of. For the component
-  that decides whether money leaves your account, that is the weaker claim.</p>
+    that decides whether money leaves your account, that is the weaker claim.</p>
+  <div class="row">
+    <a class="btn ghost" href="/security.html">The invariants being proved →</a>
+    <a class="btn ghost" href="https://github.com/Aditya-galaxy/merlinclips">Read the suite</a>
+  </div>
+  <p class="fine">423 tests · 600,000 generated decisions · 17 of 17 mutants caught</p>
 </div></section>
 
 <hr />
@@ -144,11 +149,54 @@ violations     <span class="c-ok">none</span></div>
 </div></section>
 
 <footer><div class="wrap">
-  <a href="/">Home</a> · <a href="/architecture.html">Architecture</a> ·
-  <a href="/security.html">Security</a> ·
-  <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/app">Discover campaigns</a></li>
+        <li><a href="/brands.html">For brands</a></li>
+        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>How it works</h4>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/openapi.json">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <ul>
+        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
 </div></footer>
 
 </main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+})();
+</script>
 </body>
 </html>

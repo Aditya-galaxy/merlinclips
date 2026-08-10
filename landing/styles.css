@@ -28,13 +28,16 @@
    ============================================================ */
 
 :root{
-  --bg:#08070C; --surface:#100E17; --surface-2:#16131F;
-  --line:#221E2E; --line-hi:#332C46;
-  --text:#F5F5F7; --text-2:#B4B4BE; --muted:#7B7B87;
-  --accent:#5BE9FF;                 /* brand side */
-  --pop:#8B5CF6;                    /* creator side */
-  --ok:#4ADE9B; --warn:#F0B849; --bad:#FB7185;
-  --lime:#A3E635;
+  /* Content Rewards' warmth, our violet. A warm off-white rather than the
+     cream-and-serif default: the ground is barely tinted, so the violet reads
+     as the only real colour on the page. */
+  --bg:#FAF8F5; --surface:#FFFFFF; --surface-2:#F3F0EB;
+  --line:#E8E3DB; --line-hi:#D8D1C6;
+  --text:#151310; --text-2:#5C554C; --muted:#8B8378;
+  --accent:#0E8FA8;                 /* brand side */
+  --pop:#6D28D9;                    /* creator side */
+  --ok:#0F7B4F; --warn:#8A5A00; --bad:#B02A20;
+  --lime:#4D7C0F;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --wrap:1080px;
@@ -47,7 +50,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
 
 /* ── nav ── */
 nav{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
-    background:rgba(0,0,0,.82);backdrop-filter:blur(10px)}
+    background:rgba(250,248,245,.86);backdrop-filter:blur(12px)}
 nav .wrap{display:flex;align-items:center;gap:22px;height:72px}
 /* Links sit left of centre and the action sits hard right, which is the
    arrangement both Content Rewards and MoonPay use: the thing you came to do
@@ -85,7 +88,7 @@ a:hover{text-decoration:underline}
 section{padding:96px 0}
 .hero{padding:96px 0 84px}
 hr{height:1px;background:var(--line);border:0;margin:0}
-.grad{background:linear-gradient(96deg,#C4B5FD 0%,#8B5CF6 42%,#5BE9FF 100%);
+.grad{background:linear-gradient(96deg,#7C3AED 0%,#6D28D9 45%,#0E8FA8 100%);
       -webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ── numbers carry the argument ── */
@@ -96,17 +99,17 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .num.ok{color:var(--ok)}
 
 /* ── buttons ── */
-.btn{display:inline-block;background:var(--text);color:#000;text-decoration:none;
+.btn{display:inline-block;background:var(--text);color:#fff;text-decoration:none;
      font-size:17px;font-weight:650;padding:17px 32px;border-radius:99px;border:0;cursor:pointer;
      letter-spacing:-.01em;transition:transform .12s ease,filter .12s ease}
 .btn:active{transform:translateY(1px)}
-.btn:hover{background:#fff;text-decoration:none}
-.btn.pop{background:linear-gradient(96deg,#A78BFA,#7C3AED);color:#fff;
-         box-shadow:inset 0 -3px 0 rgba(59,20,140,.55),0 10px 34px -12px rgba(139,92,246,.7)}
+.btn:hover{background:#000;text-decoration:none}
+.btn.pop{background:linear-gradient(96deg,#7C3AED,#6D28D9);color:#fff;
+         box-shadow:inset 0 -3px 0 rgba(49,16,116,.6),0 12px 30px -14px rgba(109,40,217,.75)}
 .btn.pop:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .btn.pop:active{transform:translateY(1px);box-shadow:inset 0 -1px 0 rgba(59,20,140,.55),0 6px 18px -12px rgba(139,92,246,.7)}
 .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line-hi);
-           box-shadow:inset 0 -2px 0 rgba(0,0,0,.45)}
+           box-shadow:inset 0 -2px 0 rgba(0,0,0,.07)}
 .btn.ghost:hover{color:var(--text);border-color:var(--muted);background:transparent}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:34px 0 14px}
 .fine{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin:0}
@@ -148,7 +151,7 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
 @media(max-width:700px){.steps{grid-template-columns:1fr}}
 .step{border:1px solid var(--line);border-radius:20px;padding:30px 28px;background:var(--surface)}
-.step .n{font-family:var(--mono);font-size:16px;color:#000;font-weight:700;
+.step .n{font-family:var(--mono);font-size:16px;color:#fff;font-weight:700;
          width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:20px}
 .step:nth-child(1) .n{background:var(--pop)}
 .step:nth-child(2) .n{background:var(--warn)}
@@ -209,15 +212,15 @@ footer a:hover{color:var(--text)}
                font-family:var(--sans);font-size:15px;font-weight:650;letter-spacing:.01em;
                padding:12px 26px;border-radius:100px;color:var(--muted);transition:color .18s;
                white-space:nowrap}
-.toggle button[aria-selected="true"]{color:#000}
-.toggle .knob{position:absolute;top:4px;height:calc(100% - 8px);border-radius:100px;
+.toggle button[aria-selected="true"]{color:#fff}
+.toggle .knob{position:absolute;top:5px;height:calc(100% - 10px);border-radius:100px;
               /* left and width are set from the active button's own geometry.
                  A fixed 50% assumed both labels were the same length; they are
                  not ("For creators" is 9px wider), so the pill sat beside the
                  word it was meant to sit under. */
               left:4px;width:0;
               transition:left .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1),background .22s;
-              background:linear-gradient(100deg,#C4B5FD,var(--pop))}
+              background:linear-gradient(100deg,#7C3AED,var(--pop))}
 .toggle[data-on="brand"] .knob{background:linear-gradient(100deg,var(--accent),#A5F3FC)}
 
 
@@ -252,10 +255,10 @@ footer a:hover{color:var(--text)}
    diagram — the dots are what make a rectangle look like an application. */
 .window{margin-top:64px;border:1px solid var(--line-hi);border-radius:18px 18px 0 0;
         background:var(--surface);overflow:hidden;text-align:left;
-        box-shadow:0 -1px 0 rgba(255,255,255,.04),0 40px 120px -40px rgba(139,92,246,.4)}
+        box-shadow:0 30px 90px -30px rgba(109,40,217,.28),0 2px 6px rgba(21,19,16,.05)}
 .window .chrome{display:flex;align-items:center;gap:8px;padding:14px 18px;
         border-bottom:1px solid var(--line);background:var(--surface-2)}
-.window .chrome i{width:11px;height:11px;border-radius:50%;background:#332C46;flex:none}
+.window .chrome i{width:11px;height:11px;border-radius:50%;background:var(--line-hi);flex:none}
 .window .chrome .addr{margin-left:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
 .window .body{padding:26px 24px 34px}
 
@@ -268,8 +271,8 @@ footer a:hover{color:var(--text)}
 .wc{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:16px 17px 14px}
 .wc .tags{display:flex;align-items:center;gap:7px;margin-bottom:11px}
 .wtag{font-size:10.5px;font-weight:650;padding:3px 8px;border-radius:5px;letter-spacing:.02em}
-.wtag.v{background:rgba(139,92,246,.16);color:#C4B5FD}
-.wtag.g{background:rgba(74,222,155,.13);color:#4ADE9B}
+.wtag.v{background:#EEE7FD;color:#5B21B6}
+.wtag.g{background:#E3F3EB;color:#0F7B4F}
 .wtag.n{background:var(--surface-2);color:var(--text-2)}
 .wc .age{margin-left:auto;font-size:10.5px;color:var(--muted)}
 .wc h5{margin:0 0 4px;font-size:13.5px;font-weight:600;line-height:1.35;letter-spacing:-.01em}

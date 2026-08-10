@@ -635,3 +635,60 @@ nav .links{min-width:0}
        color:var(--line-hi);margin:52px 0 0;text-align:left;user-select:none;
        text-transform:uppercase}
 @media(max-width:640px){.fmark{margin-top:36px}}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE MENU
+
+   The responsive pass hid the link row below 640px because the wordmark, the
+   links and the action no longer fit on one line. That fixed the overflow and
+   introduced a worse bug: six of six navigation destinations became
+   unreachable on a phone, with no control to reach them.
+
+   Hiding something is only a layout decision if it has somewhere else to go.
+
+   No JS is required to reach any of it — the footer carries every destination
+   and always has, so a browser with scripting off still has a complete route
+   through the site. The button is an enhancement over that, not a
+   replacement for it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.burger{display:none;width:40px;height:40px;padding:10px 9px;border:0;background:none;
+        cursor:pointer;flex:none;flex-direction:column;justify-content:space-between;
+        margin-left:4px;border-radius:9px}
+.burger:hover{background:var(--surface-2)}
+.burger:focus-visible{outline:2px solid var(--pop);outline-offset:2px}
+.burger span{display:block;height:2px;border-radius:2px;background:var(--text);
+             transition:transform .18s ease,opacity .15s ease}
+/* The bars become an X, so the control shows its own state rather than
+   relying on the panel being visible to tell you it is open. */
+nav[data-open="true"] .burger span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+nav[data-open="true"] .burger span:nth-child(2){opacity:0}
+nav[data-open="true"] .burger span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+
+@media(max-width:640px){
+  .burger{display:flex}
+  /* Overriding the earlier `display:none`, which is why this block sits after
+     the responsive ladder rather than inside it. */
+  /* No transition on this panel, deliberately.
+     Two attempts to fade it in both shipped it broken: `visibility` is not
+     interpolable, so giving it a duration parked it on the from-value and
+     every link stayed unclickable; correcting that left opacity stuck at 0
+     instead. The animation was decoration on a control whose only job is to
+     reach six links. Instant open has no failure mode, and the burger still
+     animates into an X so the control shows its own state. */
+  nav .links{display:none;position:absolute;left:0;right:0;top:100%;
+             background:var(--surface);border-bottom:1px solid var(--line);
+             padding:8px 18px 16px;
+             box-shadow:0 22px 44px -28px rgba(21,19,16,.4)}
+  nav[data-open="true"] .links{display:block}
+  nav{position:sticky}
+  nav .wrap{position:relative}
+  /* 48px rows: a nav link you have to aim at is a nav link you miss. */
+  nav a.l,nav a.l.opt{display:flex;align-items:center;min-height:48px;font-size:16.5px;
+                      border-bottom:1px solid var(--line)}
+  nav a.l:last-child{border-bottom:0}
+  nav a.l[aria-current="page"]{color:var(--pop);font-weight:600}
+}
+@media(prefers-reduced-motion:reduce){
+  nav .links,.burger span{transition:none}
+}

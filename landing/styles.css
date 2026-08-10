@@ -569,3 +569,69 @@ nav .links{min-width:0}
    Both already declare this; stated once more here so the rule is visible
    next to everything else that governs narrow screens. */
 .term,.dia,.window{max-width:100%}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONTENT REWARDS' PAGE FRAME
+
+   Read off their live /brand and creators pages. Four moves carry their
+   layout, and we had none of them:
+
+   1. A CTA band between every section, always the same button and the same
+      trust line under it. The page never goes more than one screen without
+      offering the action again.
+   2. An eyebrow label above every h2, not only in the hero — it tells you
+      which part of the argument you are in.
+   3. A bento grid where some cards carry a number instead of prose.
+   4. A footer in named groups under an oversized wordmark.
+
+   Their palette is orange on black. Ours stays violet on warm off-white:
+   the frame is what was worth taking.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the repeating CTA band ── */
+.band{border-block:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(109,40,217,.045),rgba(109,40,217,0));
+      padding:38px 0;text-align:center}
+.band .btn{margin:0}
+.band .trust{display:block;margin-top:13px;font-family:var(--mono);font-size:12.5px;
+             color:var(--muted);letter-spacing:.04em}
+.band .trust b{color:var(--text-2);font-weight:600}
+
+/* ── section headers, their rhythm: eyebrow, heading, one line under ── */
+.shead{text-align:center;max-width:52ch;margin:0 auto 40px}
+.shead .eyebrow{color:var(--pop);margin-bottom:12px}
+.shead h2{margin-bottom:12px}
+.shead p{margin:0;font-size:18px;color:var(--muted)}
+
+/* ── bento: prose cards and stat cards in one grid ── */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:30px}
+.bento .b{grid-column:span 2;border:1px solid var(--line);border-radius:20px;
+          padding:28px 26px;background:var(--surface);display:flex;flex-direction:column}
+.bento .b.wide{grid-column:span 3}
+.bento .b.half{grid-column:span 3}
+.bento .b h3{margin-bottom:8px}
+.bento .b p{margin:0;font-size:16px;color:var(--text-2)}
+/* The number is the card, so it sits above the words rather than beside them. */
+.bento .b .stat{font-family:var(--mono);font-size:52px;font-weight:600;letter-spacing:-.04em;
+                line-height:1;color:var(--pop);margin-bottom:14px}
+.bento .b .stat.ok{color:var(--ok)}
+.bento .b .stat.small{font-size:34px}
+.bento .b .mark{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+                font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+                text-transform:uppercase;font-weight:700;padding:6px 12px;border-radius:99px;
+                background:var(--pop);color:#fff;margin-bottom:16px}
+.bento .b .mark.ok{background:var(--ok)}
+.bento .b .foot{margin-top:auto;padding-top:16px;font-family:var(--mono);font-size:12px;
+                color:var(--muted)}
+@media(max-width:1024px){.bento{grid-template-columns:repeat(4,1fr)}
+                         .bento .b,.bento .b.wide,.bento .b.half{grid-column:span 2}}
+@media(max-width:640px){.bento{grid-template-columns:1fr;gap:12px}
+                        .bento .b,.bento .b.wide,.bento .b.half{grid-column:span 1}
+                        .bento .b{padding:24px 22px}
+                        .bento .b .stat{font-size:44px}}
+
+/* ── footer wordmark ── */
+.fmark{font-size:clamp(46px,11vw,132px);font-weight:700;letter-spacing:-.05em;line-height:.9;
+       color:var(--line-hi);margin:52px 0 0;text-align:left;user-select:none;
+       text-transform:uppercase}
+@media(max-width:640px){.fmark{margin-top:36px}}

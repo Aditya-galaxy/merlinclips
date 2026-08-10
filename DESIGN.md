@@ -58,14 +58,24 @@ survives only as the brand-side marker in the two-sided split, where it has a
 job. Green, amber and red are semantic and never decorative: money moved, money
 held, money refused.
 
-**Dark ground.** Whop and Orshot are dark; Pika and Content Rewards are light.
-Both work. Dark was chosen because this is a payments product and the numbers
-carry the argument — monospace figures on a dark ground read as a ledger.
+**Warm light ground.** Whop and Orshot are dark; Pika and Content Rewards are
+light. Both work, and this page was dark for four passes before being changed.
 
-The earlier dark version was rejected as looking generated, and the diagnosis
-matters: it was dark **with gradient text and no imagery**, which is the
-default look. Orshot is equally dark and does not read that way, because it
-shows the product. The problem was never the darkness.
+The argument for dark was that a payments product should read as a ledger.
+That was reasoning about the product rather than the reader: the person
+deciding whether to spend an evening editing is not auditing a ledger, and
+warmth is what makes a platform feel like somewhere you would trust to pay
+you. Content Rewards understood that and this did not.
+
+The ground is a warm off-white rather than the cream-and-serif look that has
+become an AI-generated default — barely tinted, so violet stays the only real
+colour on the page.
+
+An earlier dark version was also rejected as looking generated, and the
+diagnosis is worth keeping even though the decision moved: it was dark **with
+gradient text and no imagery**, which is the default. Orshot is equally dark
+and does not read that way, because it shows the product. Darkness was never
+the problem, and lightness is not the fix — showing the product is.
 
 **Structure follows Content Rewards.** Their frame is what this market already
 knows how to read: campaigns with a budget bar, `$X / 1k views`, hold, creator

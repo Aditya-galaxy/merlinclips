@@ -869,3 +869,17 @@ body::before{
 .toggle .seg.on:hover{color:#fff}
 .toggle .seg:focus-visible{outline:2px solid var(--pop);outline-offset:3px}
 @media(max-width:430px){.toggle .seg{padding:0 16px;font-size:14px;min-height:38px}}
+
+/* ── the reference-page header owns its screen ──
+   The header was short enough that the next section's eyebrow and heading
+   cleared the fold with it, so the first thing you saw was two blocks
+   competing. Same rule the landing hero already follows: one block, one
+   screen, and the next one starts when you scroll.
+
+   Applied to all three reference pages rather than architecture alone — the
+   structure is identical on security and testing, so the defect was too. */
+.hero.page{min-height:calc(100svh - 72px);display:flex;flex-direction:column;
+           justify-content:center;padding-block:clamp(40px,7vh,72px)}
+@media(max-width:640px){
+  .hero.page{min-height:auto;justify-content:flex-start}
+}

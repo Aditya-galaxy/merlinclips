@@ -34,11 +34,17 @@ import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
+import { standingFor } from './standing';
+import { fundingFor, type BalanceReader } from './funding';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
 import { acquireTickLease, DEFAULT_LEASE_WINDOW_MS } from './lease';
 import { DryRunExecutor, runTick, skippedTick, type PayoutExecutor, type TickResult, type ViewOracle } from './tick';
+import { ReservationEngine } from './reservation';
+import { CampaignLockManager } from './lock';
+import { TokenBucketRateLimiter } from '../rate_limiter';
+import { telemetry } from '../telemetry/metrics';
 
 /** No oracle configured yet: report "cannot tell", never a fabricated count. */
 export const NULL_ORACLE: ViewOracle = { fetch: async () => undefined };
@@ -100,6 +106,20 @@ export class CampaignRuntime {
   private loaded = false;
   private readyPromise?: Promise<void>;
   private lastTick?: TickResult;
+
+  /**
+   * Reads on-chain USDC so a published budget can be checked against money
+   * that exists. Absent in tests and offline, where funding reports `unknown`
+   * rather than pretending a campaign is empty.
+   */
+  public balances?: BalanceReader;
+
+  /** Two-phase budget reservation engine for enterprise campaign payouts. */
+  public readonly reservations = new ReservationEngine();
+  /** Per-campaign distributed lock manager for mutual exclusion. */
+  public readonly locks = new CampaignLockManager();
+  /** Token bucket rate limiter for public API doors. */
+  public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
 
   constructor(options: CampaignRuntimeOptions = {}) {
     this.env = options.env ?? Bun.env;
@@ -268,6 +288,7 @@ export class CampaignRuntime {
         executor: this.executor,
         log: this.log,
         agent: this.agent,
+        verifier: this.verifier,
       },
       { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
     );
@@ -289,20 +310,50 @@ export class CampaignRuntime {
       ephemeral: this.blobs instanceof MemoryBlobStore,
       // Stated rather than discovered: a campaign with no verifier holds every
       // clip on `no_verdict`, and one with no oracle never confirms a view.
-      verifier: this.verifier ? 'gemini' : 'not configured (GOOGLE_API_KEY)',
+      verifier: this.verifier ? 'gemini' : 'not configured (set GOOGLE_GENAI_USE_VERTEXAI + GOOGLE_CLOUD_PROJECT, or GOOGLE_API_KEY)',
       viewOracle: this.counts ? 'youtube' : 'not configured (YOUTUBE_API_KEY)',
-      campaigns: state.campaigns.map((c) => ({
-        campaignId: c.campaignId,
-        brief: c.brief,
-        status: c.status,
-        cpmUsdc: c.cpmUsdc.toString(),
-        poolUsdc: c.poolUsdc.toString(),
-        remainingUsdc: this.store.remainingPool(c.campaignId).toString(),
-        perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
-        dwellHours: Math.round(c.dwellMs / 3_600_000),
-        platforms: c.platforms,
-        endsAt: c.endsAt,
-        paidOut: this.store.payoutsFor(c.campaignId).length,
+      campaigns: await Promise.all(state.campaigns.map(async (c) => {
+        // What a creator wants before committing an evening: is anyone else
+        // here, is this campaign actually paying, and how much is left. All
+        // three are already in the store; publishing them is what turns a
+        // listing into something someone can judge.
+        const subs = state.submissions.filter((s) => s.campaignId === c.campaignId);
+        const creators = new Set(subs.map((s) => s.creatorId));
+        let views = 0n;
+        for (const s of subs) views += this.store.viewsPaidTo(s.submissionId);
+        const spent = this.store.spentOnCampaign(c.campaignId);
+        return {
+          campaignId: c.campaignId,
+          brief: c.brief,
+          status: c.status,
+          cpmUsdc: c.cpmUsdc.toString(),
+          poolUsdc: c.poolUsdc.toString(),
+          spentUsdc: spent.toString(),
+          remainingUsdc: this.store.remainingPool(c.campaignId).toString(),
+          perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
+          dwellHours: Math.round(c.dwellMs / 3_600_000),
+          platforms: c.platforms,
+          startsAt: c.startsAt,
+          endsAt: c.endsAt,
+          submissions: subs.length,
+          creators: creators.size,
+          paidViews: views.toString(),
+          paidOut: this.store.payoutsFor(c.campaignId).length,
+          // What actually backs the budget. A creator decides whether to spend
+          // an evening on this number, so it is checked rather than asserted.
+          funding: this.balances
+            ? await fundingFor(c, spent, this.balances)
+            : {
+                campaignId: c.campaignId,
+                fundedUsdc: null,
+                poolUsdc: c.poolUsdc.toString(),
+                committedUsdc: spent.toString(),
+                coverage: c.fundingWallet ? ('unknown' as const) : ('no_wallet' as const),
+                summary: c.fundingWallet
+                  ? 'Budget not checked on this deployment.'
+                  : 'This campaign has not named a wallet, so nothing backs its budget yet.',
+              },
+        };
       })),
       lastTick: this.lastTick && {
         startedAt: this.lastTick.startedAt,
@@ -435,41 +486,58 @@ export class CampaignRuntime {
    */
   async handleSubmit(request: Request): Promise<Response> {
     await this.ready();
-    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const campaign = this.store.campaign(String(body.campaignId ?? ''));
-    const result = submitClip(campaign, body);
-    if (!result.ok) {
-      return Response.json({ error: result.error, field: result.field }, { status: 400 });
+
+    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    if (!this.rateLimiter.consume(clientIp)) {
+      telemetry.recordHttpRequest('/api/submissions', 429);
+      return Response.json({ error: 'Rate limit exceeded — try again shortly' }, { status: 429 });
     }
 
-    const { submission, creator } = result.value;
-    await this.record({ type: 'creator_upserted', creator });
-    const isNew = await this.record({ type: 'submission_accepted', submission });
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const campaignId = String(body.campaignId ?? '');
 
-    const terms = submission.acceptedTerms;
-    return Response.json(
-      {
-        submissionId: submission.submissionId,
-        alreadySubmitted: !isNew,
-        url: submission.url,
-        platform: submission.platform,
-        // The deal, echoed back. It is frozen from this moment and the brand
-        // cannot change it under work already accepted.
-        agreedTerms: {
-          cpmUsdc: terms.cpmUsdc.toString(),
-          perCreatorCapUsdc: terms.perCreatorCapUsdc.toString(),
-          dwellHours: Math.round(terms.dwellMs / 3_600_000),
-          acceptedAt: terms.acceptedAt,
-          guaranteedUntil: terms.settlementDeadline,
+    return await this.locks.withLock(campaignId || 'global', async () => {
+      const campaign = this.store.campaign(campaignId);
+      const result = submitClip(campaign, body, new Date(), (cid, platform, postId) =>
+        this.store.claimantOf(cid, platform, postId),
+      );
+      if (!result.ok) {
+        telemetry.recordHttpRequest('/api/submissions', 400);
+        return Response.json({ error: result.error, field: result.field }, { status: 400 });
+      }
+
+      const { submission, creator } = result.value;
+      await this.record({ type: 'creator_upserted', creator });
+      const isNew = await this.record({ type: 'submission_accepted', submission });
+
+      const terms = submission.acceptedTerms;
+      const status = isNew ? 201 : 200;
+      telemetry.recordHttpRequest('/api/submissions', status);
+
+      return Response.json(
+        {
+          submissionId: submission.submissionId,
+          alreadySubmitted: !isNew,
+          url: submission.url,
+          platform: submission.platform,
+          // The deal, echoed back. It is frozen from this moment and the brand
+          // cannot change it under work already accepted.
+          agreedTerms: {
+            cpmUsdc: terms.cpmUsdc.toString(),
+            perCreatorCapUsdc: terms.perCreatorCapUsdc.toString(),
+            dwellHours: Math.round(terms.dwellMs / 3_600_000),
+            acceptedAt: terms.acceptedAt,
+            guaranteedUntil: terms.settlementDeadline,
+          },
+          poolRemainingUsdc: this.store.remainingPool(submission.campaignId).toString(),
+          next:
+            'your views are counted from now. nothing pays until they have held ' +
+            `for ${Math.round(terms.dwellMs / 3_600_000)}h — check /api/submissions/` +
+            submission.submissionId,
         },
-        poolRemainingUsdc: this.store.remainingPool(submission.campaignId).toString(),
-        next:
-          'your views are counted from now. nothing pays until they have held ' +
-          `for ${Math.round(terms.dwellMs / 3_600_000)}h — check /api/submissions/` +
-          submission.submissionId,
-      },
-      { status: isNew ? 201 : 200 },
-    );
+        { status },
+      );
+    });
   }
 
   /** `GET /api/submissions/:id` — what a creator sees about their own clip. */
@@ -487,6 +555,18 @@ export class CampaignRuntime {
       submissionId,
       url: submission.url,
       status: decision.disposition,
+      control: decision.control,
+      /**
+       * Whether this is still in progress or genuinely decided.
+       *
+       * `disposition` alone conflates them: a clip awaiting its first
+       * verification and a clip that failed the brief are both `blocked`, and
+       * a UI showing them identically tells a creator their work was rejected
+       * when it is merely queued. The distinction is the difference between
+       * "not yet" and "no", and this product's whole posture is that a wait
+       * must never read as a rejection.
+       */
+      settled: decision.control !== 'no_verdict' && decision.control !== 'dwell_unmet',
       // Written for the creator, not a log parser — including on a refusal.
       reason: decision.reason,
       verdict: verdict && { pass: verdict.pass, reasons: verdict.reasons, at: verdict.at },
@@ -494,6 +574,12 @@ export class CampaignRuntime {
       paidForViews: this.store.viewsPaidTo(submissionId).toString(),
       earnedUsdc: this.store.spentOnCreator(submission.campaignId, submission.creatorId).toString(),
       guaranteedUntil: submission.acceptedTerms.settlementDeadline,
+      // Their standing, from the same arithmetic that decides the payout.
+      standing: standingFor(
+        submission.creatorId,
+        this.store.exportState().submissions.filter((x) => x.creatorId === submission.creatorId),
+        this.store,
+      ),
     });
   }
 
@@ -554,6 +640,7 @@ export class CampaignRuntime {
       return Response.json({ error: 'unauthorised' }, { status: 401 });
     }
 
+    this.reservations.sweepExpired();
     const result = await this.tick();
     return Response.json({
       ...result,

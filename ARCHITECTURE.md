@@ -10,6 +10,63 @@ what works is marketing.
 
 ---
 
+## 0. The shape of it
+
+```mermaid
+flowchart TB
+    subgraph doors["Two doors, deliberately asymmetric"]
+        B["Brand<br/><i>operator secret</i>"] -->|"POST /api/campaigns"| OC["openCampaign"]
+        C["Creator<br/><i>no account</i>"] -->|"POST /api/submissions"| SC["submitClip"]
+    end
+
+    OC --> FUND{"Budget<br/>funded?"}
+    FUND -->|"reports, never blocks"| LOG[("Append-only<br/>event log<br/><i>hash chain on read</i>")]
+    SC --> CLAIM{"Post already<br/>claimed?"}
+    CLAIM -->|"yes"| REFUSE1["Refused<br/><i>one post, one claimant</i>"]
+    CLAIM -->|"no"| TERMS["Terms frozen<br/><i>rate · hold · cap</i>"]
+    TERMS --> LOG
+
+    SCHED["Cloud Scheduler<br/><i>hourly</i>"] -->|"POST /api/tick"| LEASE{"Window<br/>lease?"}
+    LEASE -->|"held elsewhere"| SKIP["Skipped<br/><i>never two at once</i>"]
+    LEASE -->|"acquired"| TICK["Agent pass"]
+
+    TICK --> V{"Judged<br/>yet?"}
+    V -->|"no"| GEM["Gemini<br/><i>clip vs brief</i>"]
+    GEM --> LOG
+    V -->|"yes"| O
+    GEM --> O["YouTube oracle<br/><i>counts, never self-reported</i>"]
+    O --> LOG
+
+    O --> GATE{"Payout gate"}
+    GATE -->|"no verdict · failed brief<br/>deadline passed · pool spent"| BLOCK["Blocked"]
+    GATE -->|"hold not elapsed"| HELD["Held<br/><i>a wait, not a rejection</i>"]
+    GATE -->|"survived the hold"| POL{"Policy engine<br/><i>deterministic</i>"}
+
+    POL -->|"cap · mandate · window<br/>kill switch · mainnet guard"| REQ["Needs a human"]
+    POL -->|"authorised"| EX["Circle CLI<br/><i>idempotency key</i>"]
+    EX -->|"settled, then recorded"| LOG
+    EX --> PAID["USDC to the creator's wallet"]
+
+    AGENT["Rate proposer<br/>Fraud investigator"] -.->|"proposes only"| TICK
+    AGENT -.->|"cannot release money"| GATE
+
+    classDef money fill:#EDE4FF,stroke:#6D28D9,color:#2E1065
+    classDef refuse fill:#FBECEA,stroke:#B02A20,color:#5A1410
+    classDef wait fill:#FBF1DF,stroke:#8A5A00,color:#4A3000
+    classDef store fill:#E7F0FF,stroke:#1E5BB8,color:#0C2A56
+    class PAID,EX money
+    class REFUSE1,BLOCK refuse
+    class HELD,SKIP,REQ wait
+    class LOG store
+```
+
+**What the diagram is really saying.** Every path that could move money passes
+through two independent judges — the gate, which knows about campaigns, and the
+policy engine, which knows about money and reads nothing an attacker can write.
+The model appears only as a dotted line, and only ever proposing. There is no
+arrow from the agent to a payout, and that absence is the design.
+
+---
 ## 1. Threat model
 
 The agent is **not** trusted. That is the founding assumption, and everything
@@ -271,21 +328,13 @@ landed.
 
 ## 5. The production design
 
-### 5.1 Durable state, per-campaign sharding
+### 5.1 Durable state, per-campaign sharding (`CampaignLockManager`)
 
-State moves from a whole-blob rewrite to a transactional store (Postgres /
-Cloud SQL, or Firestore with transactions). The pool check and its consumption
-must be a **single atomic transaction** — read-then-write across a network is a
-textbook TOCTOU, and the thing being raced is a spend ceiling.
+**Implemented in `src/campaign/lock.ts`.** Per-campaign mutual exclusion (`CampaignLockManager`) serializes pool checks and tick passes per `campaignId` rather than globally. Global locks make a payment system correct but unusable; per-campaign serialization gives correctness where needed and full parallelism everywhere else.
 
-Serialize per `campaignId` rather than globally. Global locks are the standard
-way to make a payment system that is correct and unusable; per-campaign
-serialization gives correctness where it is needed and parallelism everywhere
-else.
+### 5.2 Reservation, not deduction (`ReservationEngine`)
 
-### 5.2 Reservation, not deduction
-
-Two-phase, so a failed payout does not permanently consume pool:
+**Built in `src/campaign/reservation.ts`, and not yet on the payout path.** Only `sweepExpired` runs today; nothing calls `reserve`, so no pool allocation currently flows through it. The pool ceiling is enforced by the gate's own check, which is mutation-tested. Two-phase reservation is the intended replacement at multi-instance scale:
 
 ```
 reserve(intentId, amount)   → row: state=reserved, expires_at=now+5m
@@ -297,15 +346,17 @@ release(intentId, reason)   → state=released, pool returned
 (reservation lapses)        → swept back after 5 minutes
 ```
 
-The lapse sweep matters: a process that dies between `reserve` and `commit`
-must not strand pool forever. Reservations expire; deductions don't.
+The lapse sweep (`sweepExpired`) automatically returns stranded reservations back to the pool after 5 minutes if a process crashes between `reserve` and `commit`.
 
-This also enables something the current design cannot offer — **reserving
-against accepted work**, so a creator's earned payout cannot be taken by a
-later creator arriving first. Today the pool is first-come-first-served and
-that is disclosed rather than hidden.
+### 5.3 Edge Rate Limiting (`TokenBucketRateLimiter`)
 
-### 5.3 Idempotency
+**Implemented in `src/rate_limiter.ts`.** Token bucket rate limiter on `/api/submissions` — the one unauthenticated write, and so the only endpoint where burst traffic costs us storage and log growth for free. `/api/verify` and `/api/views` are x402-paid, where the payment is itself the limiter.
+
+### 5.4 Enterprise Telemetry (`TelemetryCollector`)
+
+**Implemented in `src/telemetry/metrics.ts`.** Exposes OpenTelemetry / Prometheus compatible metrics counters for payout dispositions, micro-USDC volumes, HTTP statuses, and latency histograms.
+
+### 5.5 Idempotency
 
 Every intent carries a deterministic key, already derived as
 `pay-<submission>-<confirmed views>`. `reserve` becomes
@@ -313,7 +364,7 @@ Every intent carries a deterministic key, already derived as
 returns the original reservation rather than creating a second one. Circle's
 CLI accepts the same key, so the defence exists on both sides of the boundary.
 
-### 5.4 Ledger under concurrency
+### 5.6 Ledger under concurrency
 
 A hash chain has a single-writer assumption baked in: entry *n* hashes entry
 *n−1*, so two concurrent appends both claim the same predecessor and the chain
@@ -335,7 +386,7 @@ Entries are append-only and never updated. The chain gives
 tamper-*evidence*; write access to the store still permits truncation, and
 claiming otherwise would be dishonest.
 
-### 5.5 Failure posture
+### 5.7 Failure posture
 
 Every dependency failure resolves toward *not paying*:
 
@@ -358,6 +409,26 @@ already bounds.
 
 ---
 
+### 5.8 Verification happens inside the pass
+
+A clip is judged against its brief by the tick itself, before views are
+refreshed and before the gate decides, so a submission can be judged and paid
+in the same pass once it has dwelled.
+
+This was not always true, and the way it failed is worth recording. The
+verifier existed, worked, and was wired only to the paid `/api/verify`
+endpoint that outside agents call — never to our own creators' submissions.
+Nothing in production ever wrote a verdict, so the gate refused every payout
+forever with `no_verdict` while every individual component passed its tests.
+It was found by driving the HTTP API end to end, because a unit test cannot
+observe that nobody calls the unit.
+
+A clip is judged once and never re-judged: a verdict costs a model call, and
+re-judging a clip that already passed would let a flaky model retract a
+promise the creator has been paid against. A verifier outage leaves the clip
+blocked on `no_verdict`, which is the correct fail-closed outcome — an
+unjudged clip must not be paid because the model was unavailable.
+
 ## 6. Testing strategy
 
 **Example tests** cover the cases we thought of — the happy path, each refusal
@@ -366,7 +437,7 @@ control, and the *ordering* of the ladder.
 **Property tests** cover the ones we didn't. Every invariant in §2 is asserted
 over generated campaigns: view trajectories that collapse, counts that spike to
 a cap, several creators drawing on one pool, verdicts failing partway through.
-221 tests, ~16,400 assertions per run.
+405 tests, ~19,000 assertions per run.
 
 **The generator is itself tested.** An earlier version produced 74
 authorizations against 2,110 pool blocks — monotonicity and authorization were
@@ -392,6 +463,20 @@ view oracle, the executor, the blob store, the command runner.
   code.
 
 ---
+
+### Wiring is asserted, not assumed
+
+Four separate modules here were written, tested, documented, and called by
+nothing: the agent loop, `acceptSubmission`, the clip verifier, and the
+reservation engine. Each had passing unit tests, because a module in isolation
+behaves identically whether or not production ever calls it.
+
+`src/wiring.test.ts` walks the real import graph from `src/server.ts` and
+fails on any source file nothing reaches. Files outside the served application
+are excused by name with a reason, and a second test fails if an excused file
+disappears — a drifting allowlist eventually excuses something real. It also
+asserts that `runTick` receives every dependency whose absence degrades the
+system quietly rather than loudly.
 
 ## 7. Why the deterministic core is small
 

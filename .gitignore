@@ -15,3 +15,6 @@ docs/
 
 # bun project — npm lockfiles are not ours
 package-lock.json
+
+# Internal design notes — not part of the shipped repo
+DESIGN.md

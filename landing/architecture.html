@@ -7,7 +7,7 @@
 <meta name="description" content="How the spend gate works: where the decision lives, why pricing precedes authorizing, and what would break at scale." />
 <meta property="og:title" content="Merlin Clips — architecture" />
 <meta property="og:description" content="Where the decision lives, why pricing precedes authorizing, and an honest account of what breaks at scale." />
-<meta name="theme-color" content="#000000" />
+<meta name="theme-color" content="#FAF8F5" />
 <link rel="canonical" href="https://merlinclips.com/architecture.html" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -15,43 +15,127 @@
 
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
-  <a class="l" href="/#how">How it works</a>
-  <a class="l" href="/architecture.html" aria-current="page">Architecture</a>
-  <a class="l" href="/security.html">Security</a>
-  <a class="l opt" href="/testing.html">Testing</a>
+  <div class="links">
+    <a class="l" href="/brands.html">For brands</a>
+    <a class="l" href="/app">Discover</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/#agencies">Agencies</a>
+    <a class="l opt" href="/#contact">Contact</a>
+    <a class="l opt" href="/architecture.html" aria-current="page">Architecture</a>
+  </div>
+  <a class="cta" href="/app">Start earning today</a>
 </div></nav>
 
 <main>
 
-<section class="hero"><div class="wrap">
-  <span class="eyebrow">Architecture</span>
-  <h1>Where the decision lives</h1>
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Architecture</b> How a payout is decided</span></div>
+  <h1>Where the <span class="grad">decision lives</span></h1>
   <p class="lede">One idea does all the work: the component that decides whether money moves must
-  never read anything an attacker can write.</p>
+    never read anything an attacker can write.</p>
+  <div class="row">
+    <a class="btn ghost" href="#path">Follow a payment through →</a>
+    <a class="btn ghost" href="/security.html">The threat model</a>
+  </div>
+  <p class="fine">Deterministic engine · no model in the decision path · hash-chained record</p>
 </div></section>
 
 <hr />
 
-<section><div class="wrap">
+<section id="path"><div class="wrap">
   <h2>The path a payment takes</h2>
-  <div class="term"><span class="c-dim"> the model — untrusted, reads attacker-controlled text</span>
-        <span class="c-dim">│</span>
-        <span class="c-dim">│  "pay creator 0xa1b2 for clip 4f2a"</span>
-        <span class="c-dim">▼</span>
- <span class="c-acc">one function</span>  <span class="c-dim">← the only seam your runtime needs</span>
-        <span class="c-dim">│</span>
-        <span class="c-dim">▼</span>
- <span class="c-acc">price it</span>      <span class="c-dim">← we resolve the price. never the model's number.</span>
-        <span class="c-dim">│</span>
-        <span class="c-dim">▼</span>
- <span class="c-acc">decide</span>        <span class="c-dim">← deterministic. no LLM. no network. no config.</span>
-        <span class="c-dim">│</span>
-        <span class="c-ok">├── pay</span>        <span class="c-dim">within permission, within budget</span>
-        <span class="c-warn">├── hold</span>       <span class="c-dim">a human decides</span>
-        <span class="c-bad">└── block</span>      <span class="c-dim">kill switch, or a limit nothing can raise</span>
-        <span class="c-dim">│</span>
-        <span class="c-dim">▼</span>
- <span class="c-acc">record</span>        <span class="c-dim">hash-chained. refusals included.</span></div>
+  <figure class="dia">
+    <svg viewBox="0 0 900 700" role="img" width="900" height="700"
+         aria-labelledby="dia-t dia-d" preserveAspectRatio="xMidYMid meet">
+      <title id="dia-t">How a payout is decided</title>
+      <desc id="dia-d">Two entry doors: a brand creates a campaign through an operator-gated
+        route, and a creator submits a clip through a public one. A submission passes a claim
+        check, freezes its terms, then waits for a scheduled pass. That pass runs the verifier and
+        the view oracle, and hands a proposal to a deterministic gate. The gate either settles a
+        payout in USDC or refuses with a named reason. Every outcome, including every refusal, is
+        appended to the event log. The agent appears only as a dotted line, and only ever
+        proposing.</desc>
+
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+                orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#8B8378" />
+        </marker>
+        <marker id="ar-pop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+                orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#6D28D9" />
+        </marker>
+      </defs>
+
+      <!-- Edges. Every join is a right angle and no two arrowheads meet: the
+           two doors enter the verifier at different points on its top edge, so
+           the merge reads as two paths arriving rather than a collision. -->
+      <g class="d-edge">
+        <path d="M170 96 V132" />
+        <path d="M730 96 V132" />
+        <path d="M170 186 V222" />
+        <path d="M730 186 V222" />
+        <path d="M730 276 V312" />
+        <path d="M170 276 V350 H380 V400" />
+        <path d="M730 366 V382 H520 V400" />
+        <path d="M450 454 V496" />
+        <path d="M300 523 H244" />
+      </g>
+      <g class="d-edge d-pop"><path d="M450 550 V592" /></g>
+      <g class="d-edge d-dash"><path d="M240 427 H298" /></g>
+      <path class="d-refused-line" d="M600 523 H648" />
+
+      <g class="d-box">
+        <rect x="60"  y="52"  width="220" height="44" rx="10" />
+        <rect x="610" y="52"  width="240" height="44" rx="10" />
+        <rect x="60"  y="132" width="220" height="54" rx="10" />
+        <rect x="610" y="132" width="240" height="54" rx="10" />
+        <rect x="60"  y="222" width="220" height="54" rx="10" />
+        <rect x="610" y="222" width="240" height="54" rx="10" />
+        <rect x="610" y="312" width="240" height="54" rx="10" />
+        <rect x="80"  y="400" width="160" height="54" rx="10" />
+        <rect x="300" y="400" width="300" height="54" rx="10" />
+        <rect x="300" y="496" width="300" height="54" rx="10" />
+      </g>
+      <rect class="d-settle" x="300" y="592" width="300" height="54" rx="10" />
+      <rect class="d-logbox" x="60" y="496" width="184" height="150" rx="10" />
+
+      <g class="d-t">
+        <text x="170" y="80">Brand</text>
+        <text x="730" y="80">Creator</text>
+        <text x="170" y="155">Create campaign</text>
+        <text x="730" y="155">Submit a clip</text>
+        <text x="170" y="245">Fund the wallet</text>
+        <text x="730" y="245">Claim check</text>
+        <text x="730" y="335">Terms frozen</text>
+        <text x="160" y="423">Agent</text>
+        <text x="450" y="423">Verifier &#183; oracle</text>
+        <text x="450" y="519">The gate</text>
+        <text x="450" y="615">Settle in USDC</text>
+        <text x="152" y="547">Event log</text>
+      </g>
+      <g class="d-s">
+        <text x="170" y="172">operator-gated</text>
+        <text x="730" y="172">public route</text>
+        <text x="170" y="262">published as budget left</text>
+        <text x="730" y="262">one post, one claimant</text>
+        <text x="730" y="352">rate &#183; dwell &#183; cap, frozen</text>
+        <text x="160" y="440">proposes only</text>
+        <text x="450" y="440">Gemini reads it &#183; the platform counts it</text>
+        <text x="450" y="536">deterministic &#183; no model</text>
+        <text x="450" y="632">only views that survived</text>
+        <text x="152" y="573">append-only</text>
+        <text x="152" y="593">hash chain on read</text>
+        <text x="152" y="613">refusals included</text>
+      </g>
+
+      <text class="d-refused" x="660" y="518">Refused, by name</text>
+      <text class="d-s d-left" x="660" y="536">dwell_unmet &#183; off_brief &#183; cap</text>
+    </svg>
+    <figcaption>There is no arrow from the agent to a payout, and that absence is the design.
+      The dotted line is the whole of the model&rsquo;s authority: it proposes, and something
+      deterministic decides.</figcaption>
+  </figure>
 
   <div class="note"><p>An agent that can be talked into <em>proposing</em> a payment is expected and
   survivable. An engine that can be talked into <em>approving</em> one is not. Everything below
@@ -153,11 +237,54 @@
 </div></section>
 
 <footer><div class="wrap">
-  <a href="/">Home</a> · <a href="/security.html">Security</a> ·
-  <a href="/testing.html">Testing</a> ·
-  <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/app">Discover campaigns</a></li>
+        <li><a href="/brands.html">For brands</a></li>
+        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>How it works</h4>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/openapi.json">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <ul>
+        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
 </div></footer>
 
 </main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+})();
+</script>
 </body>
 </html>

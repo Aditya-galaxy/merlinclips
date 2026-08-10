@@ -47,6 +47,14 @@ export interface Campaign {
   readonly settlementWindowMs: number;
   readonly platforms: readonly Platform[];
   readonly chain: Chain;
+  /**
+   * Where the budget actually sits.
+   *
+   * Optional only so existing campaigns keep loading; a campaign without one
+   * publishes a budget nothing backs, and `funding.ts` says so plainly rather
+   * than letting the number pass for a guarantee.
+   */
+  readonly fundingWallet?: string;
   status: CampaignStatus;
   readonly startsAt: string;
   readonly endsAt: string;

@@ -50,6 +50,20 @@ import { telemetry } from '../telemetry/metrics';
 /** No oracle configured yet: report "cannot tell", never a fabricated count. */
 export const NULL_ORACLE: ViewOracle = { fetch: async () => undefined };
 
+/** Where the last pass's summary lives. Outside the event log on purpose. */
+const LAST_TICK_KEY = 'tick/last';
+
+/** The display summary as stored — money already stringified. */
+interface PersistedTick {
+  readonly startedAt: string;
+  readonly paid: number;
+  readonly held: number;
+  readonly blocked: number;
+  readonly needsApproval: number;
+  readonly totalPaidUsdc: string;
+  readonly errors: readonly string[];
+}
+
 export function chooseBlobStore(env: Record<string, string | undefined> = Bun.env): BlobStore {
   if (env.GCS_BUCKET) return new GcsBlobStore(env.GCS_BUCKET);
   if (env.STATE_DIR) return new FileBlobStore(env.STATE_DIR);
@@ -300,7 +314,53 @@ export class CampaignRuntime {
       },
       { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
     );
+    await this.rememberLastTick(this.lastTick);
     return this.lastTick;
+  }
+
+  /**
+   * When the last pass ran, durably.
+   *
+   * `lastTick` was a private field and nothing else. The scheduler's pass ran
+   * on one instance, set it in that instance's memory, and the instance
+   * scaled away; the next request reached a cold one and the console reported
+   * that nothing had ever run. The pass had run every hour for hours.
+   *
+   * Its own blob key, deliberately not an event. The log is the record of
+   * money moving, and a hash chain over payouts is worth exactly as much as
+   * the discipline about what is allowed into it — "when did the pass last
+   * run" is a fact about the operator's dashboard, not about anyone's money.
+   *
+   * A failed write is swallowed. Losing the display of a tick is a smaller
+   * harm than failing a pass that has already settled real payouts, and by
+   * this point it has.
+   */
+  private async rememberLastTick(result: TickResult): Promise<void> {
+    try {
+      await this.blobs.put(LAST_TICK_KEY, JSON.stringify({
+        startedAt: result.startedAt,
+        paid: result.paid,
+        held: result.held,
+        blocked: result.blocked,
+        needsApproval: result.needsApproval,
+        totalPaidUsdc: result.totalPaidUsdc.toString(),
+        errors: result.errors,
+      }));
+    } catch {
+      /* display only — never fail a settled pass over it */
+    }
+  }
+
+  /** The stored summary, for an instance that has not ticked itself. */
+  private async recallLastTick(): Promise<PersistedTick | undefined> {
+    try {
+      const raw = await this.blobs.get(LAST_TICK_KEY);
+      if (!raw) return undefined;
+      const v = JSON.parse(raw) as PersistedTick;
+      return typeof v?.startedAt === 'string' ? v : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
@@ -363,7 +423,10 @@ export class CampaignRuntime {
               },
         };
       })),
-      lastTick: this.lastTick && {
+      // This instance's own pass if it ran one, otherwise whichever instance
+      // last did. Without the fallback a cold instance reports null and the
+      // console says nothing has ever run.
+      lastTick: (this.lastTick && {
         startedAt: this.lastTick.startedAt,
         paid: this.lastTick.paid,
         held: this.lastTick.held,
@@ -371,7 +434,7 @@ export class CampaignRuntime {
         needsApproval: this.lastTick.needsApproval,
         totalPaidUsdc: this.lastTick.totalPaidUsdc.toString(),
         errors: this.lastTick.errors,
-      },
+      }) ?? (await this.recallLastTick()),
     };
   }
 

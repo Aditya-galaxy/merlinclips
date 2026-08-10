@@ -34,10 +34,11 @@ import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
-import { standingFor } from './standing';
+import { standingFor, type Standing } from './standing';
 import { fundingFor, type BalanceReader } from './funding';
 import { RpcBalanceReader } from './balances';
 import { enquiryKey, parseEnquiry } from './enquiry';
+import { meets } from './eligibility';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -529,6 +530,45 @@ export class CampaignRuntime {
    * submissions, and why every field is validated here rather than trusted
    * from the form.
    */
+  /**
+   * A creator's record, and how many places on this campaign have already gone
+   * to creators without one.
+   *
+   * Counted from accepted submissions rather than tracked as a running total:
+   * a counter is a thing that drifts, and the submissions are already the
+   * record of what was accepted.
+   */
+  /**
+   * A creator's record, and how many places on this campaign have already gone
+   * to creators without one.
+   *
+   * Counted from accepted submissions rather than kept as a running total: a
+   * counter is a thing that drifts, and the submissions already are the record
+   * of what was accepted.
+   */
+  private eligibilityFor(creatorId: string, campaignId: string): {
+    standing: Standing; acceptedBelowFloor: number;
+  } {
+    const state = this.store.exportState();
+    const mine = state.submissions.filter((x) => x.creatorId === creatorId);
+    const standing = standingFor(creatorId, mine, this.store).standing;
+
+    const floor = this.store.campaign(campaignId)?.minStanding;
+    if (!floor) return { standing, acceptedBelowFloor: 0 };
+
+    // One creator occupies one place however many clips they sent.
+    const below = new Set<string>();
+    for (const sub of state.submissions) {
+      if (sub.campaignId !== campaignId) continue;
+      if (below.has(sub.creatorId)) continue;
+      const theirs = state.submissions.filter((x) => x.creatorId === sub.creatorId);
+      if (!meets(standingFor(sub.creatorId, theirs, this.store).standing, floor)) {
+        below.add(sub.creatorId);
+      }
+    }
+    return { standing, acceptedBelowFloor: below.size };
+  }
+
   async handleBrandEnquiry(request: Request): Promise<Response> {
     const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
     if (!this.rateLimiter.consume(clientIp)) {
@@ -613,8 +653,10 @@ export class CampaignRuntime {
 
     return await this.locks.withLock(campaignId || 'global', async () => {
       const campaign = this.store.campaign(campaignId);
-      const result = submitClip(campaign, body, new Date(), (cid, platform, postId) =>
-        this.store.claimantOf(cid, platform, postId),
+      const result = submitClip(
+        campaign, body, new Date(),
+        (cid, platform, postId) => this.store.claimantOf(cid, platform, postId),
+        (creatorId) => this.eligibilityFor(creatorId, campaignId),
       );
       if (!result.ok) {
         telemetry.recordHttpRequest('/api/submissions', 400);

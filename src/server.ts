@@ -26,6 +26,13 @@ import {
   type ScenarioName,
 } from './scenarios';
 import { APP_HTML } from './app';
+import {
+  authorizeUrl, creatorIdForSubject, exchangeCode, googleConfig, randomToken,
+} from './auth/google';
+import {
+  SESSION_COOKIE, SESSION_TTL_SECONDS, STATE_COOKIE, clearCookie, cookie,
+  readCookie, sign, verify,
+} from './auth/session';
 import { isExpired } from './mandates';
 import { runJob } from './business/loop';
 import { MARKETPLACE } from './business/tools';
@@ -173,6 +180,100 @@ const server = Bun.serve({
     // path looked dead while being perfectly healthy. /health is ours.
     if (url.pathname === '/health' || url.pathname === '/healthz') {
       return new Response('ok');
+    }
+
+
+    // ── sign-in ──────────────────────────────────────────────────────────
+    //
+    // Identity used to be the wallet address, which is free to mint: fifty
+    // addresses meant fifty fresh standings and fifty per-creator caps. An
+    // account raises that cost. It does not remove it, and the FAQ says so.
+    //
+    // Everything here fails closed. Unconfigured OAuth, a state mismatch, a
+    // token that will not verify — each returns without a session rather than
+    // guessing, because a sign-in that half-works is worse than one that says
+    // it did not.
+    const OAUTH = googleConfig(Bun.env as Record<string, string | undefined>);
+    const SESSION_SECRET = Bun.env.SESSION_SECRET?.trim();
+    const SECURE_COOKIES = url.protocol === 'https:';
+
+    if (url.pathname === '/auth/google') {
+      if (!OAUTH || !SESSION_SECRET) {
+        return new Response('sign-in is not configured on this deployment', { status: 503 });
+      }
+      const state = randomToken();
+      const nonce = randomToken();
+      const headers = new Headers({ location: authorizeUrl(OAUTH, state, nonce) });
+      // state and nonce travel in one short-lived cookie: state proves the
+      // callback belongs to a flow we started, nonce proves the id_token was
+      // minted for it. Ten minutes is longer than a consent screen takes and
+      // shorter than a walk away from the desk.
+      headers.append('set-cookie',
+        cookie(STATE_COOKIE, `${state}.${nonce}`, 600, SECURE_COOKIES));
+      return new Response(null, { status: 302, headers });
+    }
+
+    if (url.pathname === '/auth/google/callback') {
+      if (!OAUTH || !SESSION_SECRET) {
+        return new Response('sign-in is not configured on this deployment', { status: 503 });
+      }
+      const pending = readCookie(request.headers.get('cookie'), STATE_COOKIE);
+      const [wantState, nonce] = (pending ?? '').split('.');
+      const gotState = url.searchParams.get('state');
+      const code = url.searchParams.get('code');
+
+      const fail = (why: string) => {
+        const h = new Headers({ location: `/app?signin=failed&why=${encodeURIComponent(why)}` });
+        h.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
+        return new Response(null, { status: 302, headers: h });
+      };
+
+      if (url.searchParams.get('error')) return fail('declined');
+      if (!code || !wantState || !nonce) return fail('incomplete');
+      if (gotState !== wantState) return fail('state');
+
+      let identity;
+      try {
+        identity = await exchangeCode(OAUTH, code, nonce);
+      } catch {
+        // The reason is deliberately not surfaced to the browser: it would
+        // tell an attacker which of the checks they failed.
+        return fail('unverified');
+      }
+
+      const creatorId = await creatorIdForSubject(identity.sub);
+      const token = await sign({
+        creatorId,
+        sub: identity.sub,
+        email: identity.email,
+        name: identity.name,
+        exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+      }, SESSION_SECRET);
+
+      const headers = new Headers({ location: '/app?signin=ok' });
+      headers.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
+      headers.append('set-cookie',
+        cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));
+      return new Response(null, { status: 302, headers });
+    }
+
+    if (url.pathname === '/auth/logout') {
+      const headers = new Headers({ location: '/' });
+      headers.append('set-cookie', clearCookie(SESSION_COOKIE, SECURE_COOKIES));
+      return new Response(null, { status: 302, headers });
+    }
+
+    if (url.pathname === '/api/me') {
+      const session = SESSION_SECRET
+        ? await verify(readCookie(request.headers.get('cookie'), SESSION_COOKIE), SESSION_SECRET)
+        : undefined;
+      return json({
+        signedIn: !!session,
+        available: !!(OAUTH && SESSION_SECRET),
+        creatorId: session?.creatorId,
+        name: session?.name,
+        email: session?.email,
+      });
     }
 
     if (url.pathname === '/api/state') return json(state());

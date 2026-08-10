@@ -56,6 +56,23 @@ a:hover{text-decoration:underline}
 .bar{border-bottom:1px solid var(--line);background:rgba(250,248,245,.88);
      backdrop-filter:blur(12px);position:sticky;top:0;z-index:20}
 .bar .wrap{display:flex;align-items:center;gap:26px;height:60px}
+/* Google's button, close enough to the one people recognise that it reads as
+   the real thing, on our surface rather than theirs. */
+.gbtn{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;
+      padding:8px 15px;border-radius:99px;border:1px solid var(--line-2);
+      background:var(--card);color:var(--ink);white-space:nowrap;text-decoration:none}
+.gbtn:hover{border-color:var(--ink-3);text-decoration:none}
+.signin-note{margin:0 0 20px;padding:13px 16px;border-radius:11px;
+             border:1px solid var(--line-2);background:var(--refused-wash);
+             color:var(--refused);font-size:14.5px}
+.who{font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;
+     text-overflow:ellipsis;max-width:26ch}
+@media(max-width:640px){
+  .bar .wrap{gap:14px}
+  .bar .nav{display:none}
+  .gbtn{font-size:13px;padding:7px 12px}
+  .who{max-width:14ch}
+}
 .mark{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15.5px;
       letter-spacing:-.02em;color:var(--ink);margin-right:auto}
 .mark i{width:20px;height:20px;border-radius:6px;flex:none;background:var(--violet);
@@ -178,6 +195,15 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
   <span class="mark"><i></i>Merlin Clips</span>
   <a class="nav" href="/console">Console</a>
   <a class="nav" href="/openapi.json">API</a>
+  <span id="who" class="who" hidden></span>
+  <a id="signin" class="gbtn" href="/auth/google" hidden>
+    <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
+      <path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.2-.16-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
+      <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
+      <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
+      <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
+    </svg>Continue with Google</a>
+  <a id="signout" class="nav" href="/auth/logout" hidden>Sign out</a>
 </div></div>
 
 <main class="wrap">
@@ -387,6 +413,43 @@ document.getElementById('go').addEventListener('click',async function(){
 loadCampaigns();
 loadClips();
 setInterval(loadClips,20000);
+
+/* Sign-in state comes from the server, never from the cookie: the session
+   cookie is HttpOnly precisely so this script cannot read it, and a page that
+   decides who you are from something JavaScript can write is deciding
+   nothing. When sign-in is not configured on a deployment, no button appears
+   at all rather than one that 503s. */
+(function () {
+  var btn = document.getElementById('signin');
+  var out = document.getElementById('signout');
+  var who = document.getElementById('who');
+  if (!btn || !out || !who) return;
+
+  fetch('/api/me', { credentials: 'same-origin' })
+    .then(function (r) { return r.json(); })
+    .then(function (me) {
+      if (!me.available) return;
+      if (me.signedIn) {
+        who.textContent = me.name || me.email || me.creatorId;
+        who.hidden = false;
+        out.hidden = false;
+      } else {
+        btn.hidden = false;
+      }
+    })
+    .catch(function () { /* signed out is the safe assumption */ });
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('signin') === 'failed') {
+    var why = q.get('why') || 'unknown';
+    var note = document.createElement('div');
+    note.className = 'signin-note';
+    note.textContent = why === 'declined'
+      ? 'Sign-in was cancelled. Nothing was changed.'
+      : 'Sign-in could not be verified, so you were not signed in.';
+    document.querySelector('main').prepend(note);
+  }
+})();
 </script>
 </body>
 </html>

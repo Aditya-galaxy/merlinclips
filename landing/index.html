@@ -17,7 +17,7 @@
 
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
-  <div class="links">
+  <div class="links" id="navlinks">
     <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
@@ -26,6 +26,8 @@
     <a class="l opt" href="/architecture.html">Architecture</a>
   </div>
   <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
 
 <main>
@@ -61,15 +63,49 @@
     <p class="fine">Hard budget ceiling · per-creator caps · never a cut of your spend</p>
   </div>
 
-  <a class="scrollcue" href="#showcase" aria-label="See the product">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-  </a>
+  <!-- Product at the fold. A tilted, overlapping group crops honestly: the
+       eye reads a composition continuing past the edge, where a flat browser
+       window cut through its chrome bar just reads as a page scrolled wrong.
+       aria-hidden because the same campaigns are listed as real text below;
+       this is the picture of them, not a second copy to read out. -->
+  <div class="fan" aria-hidden="true">
+    <div class="fc l">
+      <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span></div>
+      <h5>Clip the factory tour</h5>
+      <div class="amt"><b>$6,833<em> / $85,000</em></b><span>$0.50 / 1k</span></div>
+      <span class="bar"><i style="width:8%"></i></span>
+      <div class="st"><div><span>Hold</span><b>24h</b></div>
+        <div><span>Paid</span><b>12.8M</b></div>
+        <div><span>Creators</span><b>3,221</b></div></div>
+    </div>
+
+    <div class="fc c">
+      <div class="tags"><span class="wtag v">Settled</span><span class="wtag g">Funded</span></div>
+      <h5>Show the app building a real project</h5>
+      <div class="amt"><b>$1,204.66<em> / $50,000</em></b><span>$1.00 / 1k</span></div>
+      <span class="bar"><i style="width:34%"></i></span>
+      <div class="st"><div><span>Hold</span><b>24h</b></div>
+        <div><span>Paid</span><b>1.2M</b></div>
+        <div><span>Creators</span><b>362</b></div></div>
+      <div class="stamp">Paid in USDC</div>
+    </div>
+
+    <div class="fc r">
+      <div class="tags"><span class="wtag v">Clipping</span><span class="wtag n">Part funded</span></div>
+      <h5>One editing trick per clip</h5>
+      <div class="amt"><b>$655<em> / $30,000</em></b><span>$2.00 / 1k</span></div>
+      <span class="bar"><i style="width:2%"></i></span>
+      <div class="st"><div><span>Hold</span><b>48h</b></div>
+        <div><span>Paid</span><b>322K</b></div>
+        <div><span>Creators</span><b>5,098</b></div></div>
+    </div>
+  </div>
 </div></section>
 
 <section class="showcase" id="showcase"><div class="wrap">
   <div class="lead">
-    <h2>Every campaign, and what is left in it</h2>
+    <span class="eyebrow">Discover</span>
+  <h2>Every campaign, and what is left in it</h2>
     <p>Budgets, rates and holds are published before you commit an evening — including
       the ones that have not been funded yet.</p>
   </div>
@@ -128,8 +164,11 @@
 <hr />
 
 <section id="how"><div class="wrap">
-  <h2>Get paid in three steps</h2>
-  <p>From submission to payment, with the one delay that makes it work.</p>
+  <div class="shead">
+    <span class="eyebrow">How it works</span>
+    <h2>Get paid in three steps</h2>
+    <p>From submission to payment, with the one delay that makes it work.</p>
+  </div>
 
   <div class="steps">
     <div class="step"><div class="n">1</div>
@@ -147,10 +186,17 @@
   </div>
 </div></section>
 
-<hr />
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today →</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section id="trust"><div class="wrap">
-  <h2>Standing you earn, not a score we award</h2>
+  <div class="shead">
+    <span class="eyebrow">Standing</span>
+    <h2>Standing you earn, not a score we award</h2>
+    <p>The number that decides your payout, shown back to you.</p>
+  </div>
   <p>Every platform here ships a trust score built on ratings and approval rates. Those measure how
     a platform feels about you, and they can be farmed by posting a lot of anything.</p>
   <p><strong>Yours is arithmetic.</strong> Your standing is the share of your views that were still
@@ -177,36 +223,66 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Protection that is checked, not promised</h2>
-  <p>Each of these is enforced in code and verified by deliberately breaking it to confirm a test
-    fails. None of them depends on us behaving well.</p>
+  <div class="shead">
+    <span class="eyebrow">Protection</span>
+    <h2>Protection that is checked, not promised</h2>
+    <p>Every one of these is enforced in code and proved by breaking it on purpose.</p>
+  </div>
+  <div class="bento">
+    <div class="b half">
+      <span class="stat">0%</span>
+      <h3>Taken from your earnings</h3>
+      <p>We charge brands per campaign and per settled payout. A percentage of spend would mean our
+      revenue rises when a brand pays for bots, and we would rather not hold that incentive at all
+      than promise to resist it.</p>
+      <div class="foot">for creators</div>
+    </div>
 
-  <div class="list">
-    <div class="item"><div class="k">For brands</div><div>
-      <h3>A budget that cannot be exceeded</h3>
-      <p>Total payouts never exceed the campaign budget, and no creator can take more than their
-      cap. The agent may allocate inside a rate band; it can never widen it.</p></div></div>
-    <div class="item"><div class="k">For brands</div><div>
-      <h3>You are charged only for what survived</h3>
-      <p>Views that vanish before the hold closes are never paid for. That is the mechanic, not a
-      detection system we ask you to trust.</p></div></div>
-    <div class="item"><div class="k">For creators</div><div>
-      <h3>Terms freeze when your clip is accepted</h3>
-      <p>Rate, hold and cap are copied onto your submission. A brand pausing or ending a campaign
-      refuses new clips — it does not abandon work already taken.</p></div></div>
-    <div class="item"><div class="k">For creators</div><div>
+    <div class="b half">
+      <span class="stat ok">24h</span>
+      <h3>Before a single view is paid for</h3>
+      <p>Counts are read from the platform, then read again a day later, and you are paid on the
+      lowest figure across the window. The wait is the product.</p>
+      <div class="foot">for both sides</div>
+    </div>
+
+    <div class="b">
+      <span class="mark">Frozen</span>
+      <h3>Terms lock on acceptance</h3>
+      <p>Rate, hold and cap are copied onto your submission. A brand ending a campaign refuses new
+      clips — it does not abandon work already taken.</p>
+      <div class="foot">for creators</div>
+    </div>
+
+    <div class="b">
+      <span class="mark ok">On-chain</span>
       <h3>Budgets you can check yourself</h3>
-      <p>Every campaign names the wallet its money sits in, and we read the on-chain balance. A
-      campaign that has not funded is labelled unfunded before you spend an evening on it.</p></div></div>
+      <p>Every campaign names the wallet its money sits in. One that has not funded is labelled
+      unfunded before you spend an evening on it.</p>
+      <div class="foot">for creators</div>
+    </div>
+
+    <div class="b">
+      <span class="stat small">21</span>
+      <h3>Invariants, each proved by breaking it</h3>
+      <p>A budget that cannot be exceeded, a per-creator cap, a kill switch with no override. Each
+      is deliberately broken to confirm a test fails.</p>
+      <div class="foot">for brands</div>
+    </div>
   </div>
 </div></section>
 
-
-
-<hr />
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today →</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section id="faq"><div class="wrap">
-  <h2>Your questions, answered</h2>
+  <div class="shead">
+    <span class="eyebrow">FAQ</span>
+    <h2>Your questions, answered</h2>
+    <p>The things creators ask before their first clip.</p>
+  </div>
 
   <div class="faq">
         <details class="qa">
@@ -237,6 +313,15 @@
       rejection; a clip that missed the brief says which part it missed.</p></div>
     </details>
         <details class="qa">
+      <summary><span class="k">Accounts</span><span class="q">Do I need an account, and why Google?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>You sign in with Google so your standing follows you rather than resetting
+      every time you use a different wallet. We store no password, hold no refresh token, and ask
+      Google for nothing beyond your name and email.</p>
+      <p>It is worth being straight about the limit: an account raises the cost of farming the
+      per-creator cap across many wallets, it does not remove it, because Google accounts are also
+      cheap. Anyone telling you their sign-in stops fraud outright is selling something.</p></div>
+    </details>
+    <details class="qa">
       <summary><span class="k">Platforms</span><span class="q">Which platforms can I post on?</span><span class="chev" aria-hidden="true"></span></summary>
       <div class="a"><p>YouTube today. Instagram, Facebook and TikTok need platform review we do not hold, and we
       would rather refuse a link than promise a check we cannot perform.</p></div>
@@ -244,13 +329,22 @@
   </div>
 </div></section>
 
-<hr />
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today →</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section id="agencies"><div class="wrap">
-  <h2>Agencies</h2>
-  <p>If you run campaigns for several brands, each one is a separate campaign with its own budget,
+  <div class="shead">
+    <span class="eyebrow">Agencies</span>
+    <h2>Agencies</h2>
+    <p>One campaign per client, and nothing pools across them.</p>
+  </div>
+
+  <p>If you run campaigns for several brands, each is a separate campaign with its own budget,
     its own wallet and its own frozen terms. Nothing pools across clients, so one brand's spend can
     never reach another's creators, and each budget is verifiable on-chain independently.</p>
+
   <p>The same API the app uses is public and documented, so a campaign can be opened, funded and
     monitored programmatically rather than through this page.
     <a href="/openapi.json">Read the API contract →</a></p>
@@ -259,9 +353,12 @@
 <hr />
 
 <section id="contact"><div class="wrap">
-  <h2>Contact</h2>
-  <p>We are early and there is no support desk yet, so the honest answer is that the fastest way to
-    reach us is to open an issue — it is read, it is public, and you can see what was said.</p>
+  <div class="shead">
+    <span class="eyebrow">Contact</span>
+    <h2>Contact</h2>
+    <p>A small number of people reading their own email.</p>
+  </div>
+
   <div class="list">
     <div class="item"><div class="k">General</div><div>
       <h3><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></h3>
@@ -277,16 +374,20 @@
   </div>
 
   <div class="row">
-    <a class="btn ghost" href="https://github.com/Aditya-galaxy/merlinclips/issues">Open an issue →</a>
-    <a class="btn ghost" href="https://github.com/Aditya-galaxy/merlinclips">Read the source →</a>
+    <a class="btn pop" href="/app">Open the app →</a>
+    <a class="btn ghost" href="/architecture.html">How it decides what to pay</a>
   </div>
-  <p class="fine">Issues are public and answered in the open · email if it should not be</p>
+  <p class="fine">Security reports are read first · quote a submission id and we can name the check</p>
 </div></section>
 
 <hr />
 
 <section class="not"><div class="wrap">
-  <h2>What this is not</h2>
+  <div class="shead">
+    <span class="eyebrow">Limits</span>
+    <h2>What this is not</h2>
+    <p>Named rather than left for you to discover.</p>
+  </div>
   <ul>
     <li><strong>Not a bot detector.</strong> We do not claim to out-detect fraud farms. We changed
     what gets bought so that outlasting them is unnecessary.</li>
@@ -306,16 +407,16 @@
       evaporate before settlement, so nobody buys them.</p>
     </div>
     <div>
-      <h4>Product</h4>
+      <h4>Navigation</h4>
       <ul>
-        <li><a href="/app">Discover campaigns</a></li>
-        <li><a href="/brands.html">For brands</a></li>
-        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/">Creators</a></li>
+        <li><a href="/brands.html">Brands</a></li>
+        <li><a href="/app">Discover</a></li>
         <li><a href="/#faq">FAQ</a></li>
       </ul>
     </div>
     <div>
-      <h4>How it works</h4>
+      <h4>Pages</h4>
       <ul>
         <li><a href="/architecture.html">Architecture</a></li>
         <li><a href="/security.html">Threat model</a></li>
@@ -324,17 +425,18 @@
       </ul>
     </div>
     <div>
-      <h4>Elsewhere</h4>
+      <h4>Contact</h4>
       <ul>
-        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
         <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
         <li><a href="mailto:support@merlinclips.com">Support</a></li>
         <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+        <li><a href="/#contact">All ways to reach us</a></li>
       </ul>
     </div>
   </div>
+  <p class="fmark" aria-hidden="true">Merlin Clips</p>
   <div class="foot-base">
-    <span>&copy; 2026 Merlin Clips</span>
+    <span>&copy; 2026 Merlin Clips &middot; all rights reserved</span>
     <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
   </div>
 </div></footer>
@@ -356,6 +458,30 @@
   var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
   sync();
   addEventListener('scroll', sync, { passive: true });
+
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+
+  burger.addEventListener('click', function () {
+    setOpen(nav.dataset.open !== 'true');
+  });
+  /* An in-page anchor does not reload, so without this the panel stays open
+     over the section it just scrolled to. */
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
 })();
 
 (function () {

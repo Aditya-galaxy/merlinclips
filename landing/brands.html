@@ -14,7 +14,7 @@
 
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
-  <div class="links">
+  <div class="links" id="navlinks">
     <a class="l" href="/brands.html" aria-current="page">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
@@ -23,6 +23,8 @@
     <a class="l opt" href="/architecture.html">Architecture</a>
   </div>
   <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
 
 <main>
@@ -42,7 +44,11 @@
 <hr />
 
 <section id="how"><div class="wrap">
-  <h2>You cannot tell which half of a campaign was real</h2>
+  <div class="shead">
+    <span class="eyebrow">The problem</span>
+    <h2>You cannot tell which half of a campaign was real</h2>
+    <p>So we changed what is being bought.</p>
+  </div>
   <p>Nobody can, and that is the problem. Every platform in this category pays on a number the
     person being paid can buy for less than the payout. Detection loses that race by construction:
     the money moves before anybody can tell.</p>
@@ -67,10 +73,17 @@
   </div>
 </div></section>
 
-<hr />
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Launch a campaign →</a>
+  <span class="trust">Hard budget ceiling &middot; <b>never a cut of your spend</b></span>
+</div></section>
 
 <section><div class="wrap">
-  <h2>Why verification matters here</h2>
+  <div class="shead">
+    <span class="eyebrow">Verification</span>
+    <h2>Why verification matters here</h2>
+    <p>A model watches the clip and decides, before any money is authorised.</p>
+  </div>
   <p>Verification on other platforms means a badge on a profile. Here it means a model watched the
     clip and decided whether it meets the brief you wrote — before any money is authorised.</p>
 
@@ -95,29 +108,52 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Protection you can check rather than trust</h2>
-  <p>Each of these is enforced in code and verified by deliberately breaking it to confirm a test
-    fails. None of it depends on us behaving well.</p>
+  <div class="shead">
+    <span class="eyebrow">Protection</span>
+    <h2>Protection you can check rather than trust</h2>
+    <p>None of it depends on us behaving well.</p>
+  </div>
+  <div class="bento">
+    <div class="b half">
+      <span class="stat">0</span>
+      <h3>Ways to raise a cap you set</h3>
+      <p>Total payouts never exceed the budget, and the agent may move the rate inside a band you
+      set. It can never widen the band, and no model output can raise a ceiling.</p>
+      <div class="foot">budget</div>
+    </div>
 
-  <div class="list">
-    <div class="item"><div class="k">Budget</div><div>
-      <h3>The ceiling cannot be raised</h3>
-      <p>Total payouts never exceed the budget. The agent may move the rate inside a band you set;
-      it can never widen the band, and no model output can raise a cap.</p></div></div>
-    <div class="item"><div class="k">Per creator</div><div>
+    <div class="b half">
+      <span class="stat ok">21</span>
+      <h3>Invariants, each proved by breaking it</h3>
+      <p>Every one is enforced in code and verified by deliberately breaking it to confirm a test
+      fails. A guard nobody has tried to break is a guard nobody has tested.</p>
+      <div class="foot">enforcement</div>
+    </div>
+
+    <div class="b">
+      <span class="mark">Per creator</span>
       <h3>One account cannot take the budget</h3>
-      <p>A per-creator cap bounds any single account, and a rolling window limits spend per hour
-      independently of budget size — so a compromised agent holding entirely valid permissions
-      still cannot empty a large campaign in an afternoon.</p></div></div>
-    <div class="item"><div class="k">Kill switch</div><div>
+      <p>A rolling window limits spend per hour independently of budget size, so a compromised
+      agent holding entirely valid permissions still cannot empty a large campaign in an
+      afternoon.</p>
+      <div class="foot">rate limit</div>
+    </div>
+
+    <div class="b">
+      <span class="mark ok">No override</span>
       <h3>Stop admits no exceptions</h3>
       <p>One flag halts every payout regardless of what anything else authorised. It is checked
-      first and there is no override.</p></div></div>
-    <div class="item"><div class="k">Evidence</div><div>
+      first, and there is nothing that can countermand it.</p>
+      <div class="foot">kill switch</div>
+    </div>
+
+    <div class="b">
+      <span class="mark">Hash chain</span>
       <h3>Every decision is written down</h3>
-      <p>Snapshots, verdicts and payouts are appended to a log whose hash chain is derived on read.
-      Altering a past entry breaks verification of every entry after it, and you can check that
-      yourself.</p></div></div>
+      <p>Snapshots, verdicts and payouts append to a log whose chain is derived on read. Altering a
+      past entry breaks verification of every entry after it.</p>
+      <div class="foot">evidence</div>
+    </div>
   </div>
 
   <div class="row">
@@ -126,10 +162,17 @@
   </div>
 </div></section>
 
-<hr />
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Launch a campaign →</a>
+  <span class="trust">Hard budget ceiling &middot; <b>never a cut of your spend</b></span>
+</div></section>
 
 <section id="faq"><div class="wrap">
-  <h2>Answers to your questions</h2>
+  <div class="shead">
+    <span class="eyebrow">FAQ</span>
+    <h2>Answers to your questions</h2>
+    <p>What brands ask before funding a first campaign.</p>
+  </div>
 
   <div class="faq">
         <details class="qa">
@@ -166,7 +209,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Launch a campaign</h2>
+  <div class="shead">
+    <span class="eyebrow">Get started</span>
+    <h2>Launch a campaign</h2>
+    <p>Write a brief, set a budget and a rate band, name the wallet it is funded from.</p>
+  </div>
   <p>Write a brief, set a budget and a rate band, name the wallet it is funded from. Creators see
     it immediately.</p>
   <div class="row">
@@ -183,16 +230,16 @@
       evaporate before settlement, so nobody buys them.</p>
     </div>
     <div>
-      <h4>Product</h4>
+      <h4>Navigation</h4>
       <ul>
-        <li><a href="/app">Discover campaigns</a></li>
-        <li><a href="/brands.html">For brands</a></li>
-        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/">Creators</a></li>
+        <li><a href="/brands.html">Brands</a></li>
+        <li><a href="/app">Discover</a></li>
         <li><a href="/#faq">FAQ</a></li>
       </ul>
     </div>
     <div>
-      <h4>How it works</h4>
+      <h4>Pages</h4>
       <ul>
         <li><a href="/architecture.html">Architecture</a></li>
         <li><a href="/security.html">Threat model</a></li>
@@ -201,17 +248,18 @@
       </ul>
     </div>
     <div>
-      <h4>Elsewhere</h4>
+      <h4>Contact</h4>
       <ul>
-        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
         <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
         <li><a href="mailto:support@merlinclips.com">Support</a></li>
         <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+        <li><a href="/#contact">All ways to reach us</a></li>
       </ul>
     </div>
   </div>
+  <p class="fmark" aria-hidden="true">Merlin Clips</p>
   <div class="foot-base">
-    <span>&copy; 2026 Merlin Clips</span>
+    <span>&copy; 2026 Merlin Clips &middot; all rights reserved</span>
     <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
   </div>
 </div></footer>
@@ -221,8 +269,33 @@
 (function () {
   var nav = document.querySelector('nav');
   if (!nav) return;
+
   var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
   sync(); addEventListener('scroll', sync, { passive: true });
+
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+
+  burger.addEventListener('click', function () {
+    setOpen(nav.dataset.open !== 'true');
+  });
+  /* An in-page anchor does not reload, so without this the panel stays open
+     over the section it just scrolled to. */
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
 })();
 </script>
 </body>

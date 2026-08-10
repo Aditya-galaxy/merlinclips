@@ -15,7 +15,7 @@
 
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
-  <div class="links">
+  <div class="links" id="navlinks">
     <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
@@ -24,6 +24,8 @@
     <a class="l opt" href="/architecture.html">Architecture</a>
   </div>
   <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
 
 <main>
@@ -35,7 +37,7 @@
     that decides whether money leaves your account, that is the weaker claim.</p>
   <div class="row">
     <a class="btn ghost" href="/security.html">The invariants being proved →</a>
-    <a class="btn ghost" href="https://github.com/Aditya-galaxy/merlinclips">Read the suite</a>
+    <a class="btn ghost" href="/architecture.html">What is being protected</a>
   </div>
   <p class="fine">423 tests · 600,000 generated decisions · 17 of 17 mutants caught</p>
 </div></section>
@@ -50,7 +52,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Properties, not examples</h2>
+  <div class="shead">
+    <span class="eyebrow">Properties</span>
+    <h2>Properties, not examples</h2>
+    <p>A property holds for every input, not for the ones we thought of.</p>
+  </div>
   <p>Each of the <a href="/security.html">twenty-one invariants</a> is stated as a property that must hold
   for <em>all</em> inputs, and a generator searches for a counterexample. When it finds one it
   shrinks it to the smallest failing case — the difference between “something broke” and “here is
@@ -67,7 +73,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Deterministic simulation</h2>
+  <div class="shead">
+    <span class="eyebrow">Simulation</span>
+    <h2>Deterministic simulation</h2>
+    <p>600,000 decisions across 372 simulated years, replayable from a seed.</p>
+  </div>
   <p>The discipline FoundationDB pioneered and TigerBeetle built a financial database on: control
   every source of non-determinism — clock, randomness, faults — so a run is a pure function of its
   seed. Then generate hostile histories by the thousand, assert the invariants after <em>every
@@ -93,7 +103,11 @@ violations     <span class="c-ok">none</span></div>
 <hr />
 
 <section><div class="wrap">
-  <h2>Three defects this found in itself</h2>
+  <div class="shead">
+    <span class="eyebrow">Findings</span>
+    <h2>Three defects this found in itself</h2>
+    <p>The interesting output of a test suite is what it caught, not that it passed.</p>
+  </div>
   <div class="list">
     <div class="item"><div class="k">Ledger</div><div>
       <h3>The payload was never hashed</h3>
@@ -129,16 +143,24 @@ violations     <span class="c-ok">none</span></div>
 <hr />
 
 <section><div class="wrap">
-  <h2>Honest limits</h2>
+  <div class="shead">
+    <span class="eyebrow">Limits</span>
+    <h2>Honest limits</h2>
+    <p>What is not covered, named — because a gap you can name is one somebody can hold you to.</p>
+  </div>
   <p>TigerBeetle runs two millennia of simulated time per day on a thousand cores. This runs 372
   years in 3.6 seconds on one. <strong>Same method, not the same coverage</strong>, and it would be
   dishonest to imply otherwise.</p>
   <p>Not yet covered: concurrency against a durable store, which does not exist yet; fault injection
   between reserving and committing; chain verification under concurrent append. Named rather than
-  glossed, and tracked in the <a href="https://github.com/Aditya-galaxy/merlinclips">repository</a>.</p>
+  glossed — because a gap you can name is one somebody can hold you to.</p>
 </div></section>
 
-<hr />
+
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today &rarr;</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section><div class="wrap">
   <div class="next">
@@ -155,16 +177,16 @@ violations     <span class="c-ok">none</span></div>
       evaporate before settlement, so nobody buys them.</p>
     </div>
     <div>
-      <h4>Product</h4>
+      <h4>Navigation</h4>
       <ul>
-        <li><a href="/app">Discover campaigns</a></li>
-        <li><a href="/brands.html">For brands</a></li>
-        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/">Creators</a></li>
+        <li><a href="/brands.html">Brands</a></li>
+        <li><a href="/app">Discover</a></li>
         <li><a href="/#faq">FAQ</a></li>
       </ul>
     </div>
     <div>
-      <h4>How it works</h4>
+      <h4>Pages</h4>
       <ul>
         <li><a href="/architecture.html">Architecture</a></li>
         <li><a href="/security.html">Threat model</a></li>
@@ -173,17 +195,18 @@ violations     <span class="c-ok">none</span></div>
       </ul>
     </div>
     <div>
-      <h4>Elsewhere</h4>
+      <h4>Contact</h4>
       <ul>
-        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
         <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
         <li><a href="mailto:support@merlinclips.com">Support</a></li>
         <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+        <li><a href="/#contact">All ways to reach us</a></li>
       </ul>
     </div>
   </div>
+  <p class="fmark" aria-hidden="true">Merlin Clips</p>
   <div class="foot-base">
-    <span>&copy; 2026 Merlin Clips</span>
+    <span>&copy; 2026 Merlin Clips &middot; all rights reserved</span>
     <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
   </div>
 </div></footer>
@@ -193,8 +216,33 @@ violations     <span class="c-ok">none</span></div>
 (function () {
   var nav = document.querySelector('nav');
   if (!nav) return;
+
   var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
   sync(); addEventListener('scroll', sync, { passive: true });
+
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+
+  burger.addEventListener('click', function () {
+    setOpen(nav.dataset.open !== 'true');
+  });
+  /* An in-page anchor does not reload, so without this the panel stays open
+     over the section it just scrolled to. */
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
 })();
 </script>
 </body>

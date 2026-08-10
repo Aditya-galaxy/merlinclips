@@ -15,7 +15,7 @@
 
 <nav><div class="wrap">
   <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
-  <div class="links">
+  <div class="links" id="navlinks">
     <a class="l" href="/brands.html">For brands</a>
     <a class="l" href="/app">Discover</a>
     <a class="l" href="/#faq">FAQ</a>
@@ -24,6 +24,8 @@
     <a class="l opt" href="/architecture.html" aria-current="page">Architecture</a>
   </div>
   <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
 
 <main>
@@ -43,7 +45,11 @@
 <hr />
 
 <section id="path"><div class="wrap">
-  <h2>The path a payment takes</h2>
+  <div class="shead">
+    <span class="eyebrow">The path</span>
+    <h2>The path a payment takes</h2>
+    <p>Two doors in, one deterministic decision, every outcome written down.</p>
+  </div>
   <figure class="dia">
     <svg viewBox="0 0 900 700" role="img" width="900" height="700"
          aria-labelledby="dia-t dia-d" preserveAspectRatio="xMidYMid meet">
@@ -145,7 +151,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Design decisions</h2>
+  <div class="shead">
+    <span class="eyebrow">Decisions</span>
+    <h2>Design decisions</h2>
+    <p>Six choices, and what each one costs.</p>
+  </div>
 
   <div class="list">
     <div class="item"><div class="k">Determinism</div><div>
@@ -198,7 +208,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>What breaks at scale</h2>
+  <div class="shead">
+    <span class="eyebrow">Limits</span>
+    <h2>What breaks at scale</h2>
+    <p>Stated plainly, because a design document that only describes what works is marketing.</p>
+  </div>
   <p>The current engine is single-process and in-memory. Every guarantee holds inside one process,
   which is enough for a single agent runtime and is not enough for production. Stated plainly
   because a design document that only describes what works is marketing.</p>
@@ -227,7 +241,11 @@
   audit trail is the product.</p></div>
 </div></section>
 
-<hr />
+
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today &rarr;</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section><div class="wrap">
   <div class="next">
@@ -244,16 +262,16 @@
       evaporate before settlement, so nobody buys them.</p>
     </div>
     <div>
-      <h4>Product</h4>
+      <h4>Navigation</h4>
       <ul>
-        <li><a href="/app">Discover campaigns</a></li>
-        <li><a href="/brands.html">For brands</a></li>
-        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/">Creators</a></li>
+        <li><a href="/brands.html">Brands</a></li>
+        <li><a href="/app">Discover</a></li>
         <li><a href="/#faq">FAQ</a></li>
       </ul>
     </div>
     <div>
-      <h4>How it works</h4>
+      <h4>Pages</h4>
       <ul>
         <li><a href="/architecture.html">Architecture</a></li>
         <li><a href="/security.html">Threat model</a></li>
@@ -262,17 +280,18 @@
       </ul>
     </div>
     <div>
-      <h4>Elsewhere</h4>
+      <h4>Contact</h4>
       <ul>
-        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
         <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
         <li><a href="mailto:support@merlinclips.com">Support</a></li>
         <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+        <li><a href="/#contact">All ways to reach us</a></li>
       </ul>
     </div>
   </div>
+  <p class="fmark" aria-hidden="true">Merlin Clips</p>
   <div class="foot-base">
-    <span>&copy; 2026 Merlin Clips</span>
+    <span>&copy; 2026 Merlin Clips &middot; all rights reserved</span>
     <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
   </div>
 </div></footer>
@@ -282,8 +301,33 @@
 (function () {
   var nav = document.querySelector('nav');
   if (!nav) return;
+
   var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
   sync(); addEventListener('scroll', sync, { passive: true });
+
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+
+  burger.addEventListener('click', function () {
+    setOpen(nav.dataset.open !== 'true');
+  });
+  /* An in-page anchor does not reload, so without this the panel stays open
+     over the section it just scrolled to. */
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
 })();
 </script>
 </body>

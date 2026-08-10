@@ -27,14 +27,17 @@ export const APP_HTML = `<!doctype html>
 <title>Merlin Clips — paid for views that survived</title>
 <meta name="description" content="Post a clip. Twenty-four hours later you are paid in USDC for every view that survived, at the rate you were promised." />
 <style>
+/* These are the landing page's tokens, not a second palette. The app is one
+   click from the site, and the cool grey the app used to sit on made that
+   click look like a handoff to somebody else's product. */
 :root{
-  --paper:#F7F7F9; --card:#FFFFFF; --sunk:#F1F1F4;
-  --line:#E4E4EA; --line-2:#D2D2DB;
-  --ink:#0E0E11; --ink-2:#5A5A66; --ink-3:#8A8A96;
-  --violet:#5B2FD6; --violet-2:#7C52F0; --violet-wash:#F0ECFE;
+  --paper:#FAF8F5; --card:#FFFFFF; --sunk:#F3F0EB;
+  --line:#E8E3DB; --line-2:#D8D1C6;
+  --ink:#151310; --ink-2:#5C554C; --ink-3:#8B8378;
+  --violet:#6D28D9; --violet-2:#7C3AED; --violet-wash:#F3EEFE;
   --settled:#0F7B4F; --settled-wash:#E7F4EE;
-  --waiting:#8A6100; --waiting-wash:#FBF1DF;
-  --refused:#A32820; --refused-wash:#FBECEA;
+  --waiting:#8A5A00; --waiting-wash:#FBF1DF;
+  --refused:#B02A20; --refused-wash:#FBECEA;
   --ui:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --num:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
 }
@@ -50,7 +53,7 @@ a:hover{text-decoration:underline}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ── masthead ── */
-.bar{border-bottom:1px solid var(--line);background:rgba(247,247,249,.88);
+.bar{border-bottom:1px solid var(--line);background:rgba(250,248,245,.88);
      backdrop-filter:blur(12px);position:sticky;top:0;z-index:20}
 .bar .wrap{display:flex;align-items:center;gap:26px;height:60px}
 .mark{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15.5px;

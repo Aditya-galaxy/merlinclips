@@ -14,6 +14,7 @@
 
 import type { Decimal } from '../decimal';
 import type { Chain } from '../schemas';
+import type { Standing } from './standing';
 
 /** Where a clip was posted. Only these two can be verified without app review. */
 export type Platform = 'youtube' | 'x';
@@ -55,6 +56,21 @@ export interface Campaign {
    * than letting the number pass for a guarantee.
    */
   readonly fundingWallet?: string;
+  /**
+   * The lowest standing this campaign accepts. Absent means open to anyone,
+   * which is the default and stays the default — a floor is a thing a brand
+   * asks for, not a thing we impose on their behalf.
+   */
+  readonly minStanding?: Standing;
+  /**
+   * Places kept open for creators who have not proved anything yet.
+   *
+   * Absent means computed: a fifth of the expected submissions, never fewer
+   * than three. A brand may set it, including to zero, and that is their
+   * campaign to run — but the default protects the newcomer, because a filter
+   * with no reservation is a marketplace nobody can enter.
+   */
+  readonly reservedForUnproven?: number;
   status: CampaignStatus;
   readonly startsAt: string;
   readonly endsAt: string;

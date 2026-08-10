@@ -202,42 +202,6 @@
   </div>
 </div></section>
 
-
-<section><div class="wrap">
-  <div class="shead">
-    <span class="eyebrow">Limits</span>
-    <h2>What breaks at scale</h2>
-    <p>Stated plainly, because a design document that only describes what works is marketing.</p>
-  </div>
-  <p>The current engine is single-process and in-memory. Every guarantee holds inside one process,
-  which is enough for a single agent runtime and is not enough for production. Stated plainly
-  because a design document that only describes what works is marketing.</p>
-
-  <table>
-    <tr><th>Gap</th><th>Consequence</th></tr>
-    <tr><td class="mono">state in memory</td><td>N instances means N times the budget, silently</td></tr>
-    <tr><td class="mono">single-writer chain</td><td>concurrent appends fork the record</td></tr>
-    <tr><td class="mono">no idempotency key</td><td>a retried request consumes budget twice</td></tr>
-    <tr><td class="mono">deduct, not reserve</td><td>a payment that fails after authorizing starves the agent</td></tr>
-  </table>
-
-  <p>JavaScript’s single-threaded execution is doing real work here — the read and the write have no
-  await between them, so no two concurrent calls can both see the pre-spend total. That is a genuine
-  guarantee, and it evaporates with a second process.</p>
-
-  <h3 style="margin-top:28px">The production design</h3>
-  <p>Per-agent transactional serialization rather than a global lock. <strong>Reservation with
-  expiry</strong> rather than deduction, so a process that dies mid-payment does not strand budget
-  forever. Idempotency keys on insert. Per-agent chains, to keep the single-writer assumption true
-  rather than working around it. Balances derived by summing an append-only history, never by
-  mutating a row.</p>
-
-  <div class="note"><p>The failure posture people argue with: <strong>if the ledger write fails, the
-  payment is refused.</strong> A payment we cannot record is a payment we do not make — because the
-  audit trail is the product.</p></div>
-</div></section>
-
-
 <section class="band"><div class="wrap">
   <a class="btn pop" href="/app">Start earning today &rarr;</a>
   <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>

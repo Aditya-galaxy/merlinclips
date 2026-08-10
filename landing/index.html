@@ -61,8 +61,19 @@
     <p class="fine">Hard budget ceiling · per-creator caps · never a cut of your spend</p>
   </div>
 
-  <!-- The product itself, built from the app's own markup rather than a
-       screenshot, so it cannot go stale and stays sharp at any width. -->
+  <a class="scrollcue" href="#showcase" aria-label="See the product">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</div>
+</div></section>
+
+<section class="showcase" id="showcase"><div class="wrap">
+  <div class="lead">
+    <h2>Every campaign, and what is left in it</h2>
+    <p>Budgets, rates and holds are published before you commit an evening — including
+      the ones that have not been funded yet.</p>
+  </div>
   <div class="window" aria-hidden="true">
     <div class="chrome"><i></i><i></i><i></i><span class="addr">merlinclips.com/app</span></div>
     <div class="body">
@@ -287,6 +298,87 @@
 </main>
 
 <script>
+/* The hero frame shows real campaigns when there are any.
+   The markup below it is a fallback, not a mock: a page whose entire argument
+   is that we do not invent numbers should not open with invented numbers if
+   the real ones are one fetch away. If the API is unreachable the static cards
+   stand, because an empty frame is worse than a representative one. */
+/* The header is transparent over the hero and gains its background only when
+   content scrolls under it — a bar with a rule from the first pixel cuts the
+   top of the screen in two before anything has been read. */
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync();
+  addEventListener('scroll', sync, { passive: true });
+})();
+
+(function () {
+  var host = document.querySelector('.wcards');
+  if (!host) return;
+  var esc = function (t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var money = function (n) {
+    var v = parseFloat(n || '0');
+    return v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+  var rate = function (n) {
+    return parseFloat(n || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var compact = function (n) {
+    var v = parseInt(n || '0', 10);
+    if (v >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+    if (v >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (v >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+    return String(v);
+  };
+  var ago = function (iso) {
+    var t = Date.parse(iso); if (isNaN(t)) return '';
+    var d = Math.floor((Date.now() - t) / 86400000);
+    if (d <= 0) return 'today';
+    if (d === 1) return '1 day ago';
+    if (d < 30) return d + ' days ago';
+    var m = Math.floor(d / 30); return m === 1 ? '1 month ago' : m + ' months ago';
+  };
+  var fundChip = function (f) {
+    if (!f) return '';
+    if (f.coverage === 'covered') return '<span class="wtag g">Funded</span>';
+    if (f.coverage === 'partial') return '<span class="wtag n">Part funded</span>';
+    if (f.coverage === 'empty' || f.coverage === 'no_wallet') return '<span class="wtag n">Unfunded</span>';
+    return '';
+  };
+
+  fetch('/api/campaign').then(function (r) { return r.json(); }).then(function (d) {
+    var list = (d.campaigns || []).slice(0, 3);
+    if (!list.length) return;                       // keep the fallback
+    var live = document.querySelector('.wrow span');
+    if (live) live.textContent = (d.campaigns.length) + ' live';
+    host.innerHTML = list.map(function (c) {
+      var pool = parseFloat(c.poolUsdc || '0');
+      var spent = parseFloat(c.spentUsdc || '0');
+      var pct = pool > 0 ? Math.max(0, Math.min(100, spent / pool * 100)) : 0;
+      var plat = (c.platforms && c.platforms[0]) || 'youtube';
+      return '<div class="wc">'
+        + '<div class="tags"><span class="wtag v">Clipping</span>' + fundChip(c.funding)
+        +   '<span class="age">' + esc(ago(c.startsAt)) + '</span></div>'
+        + '<h5>' + esc(c.brief) + '</h5>'
+        + '<div class="by">' + esc(c.campaignId) + '</div>'
+        + '<div class="amt"><b>$' + money(spent) + '<em> / $' + money(pool) + '</em></b>'
+        +   '<span>$' + rate(c.cpmUsdc) + ' / 1k</span></div>'
+        + '<span class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></span>'
+        + '<div class="st">'
+        +   '<div><span>Hold</span><b>' + esc(c.dwellHours != null ? c.dwellHours : 24) + 'h</b></div>'
+        +   '<div><span>Views paid</span><b>' + compact(c.paidViews) + '</b></div>'
+        +   '<div><span>Creators</span><b>' + (c.creators || 0) + '</b></div>'
+        + '</div></div>';
+    }).join('');
+  }).catch(function () { /* fallback markup stands */ });
+})();
+
 (function () {
   var tabs = [document.getElementById('t-creator'), document.getElementById('t-brand')];
   var wrap = document.querySelector('.toggle');

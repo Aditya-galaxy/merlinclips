@@ -37,6 +37,7 @@ import { openCampaign, submitClip } from './intake';
 import { standingFor } from './standing';
 import { fundingFor, type BalanceReader } from './funding';
 import { RpcBalanceReader } from './balances';
+import { enquiryKey, parseEnquiry } from './enquiry';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -517,6 +518,49 @@ export class CampaignRuntime {
    * is declaring an intention to pay. Anyone who can call this can commit the
    * operator's money.
    */
+  /**
+   * A brand asking whether this is real.
+   *
+   * Open, unlike campaign creation. The point is that a brand can reach us
+   * without credentials — gating the first conversation behind an operator
+   * secret is how you end up with no conversations.
+   *
+   * That openness is why it is rate limited on the same limiter as
+   * submissions, and why every field is validated here rather than trusted
+   * from the form.
+   */
+  async handleBrandEnquiry(request: Request): Promise<Response> {
+    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    if (!this.rateLimiter.consume(clientIp)) {
+      return Response.json({ error: 'Too many submissions — try again shortly.' }, { status: 429 });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const result = parseEnquiry(body);
+    if (!result.ok) {
+      return Response.json({ error: result.error, field: result.field }, { status: 400 });
+    }
+
+    // putIfAbsent, so a double-submitted form is one enquiry rather than two.
+    // The id is derived from the address and the minute, so a genuine second
+    // enquiry later still lands.
+    const stored = await this.blobs.putIfAbsent(
+      enquiryKey(result.value), JSON.stringify(result.value, null, 2),
+    );
+
+    return Response.json(
+      {
+        received: true,
+        enquiryId: result.value.enquiryId,
+        duplicate: !stored,
+        // Said plainly: there is no automated onboarding behind this yet, and
+        // implying one would be the first thing we got wrong with a brand.
+        next: 'A person reads these. Expect a reply to the address you gave, not a drip sequence.',
+      },
+      { status: stored ? 201 : 200 },
+    );
+  }
+
   async handleOpenCampaign(request: Request): Promise<Response> {
     const guard = this.requireOperator(request);
     if (guard) return guard;

@@ -285,6 +285,11 @@ const server = Bun.serve({
 
     // A brand opens a campaign. Operator-gated: declaring a pool is declaring
     // an intention to pay.
+    // Open on purpose: a brand must be able to reach us without credentials.
+    if (url.pathname === '/api/brand-enquiry' && request.method === 'POST') {
+      return campaigns.handleBrandEnquiry(request);
+    }
+
     if (url.pathname === '/api/campaigns' && request.method === 'POST') {
       return campaigns.handleOpenCampaign(request);
     }

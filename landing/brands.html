@@ -206,18 +206,69 @@
 </div></section>
 
 
-<section><div class="wrap">
+<section id="talk"><div class="wrap">
   <div class="shead">
     <span class="eyebrow">Get started</span>
-    <h2>Launch a campaign</h2>
-    <p>Write a brief, set a budget and a rate band, name the wallet it is funded from.</p>
+    <h2>Talk directly with our team</h2>
+    <p>Tell us what you are trying to do and we will tell you whether this fits.</p>
   </div>
-  <p>Write a brief, set a budget and a rate band, name the wallet it is funded from. Creators see
-    it immediately.</p>
-  <div class="row">
-    <a class="btn pop" href="/app">Open the app →</a>
-    <a class="btn ghost" href="/openapi.json">Do it over the API</a>
-  </div>
+
+  <form class="enq" id="enq" novalidate>
+    <div class="ff">
+      <label for="e-name">Your name <span class="req" aria-hidden="true">*</span></label>
+      <input id="e-name" name="name" required autocomplete="name" maxlength="120" />
+      <p class="err" id="err-name" hidden></p>
+    </div>
+
+    <div class="ff">
+      <label for="e-email">Company email <span class="req" aria-hidden="true">*</span></label>
+      <input id="e-email" name="email" type="email" required autocomplete="email"
+             inputmode="email" maxlength="254" spellcheck="false" />
+      <p class="err" id="err-email" hidden></p>
+    </div>
+
+    <div class="ff">
+      <label for="e-website">Company website <span class="req" aria-hidden="true">*</span></label>
+      <input id="e-website" name="website" required maxlength="300" spellcheck="false"
+             placeholder="yourcompany.com" />
+      <p class="hint">No need for the https — we will work it out.</p>
+      <p class="err" id="err-website" hidden></p>
+    </div>
+
+    <div class="ff">
+      <label for="e-budget">Marketing budget <span class="req" aria-hidden="true">*</span></label>
+      <select id="e-budget" name="budget" required>
+        <option value="">Choose a range</option>
+        <option>Under $1,000</option>
+        <option>$1,000 – $10,000</option>
+        <option>$10,000 – $50,000</option>
+        <option>$50,000 – $250,000</option>
+        <option>Over $250,000</option>
+        <option>Not decided yet</option>
+      </select>
+      <p class="err" id="err-budget" hidden></p>
+    </div>
+
+    <div class="ff wide">
+      <label for="e-goals">What are your goals? <span class="req" aria-hidden="true">*</span></label>
+      <textarea id="e-goals" name="goals" required rows="4" maxlength="2000"
+        placeholder="What you sell, who you want reaching, and what a good month looks like."></textarea>
+      <p class="err" id="err-goals" hidden></p>
+    </div>
+
+    <div class="ff wide check">
+      <label for="e-agency">
+        <input id="e-agency" name="wantsAgency" type="checkbox" />
+        <span>I would like to work with a verified agency to run this for me</span>
+      </label>
+    </div>
+
+    <div class="ff wide">
+      <button class="btn pop" type="submit" id="e-go">Send this to the team</button>
+      <p class="fine">A person reads these. No drip sequence, no sales cadence.</p>
+      <p class="said" id="e-said" role="status" aria-live="polite" hidden></p>
+    </div>
+  </form>
 </div></section>
 
 <footer><div class="wrap">
@@ -262,6 +313,84 @@
 </div></footer>
 
 </main>
+<script>
+/* The browser validates for speed, the server validates for truth. This only
+   decides what to show; every rule is enforced again on the other end. */
+(function () {
+  var form = document.getElementById('enq');
+  if (!form) return;
+  var said = document.getElementById('e-said');
+  var go = document.getElementById('e-go');
+  var FIELDS = ['name', 'email', 'website', 'budget', 'goals'];
+
+  function clear() {
+    FIELDS.forEach(function (f) {
+      var e = document.getElementById('err-' + f);
+      var i = document.getElementById('e-' + f);
+      if (e) { e.hidden = true; e.textContent = ''; }
+      if (i) i.removeAttribute('aria-invalid');
+    });
+  }
+  function blame(field, message) {
+    var e = document.getElementById('err-' + field);
+    var i = document.getElementById('e-' + field);
+    if (e) { e.textContent = message; e.hidden = false; }
+    if (i) { i.setAttribute('aria-invalid', 'true'); i.focus(); }
+  }
+  function tell(message, bad) {
+    said.textContent = message;
+    said.dataset.bad = bad ? 'true' : 'false';
+    said.hidden = false;
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    clear();
+    said.hidden = true;
+
+    var body = {
+      name: document.getElementById('e-name').value,
+      email: document.getElementById('e-email').value,
+      website: document.getElementById('e-website').value,
+      budget: document.getElementById('e-budget').value,
+      goals: document.getElementById('e-goals').value,
+      wantsAgency: document.getElementById('e-agency').checked
+    };
+
+    go.disabled = true;
+    go.textContent = 'Sending…';
+
+    fetch('/api/brand-enquiry', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) {
+          if (res.d && res.d.field) blame(res.d.field, res.d.error);
+          else tell(res.d && res.d.error ? res.d.error : 'That did not send. Try again shortly.', true);
+          return;
+        }
+        form.querySelectorAll('input, textarea, select').forEach(function (i) {
+          if (i.type === 'checkbox') i.checked = false; else i.value = '';
+        });
+        tell(res.d.duplicate
+          ? 'We already have this one — no need to send it twice.'
+          : 'Got it. A person will reply to the address you gave.', false);
+      })
+      .catch(function () {
+        /* The address is on the page either way, so a failed fetch is not a
+           dead end — say so rather than leaving them staring at a button. */
+        tell('That did not send. Email hello@merlinclips.com and we will pick it up.', true);
+      })
+      .finally(function () {
+        go.disabled = false;
+        go.textContent = 'Send this to the team';
+      });
+  });
+})();
+</script>
 <script>
 (function () {
   var nav = document.querySelector('nav');

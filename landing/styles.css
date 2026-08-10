@@ -883,3 +883,39 @@ body::before{
 @media(max-width:640px){
   .hero.page{min-height:auto;justify-content:flex-start}
 }
+
+/* ── brand enquiry form ──
+   Two columns on desktop because the short fields pair naturally; one column
+   below 720px because a half-width input on a phone is a scroll-to-read box.
+   Errors live under their own field rather than in a summary at the top: a
+   list saying "three problems" makes you hunt for them. */
+.enq{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;margin-top:34px;
+     max-width:760px}
+.enq .wide{grid-column:1/-1}
+@media(max-width:720px){.enq{grid-template-columns:1fr;gap:18px}}
+
+.ff{display:flex;flex-direction:column;gap:7px;min-width:0}
+.ff label{font-size:14.5px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.ff .req{color:var(--pop)}
+.ff input,.ff select,.ff textarea{
+  font:inherit;font-size:16px;color:var(--text);background:var(--surface);
+  border:1px solid var(--line-hi);border-radius:12px;padding:13px 15px;width:100%;
+  transition:border-color .14s ease,box-shadow .14s ease}
+.ff textarea{resize:vertical;min-height:112px;line-height:1.5}
+.ff input:focus,.ff select:focus,.ff textarea:focus{
+  outline:none;border-color:var(--pop);box-shadow:0 0 0 3px rgba(109,40,217,.14)}
+.ff input[aria-invalid="true"],.ff select[aria-invalid="true"],.ff textarea[aria-invalid="true"]{
+  border-color:var(--bad);box-shadow:0 0 0 3px rgba(176,42,32,.12)}
+.ff .hint{margin:0;font-size:13.5px;color:var(--muted)}
+.ff .err{margin:0;font-size:13.5px;color:var(--bad);font-weight:500}
+
+.ff.check label{flex-direction:row;display:flex;align-items:flex-start;gap:11px;
+                font-weight:450;color:var(--text-2);font-size:15.5px;line-height:1.45;
+                cursor:pointer}
+.ff.check input{width:19px;height:19px;flex:none;margin-top:1px;accent-color:var(--pop)}
+
+.enq .btn{justify-self:start}
+.enq .fine{margin-top:12px}
+.said{margin:14px 0 0;padding:13px 16px;border-radius:12px;font-size:15px;
+      background:#EAF6F0;color:var(--ok);border:1px solid rgba(15,123,79,.25)}
+.said[data-bad="true"]{background:#FBECEA;color:var(--bad);border-color:rgba(176,42,32,.25)}

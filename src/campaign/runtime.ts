@@ -36,6 +36,7 @@ import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
 import { standingFor } from './standing';
 import { fundingFor, type BalanceReader } from './funding';
+import { RpcBalanceReader } from './balances';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -111,8 +112,15 @@ export class CampaignRuntime {
    * Reads on-chain USDC so a published budget can be checked against money
    * that exists. Absent in tests and offline, where funding reports `unknown`
    * rather than pretending a campaign is empty.
+   *
+   * Defaulted rather than left optional-and-unset. As an unassigned field it
+   * was indistinguishable from a deployment that had chosen not to configure
+   * one, so every campaign published "Budget not checked on this deployment"
+   * and nobody could tell that no deployment could ever have checked it.
+   * Opt out with CAMPAIGN_BALANCE_READER=off.
    */
-  public balances?: BalanceReader;
+  public balances?: BalanceReader =
+    Bun.env.CAMPAIGN_BALANCE_READER === 'off' ? undefined : new RpcBalanceReader();
 
   /** Two-phase budget reservation engine for enterprise campaign payouts. */
   public readonly reservations = new ReservationEngine();

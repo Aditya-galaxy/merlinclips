@@ -199,6 +199,22 @@
       log of what it was stopped from paying is what shows the controls working.</p>
       <p>Append-only and hash-chained is not the same as immutable — someone with write access can
       still truncate a file. It is <em>tamper-evident</em>, which is the honest claim.</p></div></div>
+
+    <div class="item"><div class="k">Failure posture</div><div>
+      <h3>If the record fails, the payment does not happen</h3>
+      <p>A payment we cannot write down is a payment we do not make. This is the decision people
+      argue with, because it means a storage outage stops settlement rather than degrading it — and
+      that is the trade we want. The audit trail is the product; a payout nobody can prove happened
+      is worth less than one that waited.</p></div></div>
+
+    <div class="item"><div class="k">Known limits</div><div>
+      <h3>What one process still cannot promise</h3>
+      <p>Passes are bounded across instances by a lease in the blob store, budget is reserved with
+      an expiry rather than deducted, and a settlement that has already been recorded cannot be
+      counted twice. Those three were real gaps once and are closed.</p>
+      <p>What is left is smaller and named rather than implied: chain verification under concurrent
+      appends has not been proved, and fault injection between reserving and committing is not yet
+      covered by a test. <a href="/testing.html">How the rest is tested →</a></p></div></div>
   </div>
 </div></section>
 

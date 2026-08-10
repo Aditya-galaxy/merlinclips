@@ -823,3 +823,33 @@ section{padding:clamp(56px,9vh,104px) 0}
 
 @media(max-width:1024px){section{padding:clamp(48px,7vh,76px) 0}}
 @media(max-width:640px){section{padding:clamp(40px,6vh,60px) 0}}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE WASH IS THE PAGE, NOT THE HERO
+
+   The violet wash was a pseudo-element on `.hero`, so it began where the hero
+   began — under the header, not at the top of the document. Above it sat the
+   plain body gradient, and the boundary between the two showed as a pale strip
+   across the top of every page. Scrolling up past the top made it obvious,
+   because `html` had no background of its own and the overscroll area painted
+   whatever the canvas fell back to.
+
+   Two fixes, and both are needed. `html` gets an explicit ground so nothing
+   above or below the document is ever a different colour. The wash moves onto
+   the document itself so it starts at pixel zero and runs under the header
+   without a seam.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+html{background:var(--bg)}
+
+body::before{
+  content:"";position:absolute;top:0;left:0;right:0;z-index:-1;pointer-events:none;
+  height:min(820px,95svh);
+  background:
+    radial-gradient(58% 46% at 50% 0%,rgba(109,40,217,.15),transparent 72%),
+    radial-gradient(42% 36% at 84% 0%,rgba(14,143,168,.11),transparent 70%),
+    linear-gradient(180deg,#FDFCFA 0%,var(--bg) 90%);
+}
+
+/* Superseded — it is the seam. */
+.hero::before{display:none}

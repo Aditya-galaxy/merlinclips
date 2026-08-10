@@ -954,3 +954,16 @@ main.centre{flex:1;display:flex;flex-direction:column;align-items:center;
 .plainlist b{color:var(--text);font-weight:600}
 .card .fine{text-align:center}
 main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
+
+/* ── the form has a page to itself now ──
+   Centred, because there is nothing else on the screen to align against. On
+   the section it used to share, left alignment matched the prose above it;
+   alone on a page, that reads as the layout having lost its right half. */
+.enq{margin-inline:auto}
+#talk .shead{margin-bottom:8px}
+#talk .enq .btn{justify-self:center}
+#talk .enq .fine,#talk .enq .said{text-align:center}
+#talk .ff.check label{justify-content:center}
+@media(min-width:721px){
+  #talk .enq .wide:last-of-type{display:flex;flex-direction:column;align-items:center}
+}

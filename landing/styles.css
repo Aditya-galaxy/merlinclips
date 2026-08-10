@@ -102,9 +102,11 @@ hr{height:1px;background:var(--line);border:0;margin:0}
 .btn:active{transform:translateY(1px)}
 .btn:hover{background:#fff;text-decoration:none}
 .btn.pop{background:linear-gradient(96deg,#A78BFA,#7C3AED);color:#fff;
-         box-shadow:0 8px 30px -10px rgba(139,92,246,.65)}
-.btn.pop:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.btn.ghost{background:transparent;color:var(--text-2);border:1px solid var(--line-hi)}
+         box-shadow:inset 0 -3px 0 rgba(59,20,140,.55),0 10px 34px -12px rgba(139,92,246,.7)}
+.btn.pop:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn.pop:active{transform:translateY(1px);box-shadow:inset 0 -1px 0 rgba(59,20,140,.55),0 6px 18px -12px rgba(139,92,246,.7)}
+.btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line-hi);
+           box-shadow:inset 0 -2px 0 rgba(0,0,0,.45)}
 .btn.ghost:hover{color:var(--text);border-color:var(--muted);background:transparent}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:34px 0 14px}
 .fine{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin:0}

@@ -15,6 +15,16 @@ REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-merlinclips}"
 BUCKET="${GCS_BUCKET:-merlinclips-state}"
 
+# The identity the service runs as, not the identity that builds it.
+#
+# Cloud Run defaults to the project's compute service account, which is shared
+# and accumulates whatever roles anything else in the project needed — ours
+# picked up cloudbuild.builds.builder simply so `--source` deploys would work.
+# A public payout service does not need permission to run builds. This account
+# gets Vertex for the clip verifier and write access to the one state bucket,
+# and nothing else.
+RUNTIME_SA="${RUNTIME_SA:-merlinclips-run@${PROJECT}.iam.gserviceaccount.com}"
+
 if [ -z "$PROJECT" ] || [ "$PROJECT" = "(unset)" ]; then
   echo "No GCP project set. Run: gcloud config set project <project-id>" >&2
   exit 1
@@ -45,10 +55,33 @@ echo "Deploying $SERVICE to $PROJECT ($REGION)"
 
 # --allow-unauthenticated is a competition requirement, not laziness: judges
 # must reach a working instance "free of charge and without any restriction".
+if ! gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT" >/dev/null 2>&1; then
+  cat >&2 <<MISSINGSA
+Runtime service account $RUNTIME_SA does not exist.
+
+Cloud Run would otherwise run as the default compute account, which currently
+also holds build permissions — far more than a payout service should carry.
+Create it and grant only what it needs:
+
+  gcloud iam service-accounts create merlinclips-run \\
+    --project ${PROJECT} --display-name "Merlin Clips runtime"
+
+  gcloud projects add-iam-policy-binding ${PROJECT} \\
+    --member "serviceAccount:${RUNTIME_SA}" --role roles/aiplatform.user
+
+  gcloud storage buckets add-iam-policy-binding gs://${BUCKET} \\
+    --project ${PROJECT} --member "serviceAccount:${RUNTIME_SA}" \\
+    --role roles/storage.objectAdmin
+
+MISSINGSA
+  exit 1
+fi
+
 gcloud run deploy "$SERVICE" \
   --source . \
   --project "$PROJECT" \
   --region "$REGION" \
+  --service-account "$RUNTIME_SA" \
   --allow-unauthenticated \
   --port 8080 \
   --cpu 1 \
@@ -56,7 +89,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 4 \
   --timeout 60s \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
@@ -66,7 +99,12 @@ gcloud run deploy "$SERVICE" \
 URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format='value(status.url)')"
 echo
 echo "Live: $URL"
-echo "Health: $(curl -fsS "$URL/healthz" || echo 'FAILED')"
+# Not /healthz. Cloud Run's frontend reserves that path and answers it itself
+# with a Google 404, so the request never reaches the container — the first
+# deploy reported a failed health check on a service that was serving fine.
+echo "Health: $(curl -fsS "$URL/health" || echo 'FAILED')"
+echo "Config: $(curl -fsS "$URL/api/campaign" | head -c 200 || echo 'unreachable')"
+
 
 # Both of these are fail-closed rather than fail-quiet, because the ways they
 # fail are silent ones: without a bucket the campaign store is in-memory on a

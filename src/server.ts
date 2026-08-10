@@ -25,9 +25,11 @@ import {
   type DemoWorld,
   type ScenarioName,
 } from './scenarios';
+import { APP_HTML } from './app';
 import { isExpired } from './mandates';
 import { runJob } from './business/loop';
 import { MARKETPLACE } from './business/tools';
+import { telemetry } from './telemetry/metrics';
 import { Decimal, USDC } from './decimal';
 import { encodePayment, paymentRequiredBody, verifyPayment } from './x402';
 import { CampaignRuntime } from './campaign/runtime';
@@ -166,7 +168,12 @@ const server = Bun.serve({
     const url = new URL(request.url);
 
     // Cloud Run and any uptime check need a path that touches no state.
-    if (url.pathname === '/healthz') return new Response('ok');
+    // Both spellings. Cloud Run's frontend reserves /healthz and answers it
+    // before the request reaches us, so a deployment that only served that
+    // path looked dead while being perfectly healthy. /health is ours.
+    if (url.pathname === '/health' || url.pathname === '/healthz') {
+      return new Response('ok');
+    }
 
     if (url.pathname === '/api/state') return json(state());
 
@@ -208,6 +215,12 @@ const server = Bun.serve({
       return (await spec.exists())
         ? new Response(spec, { headers: { 'content-type': 'application/json; charset=utf-8' } })
         : json({ error: 'spec not found' }, 404);
+    }
+
+    if (url.pathname === '/metrics') {
+      return new Response(telemetry.toPrometheusFormat(), {
+        headers: { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' },
+      });
     }
 
     // Free, and deliberately so. It answers "can you handle this link, are you
@@ -348,8 +361,49 @@ const server = Bun.serve({
       return json({ result, ...state() });
     }
 
-    if (url.pathname === '/') {
+    // One service, three surfaces, one origin.
+    //
+    // `/` is the marketing site, `/app` is the product and `/console` is the
+    // operator view. Hosting the first somewhere else would mean every link
+    // between them is absolute and cross-origin — and a relative link works
+    // perfectly in local preview, then 404s the moment the two are deployed
+    // apart. That is the worst kind of broken link: it passes every check you
+    // run before shipping.
+    if (url.pathname === '/app') {
+      return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
+    if (url.pathname === '/console') {
       return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
+
+    // Static marketing pages, served from an allowlist rather than by joining
+    // user input onto a path. A traversal bug here would read anything the
+    // container can, and an allowlist cannot be traversed.
+    const LANDING: Record<string, string> = {
+      '/': 'landing/index.html',
+      '/index.html': 'landing/index.html',
+      '/styles.css': 'landing/styles.css',
+      '/architecture.html': 'landing/architecture.html',
+      '/brands.html': 'landing/brands.html',
+      '/security.html': 'landing/security.html',
+      '/testing.html': 'landing/testing.html',
+    };
+    const asset = LANDING[url.pathname];
+    if (asset) {
+      const file = Bun.file(asset);
+      if (await file.exists()) {
+        return new Response(file, {
+          headers: {
+            'content-type': asset.endsWith('.css')
+              ? 'text/css; charset=utf-8'
+              : 'text/html; charset=utf-8',
+          },
+        });
+      }
+      // Missing marketing asset must not take the API down with it.
+      if (url.pathname === '/') {
+        return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+      }
     }
     return new Response('not found', { status: 404 });
   },

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>For brands — Merlin Clips</title>
+<meta name="description" content="Run creator campaigns and pay only for views that survived a 24-hour hold. Bought views evaporate before settlement, so you never buy them." />
+<meta property="og:title" content="Only pay for views that stayed" />
+<meta property="og:description" content="Creators clip for your brand. You are charged only for views that outlived the hold." />
+<link rel="canonical" href="https://merlinclips.com/brands.html" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+  <div class="links">
+    <a class="l" href="/brands.html" aria-current="page">For brands</a>
+    <a class="l" href="/app">Discover</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/#agencies">Agencies</a>
+    <a class="l opt" href="/#contact">Contact</a>
+    <a class="l opt" href="/architecture.html">Architecture</a>
+  </div>
+  <a class="cta" href="/app">Start earning today</a>
+</div></nav>
+
+<main>
+
+<section class="hero stage"><div class="wrap">
+  <div><span class="badge"><b>Brands</b> Pay for attention that lasted</span></div>
+  <h1>Only pay for <span class="grad">views that stayed</span></h1>
+  <p class="lede">Short-form creators clip for your brand. You are charged only for the views still
+    standing a day later — so the ones somebody bought never reach your invoice.</p>
+  <div class="row">
+    <a class="btn pop" href="/app">Launch a campaign →</a>
+    <a class="btn ghost" href="#how">How it protects you</a>
+  </div>
+  <p class="fine">Hard budget ceiling · per-creator caps · never a cut of your spend</p>
+</div></section>
+
+<hr />
+
+<section id="how"><div class="wrap">
+  <h2>You cannot tell which half of a campaign was real</h2>
+  <p>Nobody can, and that is the problem. Every platform in this category pays on a number the
+    person being paid can buy for less than the payout. Detection loses that race by construction:
+    the money moves before anybody can tell.</p>
+  <p><strong>So we changed what is being bought.</strong> Views are counted, then counted again a
+    day later, and you are charged on the lower figure. Inflating a count is free; keeping it
+    inflated through a platform's own retro-scrubbing for a full day is somebody else's expensive
+    problem.</p>
+
+  <div class="steps">
+    <div class="step"><div class="n">1</div>
+      <h3>Fund a budget</h3>
+      <p>The campaign names the wallet its money sits in. Creators see whether it is funded before
+      they spend an evening editing, which is why they turn up.</p></div>
+    <div class="step"><div class="n">2</div>
+      <h3>Creators clip</h3>
+      <p>Each submission is judged against your brief by a model that watches the clip. One post,
+      one claimant — the same video cannot be farmed across fifty wallets.</p></div>
+    <div class="step"><div class="n">3</div>
+      <h3>You pay for what held</h3>
+      <p>Settled in USDC, per surviving view, at the rate that was frozen when the clip was
+      accepted. Nothing is charged for views that vanished.</p></div>
+  </div>
+</div></section>
+
+<hr />
+
+<section><div class="wrap">
+  <h2>Why verification matters here</h2>
+  <p>Verification on other platforms means a badge on a profile. Here it means a model watched the
+    clip and decided whether it meets the brief you wrote — before any money is authorised.</p>
+
+  <div class="list">
+    <div class="item"><div class="k">The brief</div><div>
+      <h3>Judged against your words, not a checklist</h3>
+      <p>You write the brief in plain language — <em>show the product in the first five seconds</em>
+      — and each clip is checked against it. No rule expresses that; a model can.</p></div></div>
+    <div class="item"><div class="k">Injection</div><div>
+      <h3>A clip that argues with the verifier still fails</h3>
+      <p>We built an attack clip carrying on-screen text instructing the verifier to pass it
+      unexamined. It was refused, and the refusal named the timestamps. More importantly the
+      verdict is one precondition among several: a suborned verdict still cannot exceed your
+      budget, your per-creator cap, or the hold.</p></div></div>
+    <div class="item"><div class="k">Counts</div><div>
+      <h3>Numbers come from the platform, never the creator</h3>
+      <p>View counts are read from the platform's own API. A creator telling us what they earned
+      is not evidence, and we never ask.</p></div></div>
+  </div>
+</div></section>
+
+<hr />
+
+<section><div class="wrap">
+  <h2>Protection you can check rather than trust</h2>
+  <p>Each of these is enforced in code and verified by deliberately breaking it to confirm a test
+    fails. None of it depends on us behaving well.</p>
+
+  <div class="list">
+    <div class="item"><div class="k">Budget</div><div>
+      <h3>The ceiling cannot be raised</h3>
+      <p>Total payouts never exceed the budget. The agent may move the rate inside a band you set;
+      it can never widen the band, and no model output can raise a cap.</p></div></div>
+    <div class="item"><div class="k">Per creator</div><div>
+      <h3>One account cannot take the budget</h3>
+      <p>A per-creator cap bounds any single account, and a rolling window limits spend per hour
+      independently of budget size — so a compromised agent holding entirely valid permissions
+      still cannot empty a large campaign in an afternoon.</p></div></div>
+    <div class="item"><div class="k">Kill switch</div><div>
+      <h3>Stop admits no exceptions</h3>
+      <p>One flag halts every payout regardless of what anything else authorised. It is checked
+      first and there is no override.</p></div></div>
+    <div class="item"><div class="k">Evidence</div><div>
+      <h3>Every decision is written down</h3>
+      <p>Snapshots, verdicts and payouts are appended to a log whose hash chain is derived on read.
+      Altering a past entry breaks verification of every entry after it, and you can check that
+      yourself.</p></div></div>
+  </div>
+
+  <div class="row">
+    <a class="btn ghost" href="/security.html">Read the threat model →</a>
+    <a class="btn ghost" href="/testing.html">See how it is tested →</a>
+  </div>
+</div></section>
+
+<hr />
+
+<section id="faq"><div class="wrap">
+  <h2>Answers to your questions</h2>
+
+  <div class="faq">
+        <details class="qa">
+      <summary><span class="k">Pricing</span><span class="q">What do you charge?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Per campaign and per settled payout — never a percentage of spend. A percentage would mean
+      our revenue rises when you pay for bots, and we would rather not hold that incentive at
+      all than promise to resist it.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Funding</span><span class="q">Do I fund before or after?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Before. The remaining budget is published to creators as the amount left to earn, and a
+      budget with no money behind it is a promise nobody checked. Unfunded campaigns are labelled
+      as such on the listing.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Speed</span><span class="q">Why does settlement take a day?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Because that is roughly how long platforms take to remove inauthentic views. Paying sooner
+      means paying before anyone can tell. The delay is the product.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Control</span><span class="q">Can I stop a campaign?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>Yes — and it stops accepting new clips immediately. It does not abandon work already
+      accepted: a creator who posted under your terms is still owed for views that survive, until
+      the settlement deadline. That guarantee is why creators take the brief seriously.</p></div>
+    </details>
+        <details class="qa">
+      <summary><span class="k">Platforms</span><span class="q">Which platforms are supported?</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a"><p>YouTube today. Instagram, Facebook and TikTok need platform review we do not hold, and we
+      would rather refuse a link than promise a check we cannot perform.</p></div>
+    </details>
+  </div>
+</div></section>
+
+<hr />
+
+<section><div class="wrap">
+  <h2>Launch a campaign</h2>
+  <p>Write a brief, set a budget and a rate band, name the wallet it is funded from. Creators see
+    it immediately.</p>
+  <div class="row">
+    <a class="btn pop" href="/app">Open the app →</a>
+    <a class="btn ghost" href="/openapi.json">Do it over the API</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/app">Discover campaigns</a></li>
+        <li><a href="/brands.html">For brands</a></li>
+        <li><a href="/#agencies">Agencies</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>How it works</h4>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/openapi.json">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <ul>
+        <li><a href="https://github.com/Aditya-galaxy/merlinclips">Source on GitHub</a></li>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
+</div></footer>
+
+</main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+})();
+</script>
+</body>
+</html>

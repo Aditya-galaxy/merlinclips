@@ -1,7 +1,23 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "console", "runtimeExecutable": "bun", "runtimeArgs": ["run", "src/server.ts"], "port": 8080 },
-    { "name": "landing", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "4173", "--directory", "landing"], "port": 4173 }
+    {
+      "name": "console",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "src/server.ts"
+      ],
+      "port": 8080
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "landing/serve.py",
+        "4173"
+      ],
+      "port": 4173
+    }
   ]
 }

@@ -12,7 +12,7 @@ Built on [Circle's Agent Stack](https://agents.circle.com/) for the **Build with
 
 Brands pay creators per 1,000 views to clip and post their content. It is a real market: Content Rewards alone pays **over $40,000/day across ~1M videos a month** (Forbes, Apr 2026), for clients including Polymarket and ElevenLabs, and Whop settles roughly **$3B/year** in creator payouts.
 
-It is also being drained. One brand documented paying **$1,500 for ~845,000 views that were "99.999% bot views"**. Multiple brands independently report view counts **clustering exactly at the maximum-payout cap** — not a coincidence, a calibrated attack.
+It is also being drained — and not by any one platform. One brand documented paying **$1,500 for ~845,000 views that were "99.999% bot views"**; the incident is not attributed to any of the platforms named above, and the failure is structural rather than particular to a company. Multiple brands independently report view counts **clustering exactly at the maximum-payout cap** — not a coincidence, a calibrated attack.
 
 The reason they lose the money is narrower than "fraud is hard":
 
@@ -121,15 +121,16 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 
 | Component | State |
 |---|---|
-| Payout gate, dwell mechanic, rate band, terms, persistence, tick, executor | **Done** — 313 tests, typecheck clean |
+| Payout gate, dwell mechanic, rate band, terms, persistence, tick, executor | **Done** — 405 tests, typecheck clean |
 | `/api/verify` + OpenAPI spec | **Done** — 402 handshake verified against a running server |
 | Agent loop — rate allocation and fraud investigation | **Done** — proposes and investigates; neither can release money |
-| Gemini clip verifier | **Done** — runs on Vertex via ADC, no API key |
+| Gemini clip verifier | **Done** — runs on Vertex via ADC, no API key, and judged inside the tick so a submitted clip is actually checked |
 | YouTube view oracle | **Done** — verified live against the Data API |
 | Real on-chain payout + Basescan proof | **Done** — Base Sepolia `0x47dc18c8…1224`, replay-confirmed idempotent |
 | X view oracle | Not built — `XOracleUnavailable` is returned rather than a guess |
 | Agent Marketplace listing | Blocked on a funded mainnet wallet |
 | Cloud Run deployment | Ready — `./deploy.sh`, preflight refuses without the state bucket |
+| Wiring | Asserted mechanically — `wiring.test.ts` fails on any module the server cannot reach |
 
 ```bash
 bun install
@@ -140,7 +141,7 @@ bun run src/server.ts     # http://localhost:8080
 ### Verifying it
 
 ```bash
-bun test          # 374 tests
+bun test          # 405 tests
 bun run sweep     # 600,000 simulated decisions, exits non-zero on a violation
 bun run mutate    # breaks each control on purpose; a survivor is a finding
 ```
@@ -193,6 +194,15 @@ Per the competition's *New Projects Only* requirement. Two of these are things a
 - **The `circle` CLI and Circle's published skills** are used as tooling. Settlement shells out to the CLI rather than reimplementing its wallet handling — a dependency, not vendored source.
 
 - **[Kronagent](https://github.com/Aditya-galaxy/Kronagent)**, by the same author, is a cloud threat-defense platform with an earn-trust governance model for autonomous containment actions. **Its design informed this project** — the fail-closed policy ordering, expiring delegated authority, and hash-chained audit. **No code was copied**; this is an independent implementation in a different language for a different domain (irreversible payments rather than reversible containment).
+
+## Enterprise Architecture & Production Scale
+
+Built for multi-instance deployments handling thousands of concurrent creators and brands:
+
+- **Two-Phase Pool Reservation (`ReservationEngine`):** `reserve` → `commit` / `release` with a 5-minute TTL sweep. **Built and tested, not yet wired to the payout path** — the pool ceiling is currently enforced by the gate's own check. Intended to replace it when more than one instance settles concurrently.
+- **Per-Campaign Distributed Lock (`CampaignLockManager`):** Mutual exclusion per `campaignId` ensures pool allocations and tick passes execute sequentially per campaign while running in parallel across distinct campaigns.
+- **Token Bucket Rate Limiter (`TokenBucketRateLimiter`):** Applied to `POST /api/submissions`, the only unauthenticated write. The paid endpoints are limited by their own price.
+- **OpenTelemetry & Prometheus Metrics (`TelemetryCollector`):** Exportable telemetry tracking payout dispositions, micro-USDC volumes, HTTP request counters, and oracle response latencies.
 
 ## Documentation
 

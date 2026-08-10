@@ -10,6 +10,63 @@ what works is marketing.
 
 ---
 
+## 0. The shape of it
+
+```mermaid
+flowchart TB
+    subgraph doors["Two doors, deliberately asymmetric"]
+        B["Brand<br/><i>operator secret</i>"] -->|"POST /api/campaigns"| OC["openCampaign"]
+        C["Creator<br/><i>no account</i>"] -->|"POST /api/submissions"| SC["submitClip"]
+    end
+
+    OC --> FUND{"Budget<br/>funded?"}
+    FUND -->|"reports, never blocks"| LOG[("Append-only<br/>event log<br/><i>hash chain on read</i>")]
+    SC --> CLAIM{"Post already<br/>claimed?"}
+    CLAIM -->|"yes"| REFUSE1["Refused<br/><i>one post, one claimant</i>"]
+    CLAIM -->|"no"| TERMS["Terms frozen<br/><i>rate · hold · cap</i>"]
+    TERMS --> LOG
+
+    SCHED["Cloud Scheduler<br/><i>hourly</i>"] -->|"POST /api/tick"| LEASE{"Window<br/>lease?"}
+    LEASE -->|"held elsewhere"| SKIP["Skipped<br/><i>never two at once</i>"]
+    LEASE -->|"acquired"| TICK["Agent pass"]
+
+    TICK --> V{"Judged<br/>yet?"}
+    V -->|"no"| GEM["Gemini<br/><i>clip vs brief</i>"]
+    GEM --> LOG
+    V -->|"yes"| O
+    GEM --> O["YouTube oracle<br/><i>counts, never self-reported</i>"]
+    O --> LOG
+
+    O --> GATE{"Payout gate"}
+    GATE -->|"no verdict · failed brief<br/>deadline passed · pool spent"| BLOCK["Blocked"]
+    GATE -->|"hold not elapsed"| HELD["Held<br/><i>a wait, not a rejection</i>"]
+    GATE -->|"survived the hold"| POL{"Policy engine<br/><i>deterministic</i>"}
+
+    POL -->|"cap · mandate · window<br/>kill switch · mainnet guard"| REQ["Needs a human"]
+    POL -->|"authorised"| EX["Circle CLI<br/><i>idempotency key</i>"]
+    EX -->|"settled, then recorded"| LOG
+    EX --> PAID["USDC to the creator's wallet"]
+
+    AGENT["Rate proposer<br/>Fraud investigator"] -.->|"proposes only"| TICK
+    AGENT -.->|"cannot release money"| GATE
+
+    classDef money fill:#EDE4FF,stroke:#6D28D9,color:#2E1065
+    classDef refuse fill:#FBECEA,stroke:#B02A20,color:#5A1410
+    classDef wait fill:#FBF1DF,stroke:#8A5A00,color:#4A3000
+    classDef store fill:#E7F0FF,stroke:#1E5BB8,color:#0C2A56
+    class PAID,EX money
+    class REFUSE1,BLOCK refuse
+    class HELD,SKIP,REQ wait
+    class LOG store
+```
+
+**What the diagram is really saying.** Every path that could move money passes
+through two independent judges — the gate, which knows about campaigns, and the
+policy engine, which knows about money and reads nothing an attacker can write.
+The model appears only as a dotted line, and only ever proposing. There is no
+arrow from the agent to a payout, and that absence is the design.
+
+---
 ## 1. Threat model
 
 The agent is **not** trusted. That is the founding assumption, and everything

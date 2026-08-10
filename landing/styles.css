@@ -692,3 +692,75 @@ nav[data-open="true"] .burger span:nth-child(3){transform:translateY(-8px) rotat
 @media(prefers-reduced-motion:reduce){
   nav .links,.burger span{transition:none}
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRODUCT AT THE FOLD
+
+   The earlier arrangement put the product frame at the bottom of the hero,
+   where all that showed above the fold was its chrome bar and the top
+   centimetre of a card. A sliver of a rectangle reads as a mis-scrolled page
+   rather than a designed one, so the frame was moved to its own section and
+   the hero became text with a scroll cue.
+
+   That solved the sliver and lost the point: the fold said what we do without
+   ever showing it. Three tilted, overlapping cards crop honestly — a
+   composition that continues past the edge looks intentional in a way a
+   bisected browser window never does.
+
+   Below 820px it does not render at all. On a phone the hero is already a
+   full screen of type, and a shrunken card fan under it would be decoration
+   competing with the one button that matters.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.fan{display:none}
+
+@media(min-width:821px){
+  .hero.stage{padding-bottom:0}
+  .fan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+       max-width:940px;margin:44px auto 0;padding-bottom:10px;
+       perspective:1400px;pointer-events:none}
+  .fc{border:1px solid var(--line-hi);border-radius:16px;background:var(--surface);
+      padding:16px 18px 15px;text-align:left;
+      box-shadow:0 30px 70px -34px rgba(21,19,16,.42),0 2px 6px rgba(21,19,16,.05)}
+  /* The outer two sit back and lower; the middle one comes forward. Rotation
+     on Y rather than Z, so the group reads as depth rather than as cards
+     scattered on a table. */
+  .fc.l{transform:rotateY(16deg) rotate(-3deg) translateY(24px) translateX(14px) scale(.94);
+        transform-origin:right center}
+  .fc.r{transform:rotateY(-16deg) rotate(3deg) translateY(24px) translateX(-14px) scale(.94);
+        transform-origin:left center}
+  .fc.c{transform:translateY(-6px);z-index:2;position:relative;
+        box-shadow:0 44px 90px -36px rgba(109,40,217,.42),0 3px 10px rgba(21,19,16,.07)}
+
+  .fc .tags{display:flex;gap:6px;margin-bottom:10px}
+  .fc h5{margin:0 0 9px;font-size:14px;font-weight:600;letter-spacing:-.012em;line-height:1.3}
+  .fc .amt{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+  .fc .amt b{font-family:var(--mono);font-size:14px;font-weight:600}
+  .fc .amt b em{font-style:normal;color:var(--muted);font-weight:400}
+  .fc .amt span{font-family:var(--mono);font-size:11px;color:var(--text-2)}
+  .fc .bar{display:block;height:4px;border-radius:99px;background:var(--surface-2);
+           overflow:hidden}
+  .fc .bar i{display:block;height:100%;background:var(--pop);border-radius:99px}
+  .fc .st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;
+          padding-top:11px;border-top:1px solid var(--line)}
+  .fc .st span{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;
+               letter-spacing:.06em;margin-bottom:2px}
+  .fc .st b{font-family:var(--mono);font-size:12px;font-weight:500}
+
+  /* One card carries the outcome, because the whole argument is that money
+     actually moves at the end of the hold. */
+  .fc .stamp{position:absolute;right:14px;bottom:-11px;font-family:var(--mono);font-size:10.5px;
+             font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+             padding:5px 11px;border-radius:99px;background:var(--ok);color:#fff;
+             box-shadow:0 8px 20px -8px rgba(15,123,79,.7)}
+}
+
+/* Short laptop screens: the fan is the first thing to give, because the
+   button has to stay above the fold and a picture does not. */
+@media(min-width:821px) and (max-height:760px){
+  .fan{max-width:780px;margin-top:26px}
+  .fc .st{display:none}
+}
+@media(min-width:821px) and (max-height:620px){
+  .fan{display:none}
+}

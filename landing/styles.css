@@ -485,3 +485,87 @@ nav[data-stuck="true"]{background:rgba(250,248,245,.82);backdrop-filter:blur(14p
 .d-refused{font-family:var(--sans);font-size:14px;font-weight:600;fill:var(--bad);
            text-anchor:start}
 text.d-left{text-anchor:start}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+
+   One ladder — 1024 / 820 / 640 / 430 — rather than the seven ad-hoc widths
+   this file had grown (700, 760, 780, 820, 900, 480). Scattered breakpoints
+   are why a layout can be correct at 1280 and broken at 480: nobody ever
+   checks the widths that were never named.
+
+   Backstop first. A single element bleeding past the viewport gives the
+   visitor a page they can scroll sideways into blank canvas, and it is not
+   obvious from inside the layout which element did it. `clip` contains that
+   without creating a scroll container, so `position:sticky` on the nav keeps
+   resolving against the viewport. It is a safety net, not a fix — every
+   known bleed below is fixed at its cause.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+html,body{overflow-x:clip}
+
+/* ── the nav, which was the real bug ──
+   `Start earning today` is 176px and must not wrap, and below ~510px the
+   brand, the link row and that button no longer fit on one line. The button
+   won, overflowing 118px past the right edge and taking the whole page's
+   scroll width with it. Links yield before the action does: what someone came
+   to do survives longer than what they might read. */
+nav .wrap{min-width:0}
+nav .links{min-width:0}
+
+@media(max-width:1024px){
+  .wrap{padding-inline:22px}
+  section{padding:76px 0}
+  .hero{padding:76px 0 68px}
+  .hero.page{padding:52px 0 60px}
+}
+
+@media(max-width:820px){
+  .steps,.split{grid-template-columns:1fr}
+  .foot{grid-template-columns:1fr 1fr;gap:34px}
+  .side{padding:28px 24px}
+  .step{padding:26px 24px}
+}
+
+@media(max-width:640px){
+  nav .links{display:none}          /* brand + action only */
+  nav .wrap{height:64px;gap:12px}
+  nav .brand{margin-right:auto}
+  .wrap{padding-inline:18px}
+  section{padding:56px 0}
+  .hero{padding:56px 0 48px}
+  .hero.page{padding:40px 0 44px}
+  .hero.stage{padding-top:clamp(24px,5vh,48px);padding-bottom:60px}
+  .row{gap:10px;margin:26px 0 12px}
+  .btn{font-size:16px;padding:15px 24px}
+  .fgrid{grid-template-columns:1fr 1fr}
+  .foot{grid-template-columns:1fr;gap:28px}
+  .foot .about{max-width:none}
+  .next{flex-direction:column;align-items:flex-start;gap:10px}
+  /* Long mono identifiers are the one thing that will not wrap on its own. */
+  td.mono,.mono{overflow-wrap:anywhere}
+  table{font-size:13.5px}
+  th,td{padding-block:10px}
+}
+
+@media(max-width:430px){
+  nav .cta{font-size:13.5px;padding:9px 15px}
+  /* margin-right stays auto — it is what holds the action against the right
+     edge once the link row is gone. Setting it to 0 here parked the button
+     against the wordmark with the whole right half of the bar empty. */
+  nav .brand{font-size:16px;margin-right:auto}
+  .wrap{padding-inline:16px}
+  section{padding:44px 0}
+  .btn{font-size:15.5px;padding:14px 20px;width:100%;text-align:center}
+  .row{width:100%}
+  .fgrid{grid-template-columns:1fr}
+  .foot-base{font-size:12px}
+  .num-cap{font-size:12px}
+  .badge{font-size:12.5px;padding:6px 12px 6px 7px}
+  .step .n{width:34px;height:34px;margin-bottom:16px}
+}
+
+/* Wide content scrolls inside its own box rather than widening the page.
+   Both already declare this; stated once more here so the rule is visible
+   next to everything else that governs narrow screens. */
+.term,.dia,.window{max-width:100%}

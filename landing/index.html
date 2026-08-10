@@ -32,13 +32,16 @@
 <main>
 
 <section class="hero stage" id="brands"><div class="wrap">
-  <div class="toggle" role="tablist" aria-label="Choose your side">
-    <button role="tab" id="t-creator" aria-controls="p-creator" aria-selected="true">For creators</button>
-    <button role="tab" id="t-brand" aria-controls="p-brand" aria-selected="false">For brands</button>
-    <span class="knob" aria-hidden="true"></span>
+  <!-- Links, not tabs. The header's "For brands" navigates and this said the
+       same words while doing something else — two controls with one label and
+       two behaviours is a bug however each half is implemented. The brand
+       argument has its own page; this is the way to it. -->
+  <div class="toggle" data-on="creator">
+    <a class="seg on" href="/" aria-current="page">For creators</a>
+    <a class="seg" href="/brands.html">For brands</a>
   </div>
 
-  <div id="p-creator" role="tabpanel" aria-labelledby="t-creator">
+  <div>
     <h1>Get paid for <span class="grad">real views</span></h1>
     <p class="lede">Make clips for brands. We wait a day, count the views that are still there,
       and pay you for those — straight to your wallet.</p>
@@ -49,22 +52,6 @@
     <p class="fine">No signup fee · no follower minimum · 0% cut of your earnings</p>
   </div>
 
-  <div id="p-brand" role="tabpanel" aria-labelledby="t-brand" hidden>
-    <h1>Only pay for <span class="grad">views that stayed</span></h1>
-    <p class="lede">Creators make clips for you. We wait a day before counting, so the views
-      somebody bought are gone before you are charged for them.</p>
-    <div class="row">
-      <a class="btn pop" href="/app">Launch a campaign →</a>
-      <a class="btn ghost" href="/architecture.html">Read the architecture</a>
-    </div>
-    <p class="fine">Hard budget ceiling · per-creator caps · never a cut of your spend</p>
-  </div>
-
-  <!-- Product at the fold. A tilted, overlapping group crops honestly: the
-       eye reads a composition continuing past the edge, where a flat browser
-       window cut through its chrome bar just reads as a page scrolled wrong.
-       aria-hidden because the same campaigns are listed as real text below;
-       this is the picture of them, not a second copy to read out. -->
   <div class="fan" aria-hidden="true">
     <div class="fc l">
       <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span></div>
@@ -402,7 +389,7 @@
       evaporate before settlement, so nobody buys them.</p>
     </div>
     <div>
-      <h4>Navigation</h4>
+      <h3 class="fcol">Navigation</h3>
       <ul>
         <li><a href="/">Creators</a></li>
         <li><a href="/brands.html">Brands</a></li>
@@ -410,7 +397,7 @@
       </ul>
     </div>
     <div>
-      <h4>Pages</h4>
+      <h3 class="fcol">Pages</h3>
       <ul>
         <li><a href="/architecture.html">Architecture</a></li>
         <li><a href="/security.html">Threat model</a></li>
@@ -419,7 +406,7 @@
       </ul>
     </div>
     <div>
-      <h4>Contact</h4>
+      <h3 class="fcol">Contact</h3>
       <ul>
         <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
         <li><a href="mailto:support@merlinclips.com">Support</a></li>
@@ -543,32 +530,6 @@
   }).catch(function () { /* fallback markup stands */ });
 })();
 
-(function () {
-  var tabs = [document.getElementById('t-creator'), document.getElementById('t-brand')];
-  var wrap = document.querySelector('.toggle');
-  var knob = wrap.querySelector('.knob');
-  function select(i) {
-    tabs.forEach(function (t, n) {
-      document.getElementById(t.getAttribute('aria-controls')).hidden = n !== i;
-      t.setAttribute('aria-selected', String(n === i));
-    });
-    wrap.dataset.on = i === 0 ? 'creator' : 'brand';
-    if (knob) { knob.style.left = tabs[i].offsetLeft + 'px'; knob.style.width = tabs[i].offsetWidth + 'px'; }
-  }
-  tabs.forEach(function (t, i) {
-    t.addEventListener('click', function () { select(i); });
-    t.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        e.preventDefault(); var n = i === 0 ? 1 : 0; tabs[n].focus(); select(n);
-      }
-    });
-  });
-  select(0);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { select(0); });
-  addEventListener('resize', function () {
-    select(tabs[1].getAttribute('aria-selected') === 'true' ? 1 : 0);
-  });
-})();
 </script>
 </body>
 </html>

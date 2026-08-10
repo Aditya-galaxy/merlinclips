@@ -23,6 +23,7 @@
 
 import { Decimal } from '../decimal';
 import { parsePostUrl } from './postref';
+import { eligible } from './eligibility';
 import { acceptSubmission, DEFAULT_SETTLEMENT_WINDOW_MS } from './terms';
 import { MIN_DWELL_HOURS } from './views';
 
@@ -47,6 +48,10 @@ export interface OpenCampaignInput {
   chain?: unknown;
   fundingWallet?: unknown;
   endsAt?: unknown;
+  /** Lowest standing accepted. Absent means open to anyone. */
+  readonly minStanding?: string;
+  /** Places held for creators with no record yet. Absent means computed. */
+  readonly reservedForUnproven?: number;
 }
 
 export type Refusal = { ok: false; error: string; field?: string };
@@ -86,6 +91,21 @@ export function openCampaign(
 
   const cpm = amount(input.cpmUsdc, 'cpmUsdc');
   if (!cpm.ok) return cpm;
+  const STANDINGS = new Set(['unproven', 'building', 'reliable', 'exceptional']);
+  const minStanding = typeof input.minStanding === 'string' ? input.minStanding : undefined;
+  if (minStanding && !STANDINGS.has(minStanding)) {
+    return bad(
+      'minStanding must be unproven, building, reliable or exceptional',
+      'minStanding',
+    );
+  }
+  const reserved = input.reservedForUnproven;
+  if (reserved !== undefined
+      && (typeof reserved !== 'number' || !Number.isFinite(reserved) || reserved < 0)) {
+    return bad('reservedForUnproven must be zero or a positive whole number',
+      'reservedForUnproven');
+  }
+
   const perCreator = amount(input.perCreatorCapUsdc ?? pool.value.toString(), 'perCreatorCapUsdc');
   if (!perCreator.ok) return perCreator;
   const minCpm = amount(input.minCpmUsdc ?? cpm.value.toString(), 'minCpmUsdc');
@@ -187,6 +207,8 @@ export function openCampaign(
       platforms,
       chain: chain as Campaign['chain'],
       fundingWallet,
+      minStanding: minStanding as Campaign['minStanding'],
+      reservedForUnproven: reserved,
       status: 'active',
       startsAt: now.toISOString(),
       endsAt: new Date(endsAtMs).toISOString(),
@@ -215,6 +237,17 @@ export interface SubmitInput {
  * Returns the creator id of the first submitter, or undefined. Injected rather
  * than looked up here so intake stays a pure function of its inputs.
  */
+/**
+ * What a creator has earned so far, and how many places on this campaign have
+ * already gone to creators without a record. Passed in rather than looked up
+ * here, so intake stays a pure function of its inputs — the same reason
+ * `ClaimLookup` is shaped this way.
+ */
+export type StandingLookup = (creatorId: string) => {
+  readonly standing: import('./standing').Standing;
+  readonly acceptedBelowFloor: number;
+};
+
 export type ClaimLookup = (
   campaignId: string,
   platform: Platform,
@@ -226,6 +259,7 @@ export function submitClip(
   input: SubmitInput,
   now: Date = new Date(),
   claimedBy?: ClaimLookup,
+  standingOf?: StandingLookup,
 ): Result<{ submission: Submission; creator: Creator }> {
   if (!campaign) return bad('unknown campaignId', 'campaignId');
 
@@ -272,6 +306,26 @@ export function submitClip(
       'url',
     );
   }
+  // A brand may ask for a standing floor. Checked after the claim rule, so a
+  // creator who is turned away for standing is told that, rather than being
+  // told nothing because an earlier check happened to fire first.
+  //
+  // The reservation is the whole reason this is safe to ship: standing is
+  // `unproven` until three clips have been judged, so a floor with no places
+  // held open would turn away everyone who has not been here before, and they
+  // would never get the three clips that let them in.
+  if (campaign.minStanding && standingOf) {
+    const record = standingOf(creatorId);
+    const verdict = eligible({
+      minStanding: campaign.minStanding,
+      reservedForUnproven: campaign.reservedForUnproven,
+      expectedSubmissions: undefined,
+      standing: record.standing,
+      acceptedBelowFloor: record.acceptedBelowFloor,
+    });
+    if (!verdict.admitted) return bad(verdict.reason, 'standing');
+  }
+
   const handle = typeof input.handle === 'string' ? input.handle.trim().slice(0, 64) : undefined;
 
   const accepted = acceptSubmission(

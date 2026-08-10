@@ -50,7 +50,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Properties, not examples</h2>
+  <div class="shead">
+    <span class="eyebrow">Properties</span>
+    <h2>Properties, not examples</h2>
+    <p>A property holds for every input, not for the ones we thought of.</p>
+  </div>
   <p>Each of the <a href="/security.html">twenty-one invariants</a> is stated as a property that must hold
   for <em>all</em> inputs, and a generator searches for a counterexample. When it finds one it
   shrinks it to the smallest failing case — the difference between “something broke” and “here is
@@ -67,7 +71,11 @@
 <hr />
 
 <section><div class="wrap">
-  <h2>Deterministic simulation</h2>
+  <div class="shead">
+    <span class="eyebrow">Simulation</span>
+    <h2>Deterministic simulation</h2>
+    <p>600,000 decisions across 372 simulated years, replayable from a seed.</p>
+  </div>
   <p>The discipline FoundationDB pioneered and TigerBeetle built a financial database on: control
   every source of non-determinism — clock, randomness, faults — so a run is a pure function of its
   seed. Then generate hostile histories by the thousand, assert the invariants after <em>every
@@ -93,7 +101,11 @@ violations     <span class="c-ok">none</span></div>
 <hr />
 
 <section><div class="wrap">
-  <h2>Three defects this found in itself</h2>
+  <div class="shead">
+    <span class="eyebrow">Findings</span>
+    <h2>Three defects this found in itself</h2>
+    <p>The interesting output of a test suite is what it caught, not that it passed.</p>
+  </div>
   <div class="list">
     <div class="item"><div class="k">Ledger</div><div>
       <h3>The payload was never hashed</h3>
@@ -129,7 +141,11 @@ violations     <span class="c-ok">none</span></div>
 <hr />
 
 <section><div class="wrap">
-  <h2>Honest limits</h2>
+  <div class="shead">
+    <span class="eyebrow">Limits</span>
+    <h2>Honest limits</h2>
+    <p>What is not covered, named — because a gap you can name is one somebody can hold you to.</p>
+  </div>
   <p>TigerBeetle runs two millennia of simulated time per day on a thousand cores. This runs 372
   years in 3.6 seconds on one. <strong>Same method, not the same coverage</strong>, and it would be
   dishonest to imply otherwise.</p>
@@ -138,7 +154,11 @@ violations     <span class="c-ok">none</span></div>
   glossed — because a gap you can name is one somebody can hold you to.</p>
 </div></section>
 
-<hr />
+
+<section class="band"><div class="wrap">
+  <a class="btn pop" href="/app">Start earning today &rarr;</a>
+  <span class="trust">Paid in USDC to your own wallet &middot; <b>0% cut of your earnings</b></span>
+</div></section>
 
 <section><div class="wrap">
   <div class="next">

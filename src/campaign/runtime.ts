@@ -43,10 +43,6 @@ import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
-import {
-  createCreatorWallet, walletConfig, type WalletsClient, type WalletConfig,
-} from './wallets';
-import { SdkPayoutExecutor, type WalletsTransferClient } from './sdk-executor';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -217,25 +213,9 @@ export class CampaignRuntime {
   private buildExecutor(): PayoutExecutor {
     const onMainnet = this.env.ALLOW_MAINNET === 'true';
 
-    // The SDK first, because it is the only one that can settle where the
-    // agent actually runs.
-    //
-    // The CLI executor authenticates with an email-OTP session that lives on
-    // the machine somebody logged in from and expires in about a month. A
-    // container has no such session and cannot obtain one without a person
-    // reading a code out of their inbox — so that path settled perfectly on a
-    // laptop and could never have settled in production. An agent that needs
-    // somebody to have logged in is not autonomous.
-    //
-    // The SDK takes an API key and an entity secret from the environment.
-    // Where CIRCLE_WALLET_ID names a developer-controlled wallet, that is what
-    // pays; the CLI stays as the local path so nothing that works today stops.
-    const sdkWalletId = this.env.CIRCLE_WALLET_ID?.trim();
-    const cfg = walletConfig(this.env as Record<string, string | undefined>);
-    if (sdkWalletId && cfg) {
-      return new LazySdkExecutor(sdkWalletId, cfg, this.env as Record<string, string | undefined>);
-    }
-
+    // Circle's Agent Stack, which is what this settles through: the wallet
+    // below is an agent wallet created by `circle wallet login`, and the CLI
+    // is the Agent Stack component that moves USDC out of it.
     const wallet = (
       onMainnet ? this.env.MAINNET_CAMPAIGN_WALLET : this.env.CAMPAIGN_WALLET
     )?.trim();
@@ -806,76 +786,6 @@ export class CampaignRuntime {
     });
   }
 
-  /**
-   * Give a signed-in creator a wallet, because they asked for one.
-   *
-   * On request, never by default. A creator who brings their own address keeps
-   * it and nothing about their custody changes; this exists for the one who
-   * has none and would otherwise stop at the submit form.
-   *
-   * The created address is linked to the account immediately, so it behaves
-   * exactly like an address they brought themselves — same first-use-wins
-   * claim, same profile aggregation.
-   */
-  async handleCreateWallet(request: Request): Promise<Response> {
-    const accountId = await this.accountFor(request);
-    if (!accountId) return Response.json({ error: 'not signed in' }, { status: 401 });
-
-    const cfg = walletConfig(this.env as Record<string, string | undefined>);
-    if (!cfg) {
-      return Response.json(
-        { available: false, error: 'wallet creation is not enabled on this deployment' },
-        { status: 503 },
-      );
-    }
-
-    // One wallet per account. A creator who already has one is told which,
-    // rather than being handed a second and left to guess which gets paid.
-    const existing = await walletsFor(this.blobs, accountId);
-    if (existing.length) {
-      return Response.json(
-        { created: false, address: existing[0], wallets: existing,
-          note: 'this account already has a wallet' },
-        { status: 200 },
-      );
-    }
-
-    const chain = (this.env.DEFAULT_CHAIN as never) ?? 'base-sepolia';
-    const client = await this.walletsClient(cfg);
-    const outcome = await createCreatorWallet(
-      client, chain, cfg.walletSetId,
-      async () => {
-        const set = await client?.createWalletSet({ name: 'merlinclips-creators' });
-        return set?.data?.walletSet?.id;
-      },
-    );
-
-    if (!outcome.ok) {
-      return Response.json({ created: false, error: outcome.reason }, { status: 502 });
-    }
-
-    await linkWallet(this.blobs, accountId, outcome.wallet.address);
-    return Response.json(
-      { created: true, address: outcome.wallet.address, chain: outcome.wallet.chain },
-      { status: 201 },
-    );
-  }
-
-  /** Loaded lazily so a deployment without the SDK configured never imports it. */
-  private walletsSdk?: WalletsClient;
-  private async walletsClient(cfg: { apiKey: string; entitySecret: string }) {
-    if (this.walletsSdk) return this.walletsSdk;
-    try {
-      const mod = await import('@circle-fin/developer-controlled-wallets');
-      this.walletsSdk = mod.initiateDeveloperControlledWalletsClient({
-        apiKey: cfg.apiKey, entitySecret: cfg.entitySecret,
-      }) as unknown as WalletsClient;
-      return this.walletsSdk;
-    } catch {
-      return undefined;
-    }
-  }
-
   async handleBrandEnquiry(request: Request): Promise<Response> {
     const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
     if (!this.rateLimiter.consume(clientIp)) {
@@ -1133,30 +1043,3 @@ export class CampaignRuntime {
   }
 }
 
-/**
- * Defers constructing the SDK client until the first payout.
- *
- * Building it at startup would make an unreachable Circle a boot failure, and
- * a service that will not start cannot even serve the pages explaining why.
- */
-class LazySdkExecutor implements PayoutExecutor {
-  private inner?: SdkPayoutExecutor;
-
-  constructor(
-    private readonly walletId: string,
-    private readonly cfg: WalletConfig,
-    private readonly env: Record<string, string | undefined>,
-  ) {}
-
-  async send(input: Parameters<PayoutExecutor['send']>[0]) {
-    if (!this.inner) {
-      const mod = await import('@circle-fin/developer-controlled-wallets');
-      const client = mod.initiateDeveloperControlledWalletsClient({
-        apiKey: this.cfg.apiKey, entitySecret: this.cfg.entitySecret,
-      }) as unknown as WalletsTransferClient;
-      this.inner = new SdkPayoutExecutor({ walletId: this.walletId, client, env: this.env,
-        dryRun: this.env.BROADCAST !== 'true' });
-    }
-    return this.inner.send(input);
-  }
-}

@@ -67,8 +67,8 @@ nav .cta:hover{background:#5B21B6;color:#fff;text-decoration:none}
 nav .brand{font-weight:700;font-size:17px;letter-spacing:-.01em;color:var(--text);
        text-decoration:none;display:flex;align-items:center;gap:9px;margin-right:26px}
 nav .brand:hover{text-decoration:none}
-nav .brand .dot{width:9px;height:9px;border-radius:50%;
-            background:linear-gradient(135deg,#C4B5FD,var(--pop));flex:none}
+nav .brand .dot{width:22px;height:22px;border-radius:6px;
+            background:url('/logo.svg') center/cover no-repeat;flex:none}
 nav a.l{font-size:15px;color:var(--text-2);text-decoration:none;font-weight:480}
 nav a.l:hover,nav a.l[aria-current="page"]{color:var(--text)}
 @media(max-width:700px){nav a.l.opt{display:none}}

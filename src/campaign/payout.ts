@@ -44,6 +44,15 @@
  */
 
 import { Decimal } from '../decimal';
+
+/**
+ * The smallest payout worth broadcasting.
+ *
+ * Below this the transaction costs a meaningful share of the payment itself,
+ * so sending it spends a brand's budget on fees rather than on views. Held
+ * amounts roll forward, so the floor delays a payment and never cancels one.
+ */
+export const MINIMUM_PAYOUT_USDC = new Decimal('0.25');
 import type { PaymentPolicyEngine } from '../policy';
 import type { PaymentDecision, PaymentIntent, PolicyControl } from '../schemas';
 import type { CampaignView } from './store';
@@ -59,7 +68,8 @@ export type PayoutControl =
   | 'dwell_unmet'
   | 'nothing_payable'
   | 'campaign_pool'
-  | 'per_creator_cap';
+  | 'per_creator_cap'
+  | 'below_minimum';
 
 /**
  * `held` and `no_op` are payout-specific and deliberately not folded into the
@@ -209,6 +219,30 @@ export class PayoutGate {
     }
 
     const withAmounts = { ...base, confirmedViews: confirmed, payableViews: payable, amountUsdc: amount };
+
+    // Too small to be worth sending, so it waits rather than going.
+    //
+    // At a dollar per thousand views, ten views is a cent and a hundred is a
+    // dime — amounts where the cost of moving the money is a large fraction of
+    // the money. Paying them out is not generosity, it is spending a brand's
+    // budget on transaction fees instead of on views.
+    //
+    // Held, never refused, and nothing is lost by waiting. Payouts are
+    // computed against a high-water mark of views already paid for, so an
+    // amount held today is simply included in the next one — the same clip
+    // comes back with more views and the payment covers the whole difference.
+    // A creator who never crosses the line still has the money owed to them
+    // recorded; they have not been paid it yet.
+    if (MINIMUM_PAYOUT_USDC.gt(amount)) {
+      return {
+        ...withAmounts,
+        disposition: 'held',
+        control: 'below_minimum',
+        reason:
+          `${amount} USDC is below the ${MINIMUM_PAYOUT_USDC} minimum worth sending — ` +
+          'it is not lost, it rolls into your next payment as more views confirm',
+      };
+    }
 
     const spent = this.view.spentOnCampaign(campaign.campaignId);
     if (spent.plus(amount).gt(campaign.poolUsdc)) {

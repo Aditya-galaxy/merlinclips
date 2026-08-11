@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your campaigns — Merlin Clips</title>
+<meta name="description" content="Budget, spend, creators and coverage for every campaign you are running." />
+<meta property="og:title" content="Launch a campaign" />
+<meta property="og:description" content="Talk directly with our team." />
+<link rel="canonical" href="https://merlinclips.com/brand.html" />
+<link rel="stylesheet" href="/styles.css" />
+<meta name="robots" content="noindex" />
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+  <div class="links" id="navlinks">
+    <a class="l" href="/brands.html">For brands</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/#agencies">Agencies</a>
+    <a class="l opt" href="/#contact">Contact</a>
+    <a class="l opt" href="/architecture.html">Architecture</a>
+  </div>
+  <a class="cta" href="/brands.html">For brands</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
+</div></nav>
+
+<main>
+
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>Brand</b> What your budget is doing</span></div>
+  <h1>Your <span class="grad">campaigns</span></h1>
+  <p class="lede" id="b-lede">Loading your campaigns…</p>
+</div></section>
+
+<section id="b-none" hidden><div class="wrap">
+  <div class="shead">
+    <span class="eyebrow">No account yet</span>
+    <h2>We have not set you up as a brand</h2>
+    <p id="b-none-say">Brand accounts are approved by a person rather than created on signup.</p>
+  </div>
+  <div class="row" style="justify-content:center">
+    <a class="btn pop" href="/launch.html">Tell us about your campaign &rarr;</a>
+  </div>
+</div></section>
+
+<section id="b-body" hidden><div class="wrap">
+  <div class="tiles">
+    <div class="tile"><span class="tlabel">Campaigns</span>
+      <b class="tnum" id="b-campaigns">—</b><span class="tsub">running or ended</span></div>
+    <div class="tile"><span class="tlabel">Spent</span>
+      <b class="tnum" id="b-spent">—</b><span class="tsub">on views that survived</span></div>
+    <div class="tile"><span class="tlabel">Creators</span>
+      <b class="tnum" id="b-creators">—</b><span class="tsub">who submitted clips</span></div>
+    <div class="tile"><span class="tlabel">Clips</span>
+      <b class="tnum" id="b-subs">—</b><span class="tsub">received in total</span></div>
+  </div>
+
+  <div class="list" id="b-list"></div>
+
+  <div class="note"><p>Read-only. Opening a campaign or changing a budget goes through us on
+    purpose &mdash; a dashboard that can move money is a dashboard worth attacking.
+    <a href="/launch.html">Ask for a change</a>.</p></div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="foot">
+    <div class="about">
+      <div class="mark"><span></span>Merlin Clips</div>
+      <p>Creator campaigns settled in USDC, per view that survived the hold. Bought views
+      evaporate before settlement, so nobody buys them.</p>
+    </div>
+    <div>
+      <h3 class="fcol">Navigation</h3>
+      <ul>
+        <li><a href="/">Creators</a></li>
+        <li><a href="/brands.html">Brands</a></li>
+        <li><a href="/signup.html">Create an account</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="fcol">Pages</h3>
+      <ul>
+        <li><a href="/architecture.html">Architecture</a></li>
+        <li><a href="/security.html">Threat model</a></li>
+        <li><a href="/testing.html">Testing</a></li>
+        <li><a href="/api.html">API reference</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="fcol">Contact</h3>
+      <ul>
+        <li><a href="mailto:hello@merlinclips.com">hello@merlinclips.com</a></li>
+        <li><a href="mailto:support@merlinclips.com">Support</a></li>
+        <li><a href="mailto:security@merlinclips.com">Report a vulnerability</a></li>
+        <li><a href="/terms.html">Terms of Service</a></li>
+        <li><a href="/compliance.html">Compliance</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="fmark" aria-hidden="true">Merlin Clips</p>
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips &middot; all rights reserved</span>
+    <span>Paid per view that survived 24 hours &middot; never a cut of your earnings</span>
+  </div>
+</div></footer>
+
+</main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+
+  burger.addEventListener('click', function () {
+    setOpen(nav.dataset.open !== 'true');
+  });
+  /* An in-page anchor does not reload, so without this the panel stays open
+     over the section it just scrolled to. */
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
+})();
+</script>
+<script>
+/* Everything here comes from the session. There is no brand id in the URL to
+   change, because a dashboard you can point at another company is a dashboard
+   that shows you their spend. */
+(function () {
+  var money = function (n) {
+    return '$' + Number(n).toLocaleString('en-US',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var esc = function (t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var COVER = {
+    covered: ['Funded', 'g'], partial: ['Part funded', 'n'], empty: ['Unfunded', 'n'],
+    unknown: ['Not checked', 'n'], no_wallet: ['No wallet named', 'n']
+  };
+
+  fetch('/api/brand/dashboard', { credentials: 'same-origin' })
+    .then(function (r) { return r.status === 401 ? null : r.json(); })
+    .then(function (d) {
+      var lede = document.getElementById('b-lede');
+      if (!d) {
+        lede.innerHTML = 'Sign in to see your campaigns. <a href="/signup.html">Sign in</a>.';
+        return;
+      }
+      if (!d.brand) {
+        lede.textContent = 'Signed in, but not as a brand.';
+        document.getElementById('b-none-say').textContent = d.next || '';
+        document.getElementById('b-none').hidden = false;
+        return;
+      }
+
+      lede.textContent = d.brand.company;
+      document.getElementById('b-campaigns').textContent = d.totals.campaigns;
+      document.getElementById('b-spent').textContent = money(d.totals.spentUsdc);
+      document.getElementById('b-creators').textContent = d.totals.creators;
+      document.getElementById('b-subs').textContent = d.totals.submissions;
+
+      var list = document.getElementById('b-list');
+      if (!d.campaigns.length) {
+        list.innerHTML = '<div class="item"><div class="k">Nothing yet</div><div>'
+          + '<h3>No campaigns running</h3><p>When we open one for you it appears here, '
+          + 'with what it has spent and what is left.</p></div></div>';
+      } else {
+        list.innerHTML = d.campaigns.map(function (c) {
+          var cov = COVER[(c.funding && c.funding.coverage) || 'unknown'] || COVER.unknown;
+          var pct = Math.min(100, Math.round(
+            (Number(c.spentUsdc) / Math.max(Number(c.poolUsdc), 1)) * 100));
+          return '<div class="item"><div class="k">' + esc(c.status) + '</div><div>'
+            + '<h3>' + esc(c.brief.slice(0, 90)) + '</h3>'
+            + '<p><b>' + money(c.spentUsdc) + '</b> of ' + money(c.poolUsdc)
+            + ' &middot; ' + money(c.remainingUsdc) + ' left'
+            + ' &middot; ' + esc(c.cpmUsdc) + ' per 1k views'
+            + ' &middot; ' + esc(c.dwellHours) + 'h hold</p>'
+            + '<span class="bar"><i style="width:' + pct + '%"></i></span>'
+            + '<p class="fine">' + esc(c.creators) + ' creators &middot; '
+            + esc(c.submissions) + ' clips &middot; ' + esc(c.payouts) + ' paid &middot; '
+            + Number(c.viewsPaid).toLocaleString('en-US') + ' views paid for</p>'
+            + '<p class="fine"><span class="wtag ' + cov[1] + '">' + cov[0] + '</span> '
+            + esc((c.funding && c.funding.summary) || '') + '</p>'
+            + '</div></div>';
+        }).join('');
+      }
+      document.getElementById('b-body').hidden = false;
+    })
+    .catch(function () {
+      document.getElementById('b-lede').textContent =
+        'Could not load your campaigns just now. Try again shortly.';
+    });
+})();
+</script>
+</body>
+</html>

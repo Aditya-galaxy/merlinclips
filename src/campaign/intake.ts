@@ -48,6 +48,8 @@ export interface OpenCampaignInput {
   chain?: unknown;
   fundingWallet?: unknown;
   endsAt?: unknown;
+  /** The brand this campaign belongs to. */
+  readonly ownerId?: string;
   /** Lowest standing accepted. Absent means open to anyone. */
   readonly minStanding?: string;
   /** Places held for creators with no record yet. Absent means computed. */
@@ -207,6 +209,7 @@ export function openCampaign(
       platforms,
       chain: chain as Campaign['chain'],
       fundingWallet,
+      ownerId: typeof input.ownerId === 'string' ? input.ownerId.trim() : undefined,
       minStanding: minStanding as Campaign['minStanding'],
       reservedForUnproven: reserved,
       status: 'active',

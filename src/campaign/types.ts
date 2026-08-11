@@ -61,6 +61,15 @@ export interface Campaign {
    * which is the default and stays the default — a floor is a thing a brand
    * asks for, not a thing we impose on their behalf.
    */
+  /**
+   * The brand this campaign belongs to.
+   *
+   * Optional so campaigns created before brand accounts existed keep loading.
+   * A campaign without one appears on no brand's dashboard, which is the
+   * honest outcome — it belongs to whoever holds the operator secret, and
+   * that is not a brand.
+   */
+  readonly ownerId?: string;
   readonly minStanding?: Standing;
   /**
    * Places kept open for creators who have not proved anything yet.

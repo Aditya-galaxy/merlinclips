@@ -12,7 +12,7 @@
  */
 
 import { Decimal } from '../decimal';
-import type { Campaign, Creator, Payout, Snapshot, Submission, Verdict } from './types';
+import type { Campaign, Creator, CreatorAccount, BrandProfile, LinkedWallet, Payout, Snapshot, Submission, Verdict } from './types';
 
 /** The narrow, read-only surface the gate depends on. */
 export interface CampaignView {
@@ -32,9 +32,27 @@ export class CampaignStore implements CampaignView {
   private readonly campaigns = new Map<string, Campaign>();
   private readonly submissions = new Map<string, Submission>();
   private readonly creators = new Map<string, Creator>();
+  private readonly accounts = new Map<string, CreatorAccount>();
+  private readonly brands = new Map<string, BrandProfile>();
   private readonly verdicts = new Map<string, Verdict[]>();
   private readonly snaps = new Map<string, Snapshot[]>();
   private readonly payouts: Payout[] = [];
+
+  putCreatorAccount(account: CreatorAccount): void {
+    this.accounts.set(account.accountId, account);
+  }
+
+  getCreatorAccount(accountId: string): CreatorAccount | undefined {
+    return this.accounts.get(accountId);
+  }
+
+  putBrandProfile(brand: BrandProfile): void {
+    this.brands.set(brand.brandId, brand);
+  }
+
+  getBrandProfile(brandId: string): BrandProfile | undefined {
+    return this.brands.get(brandId);
+  }
 
   putCampaign(campaign: Campaign): void {
     this.campaigns.set(campaign.campaignId, campaign);

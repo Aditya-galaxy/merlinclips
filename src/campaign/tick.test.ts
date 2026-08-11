@@ -268,13 +268,14 @@ describe('the investigator is consulted, and can only delay', () => {
     // pass before settlement, not merely be recorded next to a payout that
     // still went out.
     const { store, gate } = world(['a']);
+    store.addSnapshot({ submissionId: 'a', views: 2_000n, fetchedAt: '2026-08-03T12:00:00.000Z', source: 'youtube' });
     const { sent, executor } = spyExecutor();
     const inv = investigatorSaying('hold', ['count fell 600 views']);
 
     const result = await runTick(
       // The oracle reports fewer views than the aged snapshot: the platform
       // scrubbed some. That is what makes the velocity worth investigating.
-      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: inv } },
+      { store, gate, oracle: oracleReturning(1400n), executor, agent: { investigator: inv } },
       { agentId: 'agent', now: NOW },
     );
 
@@ -288,11 +289,12 @@ describe('the investigator is consulted, and can only delay', () => {
 
   test('a clear finding pays exactly as it would have without the agent', async () => {
     const { store, gate } = world(['a']);
+    store.addSnapshot({ submissionId: 'a', views: 2_000n, fetchedAt: '2026-08-03T12:00:00.000Z', source: 'youtube' });
     const { sent, executor } = spyExecutor();
     const inv = investigatorSaying('clear');
 
     const result = await runTick(
-      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: inv } },
+      { store, gate, oracle: oracleReturning(1400n), executor, agent: { investigator: inv } },
       { agentId: 'agent', now: NOW },
     );
     expect(inv.calls).toBe(1);
@@ -302,9 +304,10 @@ describe('the investigator is consulted, and can only delay', () => {
 
   test('watch pays too — it is a note, not a brake', async () => {
     const { store, gate } = world(['a']);
+    store.addSnapshot({ submissionId: 'a', views: 2_000n, fetchedAt: '2026-08-03T12:00:00.000Z', source: 'youtube' });
     const { sent, executor } = spyExecutor();
     const result = await runTick(
-      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: investigatorSaying('watch') } },
+      { store, gate, oracle: oracleReturning(1400n), executor, agent: { investigator: investigatorSaying('watch') } },
       { agentId: 'agent', now: NOW },
     );
     expect(sent).toEqual(['a']);
@@ -329,10 +332,11 @@ describe('the investigator is consulted, and can only delay', () => {
     // outage in the judgment layer must not become a freeze on everyone's
     // money — it is recorded as an error and the pass continues.
     const { store, gate } = world(['a']);
+    store.addSnapshot({ submissionId: 'a', views: 2_000n, fetchedAt: '2026-08-04T00:00:00.000Z', source: 'youtube' });
     const { sent, executor } = spyExecutor();
     const result = await runTick(
       {
-        store, gate, oracle: oracleReturning(400n), executor,
+        store, gate, oracle: oracleReturning(1400n), executor,
         agent: { investigator: { async investigate() { throw new Error('502 from the model'); } } },
       },
       { agentId: 'agent', now: NOW },

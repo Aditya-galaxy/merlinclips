@@ -233,14 +233,18 @@ export class PayoutGate {
     // comes back with more views and the payment covers the whole difference.
     // A creator who never crosses the line still has the money owed to them
     // recorded; they have not been paid it yet.
-    if (MINIMUM_PAYOUT_USDC.gt(amount)) {
+    // Merlin Clips Minimum Rule: 1,000 confirmed views minimum required
+    const MIN_SETTLEMENT_VIEWS = 1000n;
+
+    if (MINIMUM_PAYOUT_USDC.gt(amount) || confirmed < MIN_SETTLEMENT_VIEWS || payable < MIN_SETTLEMENT_VIEWS) {
       return {
         ...withAmounts,
         disposition: 'held',
         control: 'below_minimum',
         reason:
-          `${amount} USDC is below the ${MINIMUM_PAYOUT_USDC} minimum worth sending — ` +
-          'it is not lost, it rolls into your next payment as more views confirm',
+          confirmed < MIN_SETTLEMENT_VIEWS
+            ? `1,000 confirmed views minimum required before settlement triggers — micro-views accumulate until crossing 1,000 confirmed views`
+            : `${amount} USDC is below the ${MINIMUM_PAYOUT_USDC} minimum worth sending — it is not lost, it rolls into your next payment as more views confirm`,
       };
     }
 

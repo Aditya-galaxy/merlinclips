@@ -33,6 +33,7 @@ import { apply as applyEvent } from './eventlog';
 import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
+import { webhookFromEnv } from '../telemetry/webhooks';
 import { openCampaign, submitClip } from './intake';
 import { standingFor, type Standing } from './standing';
 import { SESSION_COOKIE as SESSION_COOKIE_NAME, readCookie as readSessionCookie,
@@ -314,6 +315,12 @@ export class CampaignRuntime {
     });
     if (!lease.acquired) {
       this.lastTick = skippedTick(at, lease.reason ?? 'lease not acquired');
+      webhookFromEnv(this.env).alert({
+        event: 'lease_contention',
+        title: 'Tick Pass Skipped (Lease Contention)',
+        message: lease.reason ?? 'Another instance holds the tick lease lock.',
+        details: { holder: this.env.AGENT_ID ?? 'campaign-agent', windowMs: this.leaseWindowMs },
+      });
       return this.lastTick;
     }
 
@@ -331,6 +338,34 @@ export class CampaignRuntime {
       { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
     );
     await this.rememberLastTick(this.lastTick);
+
+    // Check for payout failures or depleted campaigns and alert
+    const notifier = webhookFromEnv(this.env);
+    if (notifier.isConfigured) {
+      for (const d of this.lastTick.decisions) {
+        if (d.disposition === 'blocked' && d.reason.includes('failed')) {
+          notifier.alert({
+            event: 'payout_failed',
+            title: 'Payout Execution Failed',
+            message: `Submission ${d.submissionId} failed settlement: ${d.reason}`,
+            details: { submissionId: d.submissionId, campaignId: d.campaignId, reason: d.reason },
+          });
+        }
+      }
+
+      for (const c of this.store.exportState().campaigns) {
+        const remaining = c.poolUsdc.minus(this.store.spentOnCampaign(c.campaignId));
+        if (remaining.micro <= 0n) {
+          notifier.alert({
+            event: 'campaign_depleted',
+            title: 'Campaign Budget Depleted',
+            message: `Campaign ${c.campaignId} ("${c.brief.slice(0, 40)}...") budget is fully exhausted.`,
+            details: { campaignId: c.campaignId, poolUsdc: c.poolUsdc.toString() },
+          });
+        }
+      }
+    }
+
     return this.lastTick;
   }
 

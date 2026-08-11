@@ -330,6 +330,7 @@ export function submitClip(
   }
 
   const handle = typeof input.handle === 'string' ? input.handle.trim().slice(0, 64) : undefined;
+  const verificationCode = `MC-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
 
   const accepted = acceptSubmission(
     campaign,
@@ -344,10 +345,15 @@ export function submitClip(
   );
   if (!accepted.accepted) return bad(accepted.detail, 'campaignId');
 
+  const submissionWithCode: Submission = {
+    ...accepted.submission,
+    verificationCode,
+  };
+
   return {
     ok: true,
     value: {
-      submission: accepted.submission,
+      submission: submissionWithCode,
       creator: {
         creatorId,
         payoutAddress: address,

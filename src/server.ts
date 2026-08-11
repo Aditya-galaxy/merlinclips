@@ -271,7 +271,6 @@ const server = Bun.serve({
       return json({
         signedIn: !!session,
         available: !!(OAUTH && SESSION_SECRET),
-        walletCreation: !!(Bun.env.CIRCLE_API_KEY?.trim() && Bun.env.ENTITY_SECRET?.trim()),
         creatorId: session?.creatorId,
         name: session?.name,
         email: session?.email,
@@ -290,10 +289,6 @@ const server = Bun.serve({
     // an intention to pay.
     // Open on purpose: a brand must be able to reach us without credentials.
     // Everything one account has earned, across every wallet it has used.
-    // A creator who has no wallet can ask for one. Opt-in, never automatic.
-    if (url.pathname === '/api/me/wallet' && request.method === 'POST') {
-      return campaigns.handleCreateWallet(request);
-    }
 
     if (url.pathname === '/api/me/profile') {
       return campaigns.handleProfile(request);

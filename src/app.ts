@@ -86,6 +86,10 @@ a:hover{text-decoration:underline}
 .meter i{display:block;height:100%;background:var(--settled);border-radius:99px}
 #dwallets{font-family:var(--num);font-size:12.5px;color:var(--ink-3);
           overflow-wrap:anywhere}
+.linky{background:none;border:0;padding:0;font:inherit;color:var(--violet);
+       text-decoration:underline;cursor:pointer}
+.linky:hover{color:var(--ink)}
+.linky[disabled]{color:var(--ink-3);cursor:default;text-decoration:none}
 .signin-note{margin:0 0 20px;padding:13px 16px;border-radius:11px;
              border:1px solid var(--line-2);background:var(--refused-wash);
              color:var(--refused);font-size:14.5px}
@@ -398,6 +402,15 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
           <label for="addr">Payout wallet</label>
           <input id="addr" placeholder="0x…" spellcheck="false" />
           <p class="hint">Paid directly here. We never hold your balance.</p>
+          <!-- Offered, not imposed. A creator who brings their own address
+               never sees this; one who has none would otherwise stop at this
+               field, which is the whole reason it exists. -->
+          <p class="hint" id="mkwallet" hidden>
+            No wallet yet? <button type="button" class="linky" id="mkwalletgo">Create one for
+            me</button> — we hold the keys to that one, and you can move the money out whenever
+            you like.
+          </p>
+          <p class="hint" id="mkwalletsaid" hidden></p>
         </div>
         <button class="go" id="go">Submit &amp; start earning</button>
         <div id="said"></div>
@@ -763,6 +776,54 @@ function renderEntities(p) {
   links.forEach(function (a) {
     var el = document.getElementById(a.dataset.sec);
     if (el) seen.observe(el);
+  });
+})();
+
+/* Wallet creation, if this deployment has it. The offer only appears for a
+   signed-in creator who has none — showing it to somebody who already has a
+   wallet would be inviting them to acquire a second one they did not need. */
+(function () {
+  var offer = document.getElementById('mkwallet');
+  var go = document.getElementById('mkwalletgo');
+  var said = document.getElementById('mkwalletsaid');
+  var addr = document.getElementById('addr');
+  if (!offer || !go) return;
+
+  Promise.all([
+    fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+    fetch('/api/me/profile', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+  ]).then(function (both) {
+    var me = both[0], profile = both[1];
+    if (!me.signedIn || !me.walletCreation) return;
+    if (profile && profile.wallets && profile.wallets.length) return;
+    offer.hidden = false;
+  }).catch(function () { /* leave the offer hidden */ });
+
+  go.addEventListener('click', function () {
+    go.disabled = true;
+    go.textContent = 'Creating…';
+    fetch('/api/me/wallet', { method: 'POST', credentials: 'same-origin' })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.d.address) {
+          said.textContent = res.d.error || 'Could not create a wallet just now.';
+          said.hidden = false;
+          go.disabled = false;
+          go.textContent = 'Create one for me';
+          return;
+        }
+        addr.value = res.d.address;
+        offer.hidden = true;
+        said.textContent = 'Wallet created and filled in above. It is yours to move from.';
+        said.hidden = false;
+      })
+      .catch(function () {
+        said.textContent = 'Could not create a wallet just now.';
+        said.hidden = false;
+        go.disabled = false;
+        go.textContent = 'Create one for me';
+      });
   });
 })();
 </script>

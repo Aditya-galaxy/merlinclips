@@ -43,6 +43,9 @@ import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
+import {
+  createCreatorWallet, walletConfig, type WalletsClient,
+} from './wallets';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -774,6 +777,76 @@ export class CampaignRuntime {
         submissions: campaigns.reduce((a, c) => a + c.submissions, 0),
       },
     });
+  }
+
+  /**
+   * Give a signed-in creator a wallet, because they asked for one.
+   *
+   * On request, never by default. A creator who brings their own address keeps
+   * it and nothing about their custody changes; this exists for the one who
+   * has none and would otherwise stop at the submit form.
+   *
+   * The created address is linked to the account immediately, so it behaves
+   * exactly like an address they brought themselves — same first-use-wins
+   * claim, same profile aggregation.
+   */
+  async handleCreateWallet(request: Request): Promise<Response> {
+    const accountId = await this.accountFor(request);
+    if (!accountId) return Response.json({ error: 'not signed in' }, { status: 401 });
+
+    const cfg = walletConfig(this.env as Record<string, string | undefined>);
+    if (!cfg) {
+      return Response.json(
+        { available: false, error: 'wallet creation is not enabled on this deployment' },
+        { status: 503 },
+      );
+    }
+
+    // One wallet per account. A creator who already has one is told which,
+    // rather than being handed a second and left to guess which gets paid.
+    const existing = await walletsFor(this.blobs, accountId);
+    if (existing.length) {
+      return Response.json(
+        { created: false, address: existing[0], wallets: existing,
+          note: 'this account already has a wallet' },
+        { status: 200 },
+      );
+    }
+
+    const chain = (this.env.DEFAULT_CHAIN as never) ?? 'base-sepolia';
+    const client = await this.walletsClient(cfg);
+    const outcome = await createCreatorWallet(
+      client, chain, cfg.walletSetId,
+      async () => {
+        const set = await client?.createWalletSet({ name: 'merlinclips-creators' });
+        return set?.data?.walletSet?.id;
+      },
+    );
+
+    if (!outcome.ok) {
+      return Response.json({ created: false, error: outcome.reason }, { status: 502 });
+    }
+
+    await linkWallet(this.blobs, accountId, outcome.wallet.address);
+    return Response.json(
+      { created: true, address: outcome.wallet.address, chain: outcome.wallet.chain },
+      { status: 201 },
+    );
+  }
+
+  /** Loaded lazily so a deployment without the SDK configured never imports it. */
+  private walletsSdk?: WalletsClient;
+  private async walletsClient(cfg: { apiKey: string; entitySecret: string }) {
+    if (this.walletsSdk) return this.walletsSdk;
+    try {
+      const mod = await import('@circle-fin/developer-controlled-wallets');
+      this.walletsSdk = mod.initiateDeveloperControlledWalletsClient({
+        apiKey: cfg.apiKey, entitySecret: cfg.entitySecret,
+      }) as unknown as WalletsClient;
+      return this.walletsSdk;
+    } catch {
+      return undefined;
+    }
   }
 
   async handleBrandEnquiry(request: Request): Promise<Response> {

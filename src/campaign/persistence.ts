@@ -192,6 +192,17 @@ export class FileBlobStore implements BlobStore {
   async list(prefix: string): Promise<string[]> {
     const glob = new Bun.Glob('*');
     const found: string[] = [];
+    // A directory that does not exist yet holds nothing — it is not an error.
+    // Scanning a missing directory throws ENOENT, and because `list` is what
+    // the event log replays through, that threw on every route of a fresh
+    // deployment until the first write happened to create the directory. An
+    // empty store and an unreadable one are different facts, but "no writes
+    // yet" is the first one.
+    try {
+      await Array.fromAsync(glob.scan({ cwd: this.directory, onlyFiles: true }));
+    } catch {
+      return [];
+    }
     for await (const name of glob.scan({ cwd: this.directory, onlyFiles: true })) {
       let key: string;
       try {

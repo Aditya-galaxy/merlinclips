@@ -35,10 +35,13 @@ import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { openCampaign, submitClip } from './intake';
 import { standingFor, type Standing } from './standing';
+import { SESSION_COOKIE as SESSION_COOKIE_NAME, readCookie as readSessionCookie,
+  verify as verifySession } from '../auth/session';
 import { fundingFor, type BalanceReader } from './funding';
 import { RpcBalanceReader } from './balances';
 import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
+import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -569,6 +572,81 @@ export class CampaignRuntime {
     return { standing, acceptedBelowFloor: below.size };
   }
 
+  /** The signed-in account, or undefined. Never trusted from the body. */
+  private async accountFor(request: Request): Promise<string | undefined> {
+    const secret = this.env.SESSION_SECRET?.trim();
+    if (!secret) return undefined;
+    const session = await verifySession(
+      readSessionCookie(request.headers.get('cookie'), SESSION_COOKIE_NAME), secret,
+    );
+    return session?.creatorId;
+  }
+
+  /**
+   * Everything an account has earned, across every wallet it has used.
+   *
+   * Aggregated on read rather than kept as a stored summary. A stored total is
+   * a number that can disagree with the payouts it claims to add up, and the
+   * payouts are the record a creator would dispute against.
+   */
+  async handleProfile(request: Request): Promise<Response> {
+    const accountId = await this.accountFor(request);
+    if (!accountId) {
+      return Response.json({ error: 'not signed in' }, { status: 401 });
+    }
+    await this.ready();
+
+    const wallets = await walletsFor(this.blobs, accountId);
+    const ids = new Set(creatorIdsFor(wallets));
+    const state = this.store.exportState();
+    const mine = state.submissions.filter((x) => ids.has(x.creatorId));
+
+    let earnedMicro = 0n;
+    let viewsPaid = 0n;
+    const payouts = [];
+    for (const p of state.payouts) {
+      if (!ids.has(p.creatorId)) continue;
+      earnedMicro += p.amountUsdc.micro;
+      viewsPaid += p.viewsPaidTo;
+      payouts.push({
+        submissionId: p.submissionId,
+        campaignId: p.campaignId,
+        amountUsdc: p.amountUsdc.toString(),
+        viewsPaidTo: p.viewsPaidTo.toString(),
+        settledAt: p.at,
+        txHash: p.txHash,
+      });
+    }
+
+    const record = standingFor(accountId, mine, this.store);
+
+    return Response.json({
+      accountId,
+      wallets,
+      standing: {
+        level: record.standing,
+        survivalRate: record.survivalRate,
+        clipsJudged: record.judged,
+        says: record.summary,
+      },
+      totals: {
+        earnedUsdc: (Number(earnedMicro) / 1_000_000).toFixed(6),
+        viewsPaid: viewsPaid.toString(),
+        submissions: mine.length,
+        payouts: payouts.length,
+      },
+      submissions: mine.map((x) => ({
+        submissionId: x.submissionId,
+        campaignId: x.campaignId,
+        url: x.url,
+        submittedAt: x.submittedAt,
+        cpmUsdc: x.acceptedTerms.cpmUsdc.toString(),
+        dwellHours: Math.round(x.acceptedTerms.dwellMs / 3_600_000),
+      })),
+      payouts,
+    });
+  }
+
   async handleBrandEnquiry(request: Request): Promise<Response> {
     const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
     if (!this.rateLimiter.consume(clientIp)) {
@@ -642,6 +720,8 @@ export class CampaignRuntime {
   async handleSubmit(request: Request): Promise<Response> {
     await this.ready();
 
+    const accountId = await this.accountFor(request);
+
     const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
     if (!this.rateLimiter.consume(clientIp)) {
       telemetry.recordHttpRequest('/api/submissions', 429);
@@ -664,6 +744,15 @@ export class CampaignRuntime {
       }
 
       const { submission, creator } = result.value;
+
+      // Write down that this wallet belongs to the signed-in account, so the
+      // account's profile can find work filed under it. Best effort: a
+      // creator is paid to an address, and a failure to record the link does
+      // not change the address.
+      if (accountId) {
+        await linkWallet(this.blobs, accountId, creator.payoutAddress);
+      }
+
       await this.record({ type: 'creator_upserted', creator });
       const isNew = await this.record({ type: 'submission_accepted', submission });
 

@@ -21,6 +21,7 @@ import {
   encodeState,
   loadInto,
   saveFrom,
+  FileBlobStore,
 } from './persistence';
 import type { Campaign } from './types';
 
@@ -229,5 +230,23 @@ describe('Cloud Storage adapter', () => {
     await gcs.get('b');
     await gcs.put('c', '{}');
     expect(tokenCalls).toBe(1);
+  });
+});
+
+describe('a store whose directory does not exist yet', () => {
+  // This threw ENOENT on every route of a fresh deployment, because `list` is
+  // what the event log replays through and nothing had created the directory.
+  test('lists nothing rather than throwing', async () => {
+    const store = new FileBlobStore(`/tmp/never-created-${crypto.randomUUID()}`);
+    expect(await store.list('')).toEqual([]);
+    expect(await store.list('anything/')).toEqual([]);
+  });
+
+  test('still works once something is written', async () => {
+    const dir = `/tmp/created-on-write-${crypto.randomUUID()}`;
+    const store = new FileBlobStore(dir);
+    expect(await store.list('')).toEqual([]);
+    await store.put('a/b.json', '{}');
+    expect(await store.list('a/')).toEqual(['a/b.json']);
   });
 });

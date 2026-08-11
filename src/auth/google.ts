@@ -9,7 +9,7 @@
  * supposed to bound one participant bounds nothing.
  *
  * Binding a creator to a Google account raises that cost. It does not
- * eliminate it — Google accounts are also cheap, and anyone claiming
+ * eliminate it — Google accounts are also easy to get, and anyone claiming
  * otherwise is selling something. What it buys is that standing accrues to a
  * person across their wallets rather than resetting with each new address,
  * and that the per-creator cap has something durable to attach to.

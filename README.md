@@ -123,7 +123,7 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 |---|---|
 | **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 542 tests, typecheck clean |
 | **Multi-Provider Executor (Circle SDK & CLI)** | **Done** — Uses Circle Developer Controlled Wallets REST API to eliminate 24d session token expiry in Cloud Run, with CLI fallback |
-| **Batched YouTube Oracle (98% Quota Savings)** | **Done** — Groups up to 50 video IDs per single request (`videos.list?id=id1,id2...`) |
+| **Multi-Platform View Oracles** | **Done** — YouTube Data API (50-video batch), Circle Agent Marketplace for X (x402), Apify Adapter for Instagram Reels |
 | **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
 | **Account to Wallet Linkage & Brand Ownership** | **Done** — `CreatorAccount` links multiple EVM wallets; `Campaign` owned by verified `BrandProfile` |
 | **Slack & Discord Webhook Alerts** | **Done** — `WebhookNotifier` dispatches non-blocking alerts for depleted pools, failed payouts, and lease contention |
@@ -131,7 +131,7 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
 | **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet `0x0003a59858f44451be2a5b486ee612b4139700f0` (5.763 USDC) |
-| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00048-ct8` live with 100% traffic |
+| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00053-fh4` live on Base Mainnet |
 | **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
 
 ```bash

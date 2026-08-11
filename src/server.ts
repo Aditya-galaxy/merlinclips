@@ -291,6 +291,15 @@ const server = Bun.serve({
       return campaigns.handleProfile(request);
     }
 
+    // Operator-gated: approving a brand is the decision manual approval exists for.
+    if (url.pathname === '/api/brands' && request.method === 'POST') {
+      return campaigns.handleApproveBrand(request);
+    }
+    // Read-only, scoped to the signed-in brand.
+    if (url.pathname === '/api/brand/dashboard') {
+      return campaigns.handleBrandDashboard(request);
+    }
+
     if (url.pathname === '/api/brand-enquiry' && request.method === 'POST') {
       return campaigns.handleBrandEnquiry(request);
     }

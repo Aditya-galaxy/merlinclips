@@ -264,6 +264,34 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 .erow .empty{font-size:14.5px;color:var(--ink-3)}
 @media(max-width:520px){.erow dl{grid-template-columns:1fr;gap:2px 0}
                         .erow dd{margin-bottom:8px}}
+
+/* ── the signed-in person, in the rail ── */
+.rprofile{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;
+          border-radius:10px;background:rgba(255,255,255,.1);min-width:0}
+.ravatar{border-radius:50%;flex:none;display:block}
+.rinitial{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+          background:#fff;color:#5B21B6;font-weight:700;font-size:14px}
+.rid{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.rid b{font-size:13.5px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;
+       white-space:nowrap}
+.rid em{font-style:normal;font-size:11.5px;color:#C4B5FD;overflow:hidden;
+        text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:820px){.rid{display:none}.rprofile{padding:6px;margin:0}}
+
+/* ── dashboard cards ──
+   The main area was a marketing page with a form in it: a headline, a
+   paragraph of persuasion, then the tool. Somebody signed in has already been
+   persuaded. Cards, headed by what they are, holding the thing itself. */
+.card{border:1px solid var(--line);border-radius:16px;background:var(--card);
+      padding:20px 22px;margin-bottom:16px}
+.card > h3{margin:0 0 4px;font-size:16px;font-weight:650;letter-spacing:-.015em}
+.card > .sub{margin:0 0 16px;font-size:13.5px;color:var(--ink-3)}
+.cardgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:1040px){.cardgrid{grid-template-columns:1fr}}
+.dhead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+       margin:0 0 20px;flex-wrap:wrap}
+.dhead h1{margin:0;font-size:26px;font-weight:680;letter-spacing:-.03em}
+.dhead .when{font-size:13px;color:var(--ink-3);font-family:var(--num)}
 </style>
 </head>
 <body>
@@ -284,16 +312,19 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
   </nav>
 
   <div class="rfoot">
-    <div class="rwho" id="who" hidden></div>
-    <a id="signin" class="gbtn" href="/auth/google" hidden>
-      <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-        <path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.2-.16-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
-        <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
-        <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
-        <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
-      </svg>Continue with Google</a>
+    <!-- A profile, not a sign-in button. /app is gated, so anyone reading this
+         is already signed in — a "Continue with Google" button here could only
+         ever be dead chrome asking a signed-in person to sign in. -->
+    <div class="rprofile" id="rprofile" hidden>
+      <img class="ravatar" id="ravatar" alt="" width="30" height="30" referrerpolicy="no-referrer" hidden />
+      <span class="rinitial" id="rinitial" aria-hidden="true"></span>
+      <span class="rid">
+        <b id="rname">—</b>
+        <em id="remail"></em>
+      </span>
+    </div>
     <a class="rl quiet" href="/api.html">API reference</a>
-    <a id="signout" class="rl quiet" href="/auth/logout" hidden>Sign out</a>
+    <a class="rl quiet" href="/auth/logout">Sign out</a>
   </div>
 </aside>
 
@@ -301,16 +332,9 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 
 <main class="wrap">
 
-  <div class="head">
-    <p class="eyebrow">Clipping campaigns · paid in USDC</p>
-    <h1>Get paid for the views that stay.</h1>
-    <p class="stand">Clip content you enjoy, submit it to a campaign, and earn on every view that is
-      still there a day later — at the CPM you were quoted, paid straight to your wallet.</p>
-    <div class="terms">
-      <div><b>24h</b><span>Views must hold</span></div>
-      <div><b>Locked</b><span>CPM on approval</span></div>
-      <div><b>0%</b><span>Fee on your earnings</span></div>
-    </div>
+  <div class="dhead">
+    <h1 id="dtitle">Your record</h1>
+    <span class="when" id="dwhen"></span>
   </div>
 
   <!-- Only for a signed-in creator, and hidden until the profile answers.
@@ -346,37 +370,40 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     <p class="note" id="dwallets"></p>
   </section>
 
-  <section id="campaigns">
-    <div class="shead"><h2>Live campaigns</h2><span class="count" id="ccount"></span></div>
-    <p class="note">Every campaign shows its remaining budget up front, so you know what is left to
-      earn before you start editing. When a budget runs out, it runs out.</p>
-    <div class="offers" id="campaigns"></div>
-  </section>
+  <div class="cardgrid">
+    <section id="campaigns">
+      <div class="card">
+        <h3>Live campaigns</h3>
+        <p class="sub">Remaining budget is shown up front, so you know what is left to earn
+          before you start editing. <span class="count" id="ccount"></span></p>
+        <div class="offers" id="campaigns-list"></div>
+      </div>
+    </section>
 
-  <section id="submit">
-    <div class="shead"><h2>Submit your clip</h2></div>
-    <p class="note">No signup and no follower minimum. Your wallet address is your account, because it
-      is the thing that gets paid.</p>
-    <div class="panel">
-      <div class="f">
-        <label for="camp">Campaign</label>
-        <select id="camp"></select>
+    <section id="submit">
+      <div class="card">
+        <h3>Submit a clip</h3>
+        <p class="sub">Your rate and hold lock the moment it is accepted.</p>
+        <div class="f">
+          <label for="camp">Campaign</label>
+          <select id="camp"></select>
+        </div>
+        <div class="f">
+          <label for="url">Link to your post</label>
+          <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
+          <p class="hint">YouTube for now — we turn down links we cannot verify rather than
+            promise a check we cannot perform.</p>
+        </div>
+        <div class="f">
+          <label for="addr">Payout wallet</label>
+          <input id="addr" placeholder="0x…" spellcheck="false" />
+          <p class="hint">Paid directly here. We never hold your balance.</p>
+        </div>
+        <button class="go" id="go">Submit &amp; start earning</button>
+        <div id="said"></div>
       </div>
-      <div class="f">
-        <label for="url">Link to your post</label>
-        <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
-        <p class="hint">YouTube for now — TikTok and Instagram need platform review we do not yet hold. We
-          turn down links we cannot verify rather than promise a check we cannot perform.</p>
-      </div>
-      <div class="f">
-        <label for="addr">Payout wallet</label>
-        <input id="addr" placeholder="0x…" spellcheck="false" />
-        <p class="hint">Paid directly here. We never hold your balance.</p>
-      </div>
-      <button class="go" id="go">Submit &amp; start earning</button>
-      <div id="said"></div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <section id="submissions">
     <div class="shead"><h2>Your submissions</h2><span class="count" id="lcount"></span></div>
@@ -464,7 +491,7 @@ function labelFor(st,s){
 }
 
 async function loadCampaigns(){
-  var host=document.getElementById('campaigns');
+  var host=document.getElementById('campaigns-list');
   var sel=document.getElementById('camp');
   var d;
   try{ d=await (await fetch('/api/campaign')).json(); }catch(e){ d={campaigns:[]}; }
@@ -569,22 +596,26 @@ setInterval(loadClips,20000);
    nothing. When sign-in is not configured on a deployment, no button appears
    at all rather than one that 503s. */
 (function () {
-  var btn = document.getElementById('signin');
-  var out = document.getElementById('signout');
-  var who = document.getElementById('who');
-  if (!btn || !out || !who) return;
-
+  /* Who is signed in. The avatar is Google's; when it will not load — an
+     account with no photo, or a blocked referrer — an initial stands in, so
+     the rail never shows a broken image where a face should be. */
   fetch('/api/me', { credentials: 'same-origin' })
     .then(function (r) { return r.json(); })
     .then(function (me) {
-      if (!me.available) return;
-      if (me.signedIn) {
-        who.textContent = me.name || me.email || me.creatorId;
-        who.hidden = false;
-        out.hidden = false;
-      } else {
-        btn.hidden = false;
+      if (!me.signedIn) return;
+      var who = document.getElementById('rprofile');
+      var name = me.name || me.email || 'Signed in';
+      document.getElementById('rname').textContent = name;
+      document.getElementById('remail').textContent = me.email || '';
+      var img = document.getElementById('ravatar');
+      var ini = document.getElementById('rinitial');
+      ini.textContent = name.trim().charAt(0).toUpperCase();
+      if (me.picture) {
+        img.onload = function () { img.hidden = false; ini.hidden = true; };
+        img.onerror = function () { img.hidden = true; ini.hidden = false; };
+        img.src = me.picture;
       }
+      who.hidden = false;
     })
     .catch(function () { /* signed out is the safe assumption */ });
 

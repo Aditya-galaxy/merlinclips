@@ -247,6 +247,7 @@ const server = Bun.serve({
         sub: identity.sub,
         email: identity.email,
         name: identity.name,
+        picture: identity.picture,
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
       }, SESSION_SECRET);
 
@@ -273,6 +274,7 @@ const server = Bun.serve({
         creatorId: session?.creatorId,
         name: session?.name,
         email: session?.email,
+        picture: session?.picture,
       });
     }
 

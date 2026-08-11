@@ -20,6 +20,8 @@ export interface Session {
   readonly sub: string;
   readonly email?: string;
   readonly name?: string;
+  /** Google's avatar URL. Shown in the rail so an account looks like a person. */
+  readonly picture?: string;
   /** Seconds since epoch. */
   readonly exp: number;
 }

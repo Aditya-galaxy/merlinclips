@@ -718,10 +718,33 @@ export class CampaignRuntime {
         ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances)
         : undefined;
 
+      // Submissions received, with the creator's standing and the verdict.
+      // A brand asking "who is clipping for me and did it meet the brief" is
+      // asking about these three things together; separately they answer
+      // nothing.
+      const received = subs.map((x) => {
+        const theirs = state.submissions.filter((y) => y.creatorId === x.creatorId);
+        const verdict = state.verdicts.find((v) => v.submissionId === x.submissionId);
+        const paidFor = paid.find((pp) => pp.submissionId === x.submissionId);
+        return {
+          submissionId: x.submissionId,
+          url: x.url,
+          submittedAt: x.submittedAt,
+          creatorStanding: standingFor(x.creatorId, theirs, this.store).standing,
+          verdict: verdict ? (verdict.pass ? 'pass' : 'fail') : 'not judged yet',
+          verdictReason: verdict?.reasons?.[0],
+          state: paidFor ? 'paid' : verdict && !verdict.pass ? 'refused' : 'waiting',
+          paidUsdc: paidFor?.amountUsdc.toString(),
+        };
+      });
+
       return {
         campaignId: c.campaignId,
         brief: c.brief,
         status: c.status,
+        rateBand: { minUsdc: c.rateBand.minUsdc.toString(), maxUsdc: c.rateBand.maxUsdc.toString() },
+        fundingWallet: c.fundingWallet,
+        received,
         poolUsdc: c.poolUsdc.toString(),
         spentUsdc: (Number(spentMicro) / 1_000_000).toFixed(6),
         remainingUsdc: c.poolUsdc.minus(new Decimal(Number(spentMicro) / 1_000_000)).toString(),

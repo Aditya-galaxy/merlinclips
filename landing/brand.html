@@ -27,43 +27,84 @@
           aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
 
-<main>
+<div class="shell">
 
-<section class="hero page"><div class="wrap">
-  <div><span class="badge"><b>Brand</b> What your budget is doing</span></div>
-  <h1>Your <span class="grad">campaigns</span></h1>
-  <p class="lede" id="b-lede">Loading your campaigns…</p>
-</div></section>
-
-<section id="b-none" hidden><div class="wrap">
-  <div class="shead">
-    <span class="eyebrow">No account yet</span>
-    <h2>We have not set you up as a brand</h2>
-    <p id="b-none-say">Brand accounts are approved by a person rather than created on signup.</p>
+<aside class="rail">
+  <a class="rmark" href="/"><i></i>Merlin Clips</a>
+  <nav class="rnav" aria-label="Your brand">
+    <a class="rl" href="#b-overview" data-sec="b-overview"><b>Overview</b></a>
+    <a class="rl" href="#b-campaigns" data-sec="b-campaigns">Campaigns</a>
+    <a class="rl" href="#b-received" data-sec="b-received">Submissions</a>
+    <a class="rl" href="#b-spend" data-sec="b-spend">Spend</a>
+    <a class="rl" href="#b-account" data-sec="b-account">Account</a>
+  </nav>
+  <div class="rfoot">
+    <div class="rwho" id="b-who" hidden></div>
+    <a class="rl quiet" href="/launch.html">Ask for a change</a>
+    <a class="rl quiet" href="/api.html">API reference</a>
+    <a class="rl quiet" href="/auth/logout">Sign out</a>
   </div>
-  <div class="row" style="justify-content:center">
-    <a class="btn pop" href="/launch.html">Tell us about your campaign &rarr;</a>
-  </div>
-</div></section>
+</aside>
 
-<section id="b-body" hidden><div class="wrap">
-  <div class="tiles">
-    <div class="tile"><span class="tlabel">Campaigns</span>
-      <b class="tnum" id="b-campaigns">—</b><span class="tsub">running or ended</span></div>
-    <div class="tile"><span class="tlabel">Spent</span>
-      <b class="tnum" id="b-spent">—</b><span class="tsub">on views that survived</span></div>
-    <div class="tile"><span class="tlabel">Creators</span>
-      <b class="tnum" id="b-creators">—</b><span class="tsub">who submitted clips</span></div>
-    <div class="tile"><span class="tlabel">Clips</span>
-      <b class="tnum" id="b-subs">—</b><span class="tsub">received in total</span></div>
+<div class="pane"><main class="wrap">
+
+  <div class="head">
+    <p class="eyebrow">Brand dashboard</p>
+    <h1 id="b-title">Your campaigns</h1>
+    <p class="stand" id="b-lede">Loading…</p>
   </div>
 
-  <div class="list" id="b-list"></div>
+  <section id="b-none" hidden>
+    <div class="shead"><h2>We have not set you up as a brand</h2></div>
+    <p class="note" id="b-none-say">Brand accounts are approved by a person rather than created
+      on signup. Tell us what you are trying to do and we will set one up.</p>
+    <p><a class="go" href="/launch.html">Tell us about your campaign</a></p>
+  </section>
 
-  <div class="note"><p>Read-only. Opening a campaign or changing a budget goes through us on
-    purpose &mdash; a dashboard that can move money is a dashboard worth attacking.
-    <a href="/launch.html">Ask for a change</a>.</p></div>
-</div></section>
+  <section id="b-overview" hidden>
+    <div class="shead"><h2>Overview</h2></div>
+    <div class="tiles">
+      <div class="tile"><span class="tlabel">Campaigns</span><b class="tnum" id="b-campaigns-n">—</b>
+        <span class="tsub">running or ended</span></div>
+      <div class="tile"><span class="tlabel">Settled</span><b class="tnum" id="b-spent">—</b>
+        <span class="tsub">on views that survived</span></div>
+      <div class="tile"><span class="tlabel">Creators</span><b class="tnum" id="b-creators">—</b>
+        <span class="tsub">who submitted clips</span></div>
+      <div class="tile"><span class="tlabel">Clips</span><b class="tnum" id="b-subs">—</b>
+        <span class="tsub">received in total</span></div>
+    </div>
+  </section>
+
+  <section id="b-campaigns" hidden>
+    <div class="shead"><h2>Campaigns</h2></div>
+    <p class="note">Brief, pool, rate band, caps, hold, funding wallet and coverage &mdash;
+      the terms every accepted clip is frozen against.</p>
+    <div class="rows" id="b-crows"></div>
+  </section>
+
+  <section id="b-received" hidden>
+    <div class="shead"><h2>Submissions received</h2><span class="count" id="b-rcount"></span></div>
+    <p class="note">Each clip, the standing of the creator who sent it, and what the verifier
+      decided. A clip still inside its hold is waiting, not refused.</p>
+    <div class="rows" id="b-rrows"></div>
+  </section>
+
+  <section id="b-spend" hidden>
+    <div class="shead"><h2>Spend</h2></div>
+    <p class="note">Settled is money that has left. Remaining is what is still available to
+      earn against, which is the number creators see.</p>
+    <div class="rows" id="b-srows"></div>
+  </section>
+
+  <section id="b-account" hidden>
+    <div class="shead"><h2>Account</h2></div>
+    <div class="rows" id="b-arows"></div>
+    <p class="note">Read-only. Opening a campaign or changing a budget goes through us on
+      purpose &mdash; a dashboard that can move money is a dashboard worth attacking.</p>
+  </section>
+
+</main></div>
+</div>
 
 <footer><div class="wrap">
   <div class="foot">
@@ -108,7 +149,6 @@
   </div>
 </div></footer>
 
-</main>
 <script>
 (function () {
   var nav = document.querySelector('nav');
@@ -143,22 +183,37 @@
 })();
 </script>
 <script>
-/* Everything here comes from the session. There is no brand id in the URL to
+/* Everything comes from the session. There is no brand id in the URL to
    change, because a dashboard you can point at another company is a dashboard
    that shows you their spend. */
 (function () {
-  var money = function (n) {
-    return '$' + Number(n).toLocaleString('en-US',
-      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
   var esc = function (t) {
     return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   };
-  var COVER = {
-    covered: ['Funded', 'g'], partial: ['Part funded', 'n'], empty: ['Unfunded', 'n'],
-    unknown: ['Not checked', 'n'], no_wallet: ['No wallet named', 'n']
+  var money = function (n) { return '$' + Number(n).toLocaleString('en-US',
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var when = function (iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium' }); }
+    catch (e) { return iso; }
+  };
+  var COVER = { covered: 'Funded', partial: 'Part funded', empty: 'Unfunded',
+                unknown: 'Not checked', no_wallet: 'No wallet named' };
+  var show = function (id, html) {
+    var host = document.getElementById(id);
+    if (!host) return;
+    host.innerHTML = html;
+    host.closest('section').hidden = false;
+  };
+  var row = function (title, pairs) {
+    return '<div class="erow"><h4>' + esc(title) + '</h4><dl>'
+      + pairs.filter(function (kv) { return kv[1] !== undefined && kv[1] !== ''; })
+             .map(function (kv) {
+        return '<dt>' + esc(kv[0]) + '</dt><dd' + (kv[2] ? ' class="words"' : '') + '>'
+          + esc(kv[1]) + '</dd>';
+      }).join('') + '</dl></div>';
   };
 
   fetch('/api/brand/dashboard', { credentials: 'same-origin' })
@@ -176,43 +231,91 @@
         return;
       }
 
-      lede.textContent = d.brand.company;
-      document.getElementById('b-campaigns').textContent = d.totals.campaigns;
+      document.getElementById('b-title').textContent = d.brand.company;
+      lede.textContent = d.totals.campaigns
+        ? 'What your budget is doing, and who is clipping for you.'
+        : 'No campaigns open yet. When we open one for you it appears here.';
+      var who = document.getElementById('b-who');
+      who.textContent = d.brand.company; who.hidden = false;
+
+      document.getElementById('b-campaigns-n').textContent = d.totals.campaigns;
       document.getElementById('b-spent').textContent = money(d.totals.spentUsdc);
       document.getElementById('b-creators').textContent = d.totals.creators;
       document.getElementById('b-subs').textContent = d.totals.submissions;
+      document.getElementById('b-overview').hidden = false;
 
-      var list = document.getElementById('b-list');
-      if (!d.campaigns.length) {
-        list.innerHTML = '<div class="item"><div class="k">Nothing yet</div><div>'
-          + '<h3>No campaigns running</h3><p>When we open one for you it appears here, '
-          + 'with what it has spent and what is left.</p></div></div>';
-      } else {
-        list.innerHTML = d.campaigns.map(function (c) {
-          var cov = COVER[(c.funding && c.funding.coverage) || 'unknown'] || COVER.unknown;
-          var pct = Math.min(100, Math.round(
-            (Number(c.spentUsdc) / Math.max(Number(c.poolUsdc), 1)) * 100));
-          return '<div class="item"><div class="k">' + esc(c.status) + '</div><div>'
-            + '<h3>' + esc(c.brief.slice(0, 90)) + '</h3>'
-            + '<p><b>' + money(c.spentUsdc) + '</b> of ' + money(c.poolUsdc)
-            + ' &middot; ' + money(c.remainingUsdc) + ' left'
-            + ' &middot; ' + esc(c.cpmUsdc) + ' per 1k views'
-            + ' &middot; ' + esc(c.dwellHours) + 'h hold</p>'
-            + '<span class="bar"><i style="width:' + pct + '%"></i></span>'
-            + '<p class="fine">' + esc(c.creators) + ' creators &middot; '
-            + esc(c.submissions) + ' clips &middot; ' + esc(c.payouts) + ' paid &middot; '
-            + Number(c.viewsPaid).toLocaleString('en-US') + ' views paid for</p>'
-            + '<p class="fine"><span class="wtag ' + cov[1] + '">' + cov[0] + '</span> '
-            + esc((c.funding && c.funding.summary) || '') + '</p>'
-            + '</div></div>';
-        }).join('');
-      }
-      document.getElementById('b-body').hidden = false;
+      /* Campaigns: brief, pool, rate band, caps, hold, funding wallet, coverage, status. */
+      show('b-crows', d.campaigns.length ? d.campaigns.map(function (c) {
+        return row(c.brief.slice(0, 90), [
+          ['Status', c.status],
+          ['Pool', money(c.poolUsdc)],
+          ['Rate', money(c.cpmUsdc) + ' per 1k views'],
+          ['Rate band', c.rateBand ? money(c.rateBand.minUsdc) + ' – ' + money(c.rateBand.maxUsdc) : ''],
+          ['Per-creator cap', money(c.perCreatorCapUsdc)],
+          ['Hold', c.dwellHours + 'h'],
+          ['Minimum standing', c.minStanding || 'open to everyone'],
+          ['Funding wallet', c.fundingWallet || 'none named'],
+          ['Coverage', COVER[(c.funding && c.funding.coverage)] || 'not checked'],
+          ['Ends', when(c.endsAt)]
+        ]);
+      }).join('') : '<div class="erow"><p class="empty">No campaigns yet.</p></div>');
+
+      /* Submissions received: creator standing, verdict, state. */
+      var all = [];
+      d.campaigns.forEach(function (c) { (c.received || []).forEach(function (r) { all.push(r); }); });
+      document.getElementById('b-rcount').textContent =
+        all.length + (all.length === 1 ? ' clip' : ' clips');
+      show('b-rrows', all.length ? all.map(function (r) {
+        return row(r.url, [
+          ['Creator standing', r.creatorStanding],
+          ['Verdict', r.verdict],
+          ['Why', r.verdictReason, true],
+          ['State', r.state],
+          ['Paid', r.paidUsdc ? money(r.paidUsdc) : ''],
+          ['Submitted', when(r.submittedAt)]
+        ]);
+      }).join('') : '<div class="erow"><p class="empty">No clips submitted yet.</p></div>');
+
+      /* Spend: committed, settled, remaining, per creator. */
+      show('b-srows', d.campaigns.length ? d.campaigns.map(function (c) {
+        return row(c.brief.slice(0, 70), [
+          ['Settled', money(c.spentUsdc)],
+          ['Remaining', money(c.remainingUsdc)],
+          ['Pool', money(c.poolUsdc)],
+          ['Per-creator cap', money(c.perCreatorCapUsdc)],
+          ['Payouts', String(c.payouts)],
+          ['Views paid for', Number(c.viewsPaid).toLocaleString('en-US')]
+        ]);
+      }).join('') : '<div class="erow"><p class="empty">Nothing spent yet.</p></div>');
+
+      /* Brand: company, contact, verified, joined. */
+      show('b-arows', row(d.brand.company, [
+        ['Contact', d.brand.email],
+        ['Brand id', d.brand.brandId],
+        ['Verified', 'approved by a person'],
+        ['Joined', when(d.brand.approvedAt)]
+      ]));
     })
     .catch(function () {
       document.getElementById('b-lede').textContent =
         'Could not load your campaigns just now. Try again shortly.';
     });
+
+  /* The rail follows the section in view rather than the last link clicked. */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rl[data-sec]'));
+  if (links.length && 'IntersectionObserver' in window) {
+    var seen = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) links.forEach(function (a) {
+          a.setAttribute('aria-current', String(a.dataset.sec === e.target.id));
+        });
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    links.forEach(function (a) {
+      var el = document.getElementById(a.dataset.sec);
+      if (el) seen.observe(el);
+    });
+  }
 })();
 </script>
 </body>

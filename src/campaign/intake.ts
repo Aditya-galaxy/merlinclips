@@ -87,9 +87,16 @@ export function openCampaign(
     return bad('brief must be at least 10 characters — it is what the agent judges against', 'brief');
   }
 
+  /** Merlin Clips Minimum Rules: Pool >= $100.00 USDC, Creator Cap >= $10.00 USDC */
+  const MIN_CAMPAIGN_POOL_USDC = new Decimal('100.00');
+  const MIN_PER_CREATOR_CAP_USDC = new Decimal('10.00');
+
   const pool = amount(input.poolUsdc, 'poolUsdc');
   if (!pool.ok) return pool;
   if (!pool.value.isPositive()) return bad('poolUsdc must be greater than zero', 'poolUsdc');
+  if (MIN_CAMPAIGN_POOL_USDC.gt(pool.value)) {
+    return bad('poolUsdc must be at least 100.00 USDC (Merlin Clips minimum rule)', 'poolUsdc');
+  }
 
   const cpm = amount(input.cpmUsdc, 'cpmUsdc');
   if (!cpm.ok) return cpm;
@@ -110,6 +117,9 @@ export function openCampaign(
 
   const perCreator = amount(input.perCreatorCapUsdc ?? pool.value.toString(), 'perCreatorCapUsdc');
   if (!perCreator.ok) return perCreator;
+  if (MIN_PER_CREATOR_CAP_USDC.gt(perCreator.value)) {
+    return bad('perCreatorCapUsdc must be at least 10.00 USDC (Merlin Clips minimum rule)', 'perCreatorCapUsdc');
+  }
   const minCpm = amount(input.minCpmUsdc ?? cpm.value.toString(), 'minCpmUsdc');
   if (!minCpm.ok) return minCpm;
   const maxCpm = amount(input.maxCpmUsdc ?? cpm.value.toString(), 'maxCpmUsdc');

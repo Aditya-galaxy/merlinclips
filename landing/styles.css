@@ -1144,3 +1144,105 @@ main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
   border-top: 1px solid var(--line);
 }
 
+/* ── Creator & Brand Refined Dashboard Utilities ── */
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+.search-input-wrap input {
+  padding-left: 36px;
+  border-radius: 99px;
+  background: var(--surface);
+}
+.search-input-wrap ::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.6;
+}
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+.filter-chip:hover {
+  border-color: var(--line-hi);
+  color: var(--text);
+}
+.filter-chip.active {
+  background: var(--pop);
+  border-color: var(--pop);
+  color: #fff;
+  font-weight: 600;
+}
+.progress-bar-glow {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill-glow {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED, #10B981);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+.creator-standing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.creator-standing-badge.exceptional {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.creator-standing-badge.reliable {
+  background: rgba(124, 58, 237, 0.15);
+  color: #9333EA;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+.creator-standing-badge.unproven {
+  background: var(--line);
+  color: var(--muted);
+}
+.verdict-reason-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+

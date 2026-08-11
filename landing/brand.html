@@ -464,10 +464,14 @@
       document.getElementById('b-rcount').textContent =
         all.length + (all.length === 1 ? ' clip' : ' clips');
       show('b-rrows', all.length ? all.map(function (r) {
+        var standingLvl = (r.creatorStanding || 'unproven').toLowerCase();
+        var standingBadge = '<span class="creator-standing-badge ' + esc(standingLvl) + '">' + esc(r.creatorStanding || 'Unproven') + '</span>';
+        var whyHtml = r.verdictReason ? '<div class="verdict-reason-box"><strong>AI Verifier:</strong> ' + esc(r.verdictReason) + '</div>' : '';
+
         return row(r.url, [
-          ['Creator standing', r.creatorStanding],
+          ['Creator standing', standingBadge],
           ['Verdict', r.verdict],
-          ['Why', r.verdictReason, true],
+          ['Why', whyHtml],
           ['State', r.state],
           ['Paid', r.paidUsdc ? money(r.paidUsdc) : ''],
           ['Submitted', when(r.submittedAt)]
@@ -476,10 +480,15 @@
 
       /* Spend: committed, settled, remaining, per creator. */
       show('b-srows', d.campaigns.length ? d.campaigns.map(function (c) {
+        var pool = Number(c.poolUsdc || 0);
+        var spent = Number(c.spentUsdc || 0);
+        var pct = pool > 0 ? Math.min(100, Math.max(0, (spent / pool) * 100)) : 0;
+        var barHtml = '<div class="progress-bar-glow" style="margin-top:6px;"><div class="progress-fill-glow" style="width:' + pct.toFixed(1) + '%"></div></div>';
+
         return row(c.brief.slice(0, 70), [
+          ['Budget consumption', '$' + spent.toFixed(2) + ' / $' + pool.toFixed(2) + ' (' + pct.toFixed(1) + '%)' + barHtml],
           ['Settled', money(c.spentUsdc)],
           ['Remaining', money(c.remainingUsdc)],
-          ['Pool', money(c.poolUsdc)],
           ['Per-creator cap', money(c.perCreatorCapUsdc)],
           ['Payouts', String(c.payouts)],
           ['Views paid for', Number(c.viewsPaid).toLocaleString('en-US')]

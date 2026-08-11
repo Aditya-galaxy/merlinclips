@@ -36,7 +36,7 @@ const BRIEF =
   'Show the animation itself: outdoor scenery, character movement, and the ' +
   'title of the film. Sound on. No voiceover needed.';
 
-const PAYOUT_ADDRESS = Bun.env.DEMO_WALLET ?? '0x840175F5106eb2FAa7408c0B38002e09f80D5Da2';
+const PAYOUT_ADDRESS = Bun.env.DEMO_WALLET ?? '0x0003a59858f44451be2a5b486ee612b4139700f0';
 
 function line(label: string, value: unknown): void {
   console.log(`  ${label.padEnd(22)} ${typeof value === 'string' ? value : JSON.stringify(value)}`);

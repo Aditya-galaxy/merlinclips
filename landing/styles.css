@@ -975,3 +975,8 @@ main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
 @media(min-width:721px){
   #talk .enq .wide:last-of-type{display:flex;flex-direction:column;align-items:center}
 }
+
+/* The mark sits with the words rather than replacing them. A logo alone
+   assumes the reader knows what it is, and the FAQ exists because many do not. */
+.fc .stamp{display:inline-flex;align-items:center;gap:6px}
+.fc .stamp svg{flex:none}

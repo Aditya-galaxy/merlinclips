@@ -71,7 +71,7 @@ const campaign = await post('/api/campaigns', {
   dwellHours: DWELL,
   settlementDays: 14,
   platforms: ['youtube'],
-  chain: 'base-sepolia',
+  chain: 'base',
   fundingWallet: Bun.env.CAMPAIGN_WALLET ?? undefined,
 }, { 'x-operator-secret': OPERATOR });
 

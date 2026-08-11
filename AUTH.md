@@ -14,7 +14,7 @@ standings and fifty per-creator caps, and the cap meant to bound one
 participant bounds nothing.
 
 Binding a creator to a Google account raises that cost. **It does not remove
-it** — Google accounts are also cheap, and anyone claiming otherwise is
+it** — Google accounts are also easy to get, and anyone claiming otherwise is
 selling something. What it buys:
 
 - standing accrues to a person across their wallets instead of resetting with

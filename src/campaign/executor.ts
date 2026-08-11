@@ -58,7 +58,7 @@ const CLI_CHAIN: Record<Chain, string> = {
  * token, so leaving it off would send ETH instead of USDC. A payout that
  * silently moves the wrong asset is worse than one that fails.
  */
-const USDC_TOKEN: Record<Chain, string> = {
+export const USDC_TOKEN: Record<Chain, string> = {
   'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   'eth-sepolia': '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
@@ -67,7 +67,7 @@ const USDC_TOKEN: Record<Chain, string> = {
   polygon: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
 };
 
-const EXPLORER: Record<Chain, string> = {
+export const EXPLORER: Record<Chain, string> = {
   'base-sepolia': 'https://sepolia.basescan.org/tx/',
   base: 'https://basescan.org/tx/',
   'eth-sepolia': 'https://sepolia.etherscan.io/tx/',
@@ -118,6 +118,8 @@ export class BunCommandRunner implements CommandRunner {
 }
 
 export interface CircleExecutorOptions {
+  /** Read for the BROADCAST gate. Injectable so tests need not touch the real env. */
+  readonly env?: Record<string, string | undefined>;
   /** The campaign wallet money leaves. */
   fromAddress: string;
   /** Plan and estimate, never broadcast. The default, deliberately. */
@@ -154,7 +156,20 @@ export class CircleCliExecutor implements PayoutExecutor {
 
   constructor(private readonly options: CircleExecutorOptions) {
     this.runner = options.runner ?? new BunCommandRunner();
-    this.dryRun = options.dryRun ?? true;
+
+    // Two gates, and both must open.
+    //
+    // `dryRun: false` alone used to be enough to broadcast, which meant a
+    // throwaway test script could move real money — and did. Intent is not a
+    // control: a test that *can* move money eventually will. Broadcasting now
+    // also requires the environment to say so, so the only way to reach a real
+    // transfer is a deliberate act on the deployment rather than a flag
+    // somebody passed while checking something else.
+    //
+    // Tests that need to observe the broadcast path inject a `runner` and
+    // never spawn anything, which is what the seam is for.
+    const envAllows = (options.env ?? Bun.env).BROADCAST === 'true';
+    this.dryRun = (options.dryRun ?? true) || !envAllows;
   }
 
   async send(input: {

@@ -44,8 +44,9 @@ import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
 import {
-  createCreatorWallet, walletConfig, type WalletsClient,
+  createCreatorWallet, walletConfig, type WalletsClient, type WalletConfig,
 } from './wallets';
+import { SdkPayoutExecutor, type WalletsTransferClient } from './sdk-executor';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -215,6 +216,26 @@ export class CampaignRuntime {
    */
   private buildExecutor(): PayoutExecutor {
     const onMainnet = this.env.ALLOW_MAINNET === 'true';
+
+    // The SDK first, because it is the only one that can settle where the
+    // agent actually runs.
+    //
+    // The CLI executor authenticates with an email-OTP session that lives on
+    // the machine somebody logged in from and expires in about a month. A
+    // container has no such session and cannot obtain one without a person
+    // reading a code out of their inbox — so that path settled perfectly on a
+    // laptop and could never have settled in production. An agent that needs
+    // somebody to have logged in is not autonomous.
+    //
+    // The SDK takes an API key and an entity secret from the environment.
+    // Where CIRCLE_WALLET_ID names a developer-controlled wallet, that is what
+    // pays; the CLI stays as the local path so nothing that works today stops.
+    const sdkWalletId = this.env.CIRCLE_WALLET_ID?.trim();
+    const cfg = walletConfig(this.env as Record<string, string | undefined>);
+    if (sdkWalletId && cfg) {
+      return new LazySdkExecutor(sdkWalletId, cfg, this.env as Record<string, string | undefined>);
+    }
+
     const wallet = (
       onMainnet ? this.env.MAINNET_CAMPAIGN_WALLET : this.env.CAMPAIGN_WALLET
     )?.trim();
@@ -230,6 +251,12 @@ export class CampaignRuntime {
     return new CircleCliExecutor({
       fromAddress: wallet,
       dryRun: this.env.BROADCAST !== 'true',
+      // The runtime's own env, not the process's. Without this the executor
+      // read `Bun.env` for its broadcast gate while the runtime read the
+      // injected object for everything else — so a runtime told BROADCAST=true
+      // would still have estimated, and a test could not express the case at
+      // all. Two sources of truth for one decision is one too many.
+      env: this.env as Record<string, string | undefined>,
     });
   }
 
@@ -1103,5 +1130,33 @@ export class CampaignRuntime {
         amountUsdc: d.amountUsdc.toString(),
       })),
     });
+  }
+}
+
+/**
+ * Defers constructing the SDK client until the first payout.
+ *
+ * Building it at startup would make an unreachable Circle a boot failure, and
+ * a service that will not start cannot even serve the pages explaining why.
+ */
+class LazySdkExecutor implements PayoutExecutor {
+  private inner?: SdkPayoutExecutor;
+
+  constructor(
+    private readonly walletId: string,
+    private readonly cfg: WalletConfig,
+    private readonly env: Record<string, string | undefined>,
+  ) {}
+
+  async send(input: Parameters<PayoutExecutor['send']>[0]) {
+    if (!this.inner) {
+      const mod = await import('@circle-fin/developer-controlled-wallets');
+      const client = mod.initiateDeveloperControlledWalletsClient({
+        apiKey: this.cfg.apiKey, entitySecret: this.cfg.entitySecret,
+      }) as unknown as WalletsTransferClient;
+      this.inner = new SdkPayoutExecutor({ walletId: this.walletId, client, env: this.env,
+        dryRun: this.env.BROADCAST !== 'true' });
+    }
+    return this.inner.send(input);
   }
 }

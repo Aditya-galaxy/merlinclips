@@ -106,6 +106,77 @@
 </main></div>
 </div>
 
+<!-- Funding Modal -->
+<div id="fund-modal" class="modal-backdrop" hidden>
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="fund-modal-close" aria-label="Close modal">&times;</button>
+    <div class="modal-header">
+      <span class="eyebrow">Deposit USDC</span>
+      <h3 id="fund-modal-title">Fund Campaign Wallet</h3>
+      <p id="fund-modal-subtitle" class="note">Load USDC onto Base / Base Sepolia to cover creator payouts.</p>
+    </div>
+    
+    <div class="modal-body">
+      <div class="fund-status-banner">
+        <div class="fund-badge-group">
+          <span class="fund-label">Status:</span>
+          <span id="fund-coverage-badge" class="badge">Checking...</span>
+        </div>
+        <div class="fund-amount-group">
+          <span class="fund-label">Target Pool:</span>
+          <strong id="fund-pool-needed">$0.00 USDC</strong>
+        </div>
+      </div>
+
+      <!-- Option 1: Browser Wallet -->
+      <div class="fund-option-card">
+        <div class="fund-option-header">
+          <span class="option-num">1</span>
+          <h4>Pay with Browser Wallet (MetaMask / Coinbase)</h4>
+        </div>
+        <p class="fine">Send USDC directly on Base or Base Sepolia with one click.</p>
+        <div class="web3-actions">
+          <button type="button" class="btn pop" id="web3-fund-btn">Connect & Pay USDC</button>
+          <p id="web3-status" class="web3-status-text" hidden></p>
+        </div>
+      </div>
+
+      <!-- Option 2: Copy Address & QR -->
+      <div class="fund-option-card">
+        <div class="fund-option-header">
+          <span class="option-num">2</span>
+          <h4>Transfer to Wallet Address</h4>
+        </div>
+        <p class="fine">Send ERC-20 USDC directly to your campaign funding wallet:</p>
+        <div class="address-copy-box">
+          <code id="fund-wallet-address">0x...</code>
+          <button type="button" class="btn quiet sm" id="copy-wallet-btn">Copy</button>
+        </div>
+        <div class="qr-container">
+          <img id="fund-qr-code" alt="Wallet QR Code" src="" />
+        </div>
+      </div>
+
+      <!-- Option 3: External Options -->
+      <div class="fund-option-card">
+        <div class="fund-option-header">
+          <span class="option-num">3</span>
+          <h4>Acquire USDC</h4>
+        </div>
+        <div class="external-links">
+          <a class="btn quiet sm" href="https://app.uniswap.org" target="_blank" rel="noopener">Uniswap (Base)</a>
+          <a class="btn quiet sm" href="https://faucet.circle.com" target="_blank" rel="noopener">Circle Testnet Faucet</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn quiet" id="refresh-balance-btn">🔄 Refresh On-Chain Balance</button>
+      <button type="button" class="btn" id="fund-modal-done">Done</button>
+    </div>
+  </div>
+</div>
+
 <footer><div class="wrap">
   <div class="foot">
     <div class="about">
@@ -169,8 +240,6 @@
   burger.addEventListener('click', function () {
     setOpen(nav.dataset.open !== 'true');
   });
-  /* An in-page anchor does not reload, so without this the panel stays open
-     over the section it just scrolled to. */
   nav.querySelectorAll('.links a').forEach(function (a) {
     a.addEventListener('click', function () { setOpen(false); });
   });
@@ -183,9 +252,6 @@
 })();
 </script>
 <script>
-/* Everything comes from the session. There is no brand id in the URL to
-   change, because a dashboard you can point at another company is a dashboard
-   that shows you their spend. */
 (function () {
   var esc = function (t) {
     return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
@@ -212,9 +278,133 @@
       + pairs.filter(function (kv) { return kv[1] !== undefined && kv[1] !== ''; })
              .map(function (kv) {
         return '<dt>' + esc(kv[0]) + '</dt><dd' + (kv[2] ? ' class="words"' : '') + '>'
-          + esc(kv[1]) + '</dd>';
+          + (typeof kv[1] === 'string' && kv[1].indexOf('<') !== -1 ? kv[1] : esc(kv[1])) + '</dd>';
       }).join('') + '</dl></div>';
   };
+
+  /* Modal Funding State */
+  var activeCampaign = null;
+  var modal = document.getElementById('fund-modal');
+  var closeModal = function () { if (modal) modal.hidden = true; };
+  if (document.getElementById('fund-modal-close')) {
+    document.getElementById('fund-modal-close').onclick = closeModal;
+  }
+  if (document.getElementById('fund-modal-done')) {
+    document.getElementById('fund-modal-done').onclick = closeModal;
+  }
+
+  window.openFundModal = function (campaignId, wallet, poolUsdc, coverage, brief) {
+    activeCampaign = { campaignId: campaignId, wallet: wallet, poolUsdc: poolUsdc, coverage: coverage };
+    document.getElementById('fund-modal-title').textContent = brief ? ('Fund: ' + brief.slice(0, 40) + '…') : 'Fund Campaign Wallet';
+    document.getElementById('fund-coverage-badge').textContent = COVER[coverage] || coverage || 'Not checked';
+    document.getElementById('fund-pool-needed').textContent = money(poolUsdc) + ' USDC';
+    document.getElementById('fund-wallet-address').textContent = wallet || 'No wallet assigned';
+    
+    var qr = document.getElementById('fund-qr-code');
+    if (qr) {
+      qr.src = wallet ? ('https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(wallet)) : '';
+    }
+    var web3Status = document.getElementById('web3-status');
+    if (web3Status) { web3Status.hidden = true; web3Status.textContent = ''; }
+    if (modal) modal.hidden = false;
+  };
+
+  /* Copy Address */
+  var copyBtn = document.getElementById('copy-wallet-btn');
+  if (copyBtn) {
+    copyBtn.onclick = function () {
+      var addr = document.getElementById('fund-wallet-address').textContent;
+      if (!addr || addr.indexOf('0x') !== 0) return;
+      navigator.clipboard.writeText(addr).then(function () {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+      });
+    };
+  }
+
+  /* Refresh On-Chain Balance */
+  var refreshBtn = document.getElementById('refresh-balance-btn');
+  if (refreshBtn) {
+    refreshBtn.onclick = function () {
+      if (!activeCampaign || !activeCampaign.campaignId) return;
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Checking...';
+      fetch('/api/campaigns/' + activeCampaign.campaignId + '/check-funding')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res.ok && res.funding) {
+            document.getElementById('fund-coverage-badge').textContent = COVER[res.funding.coverage] || res.funding.coverage;
+            var say = res.funding.summary || 'Balance updated.';
+            var statusEl = document.getElementById('web3-status');
+            if (statusEl) {
+              statusEl.textContent = say;
+              statusEl.hidden = false;
+            }
+          }
+        })
+        .finally(function () {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = '🔄 Refresh On-Chain Balance';
+        });
+    };
+  }
+
+  /* Web3 Pay Button */
+  var web3Btn = document.getElementById('web3-fund-btn');
+  if (web3Btn) {
+    web3Btn.onclick = function () {
+      if (!activeCampaign || !activeCampaign.wallet) {
+        alert('No funding wallet address assigned to this campaign.');
+        return;
+      }
+      var statusEl = document.getElementById('web3-status');
+      var tell = function (msg) { if (statusEl) { statusEl.textContent = msg; statusEl.hidden = false; } };
+
+      if (typeof window.ethereum === 'undefined') {
+        tell('No Web3 wallet found. Please install MetaMask or Coinbase Wallet.');
+        return;
+      }
+
+      web3Btn.disabled = true;
+      tell('Connecting to wallet...');
+
+      window.ethereum.request({ method: 'eth_requestAccounts' })
+        .then(function (accounts) {
+          if (!accounts || !accounts.length) throw new Error('No account selected');
+          var fromAddr = accounts[0];
+          tell('Wallet connected: ' + fromAddr.slice(0, 6) + '...' + fromAddr.slice(-4));
+          
+          /* Target USDC contracts */
+          var USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+          var USDC_SEPOLIA = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+
+          /* Convert pool USDC to micro units (6 decimals) hex */
+          var microUnits = BigInt(Math.round(Number(activeCampaign.poolUsdc) * 1_000_000));
+          var amountHex = microUnits.toString(16).padStart(64, '0');
+          var targetHex = activeCampaign.wallet.replace(/^0x/, '').toLowerCase().padStart(64, '0');
+          var data = '0xa9059cbb' + targetHex + amountHex;
+
+          tell('Please confirm USDC transfer in your wallet...');
+          return window.ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: fromAddr,
+              to: USDC_BASE, // Default to Base Mainnet USDC
+              data: data
+            }]
+          });
+        })
+        .then(function (txHash) {
+          tell('Transaction sent! Tx: ' + txHash);
+        })
+        .catch(function (err) {
+          tell('Error: ' + (err.message || 'Transaction declined'));
+        })
+        .finally(function () {
+          web3Btn.disabled = false;
+        });
+    };
+  }
 
   fetch('/api/brand/dashboard', { credentials: 'same-origin' })
     .then(function (r) { return r.status === 401 ? null : r.json(); })
@@ -246,6 +436,14 @@
 
       /* Campaigns: brief, pool, rate band, caps, hold, funding wallet, coverage, status. */
       show('b-crows', d.campaigns.length ? d.campaigns.map(function (c) {
+        var cov = (c.funding && c.funding.coverage) || 'not checked';
+        var covText = COVER[cov] || cov;
+        var fundBtn = c.fundingWallet
+          ? ' <button type="button" class="btn quiet sm" onclick="openFundModal(\'' +
+              esc(c.campaignId) + '\', \'' + esc(c.fundingWallet) + '\', \'' + esc(c.poolUsdc) +
+              '\', \'' + esc(cov) + '\', \'' + esc(c.brief).replace(/'/g, "\\'") + '\')">⚡ Fund Wallet</button>'
+          : '';
+
         return row(c.brief.slice(0, 90), [
           ['Status', c.status],
           ['Pool', money(c.poolUsdc)],
@@ -254,8 +452,8 @@
           ['Per-creator cap', money(c.perCreatorCapUsdc)],
           ['Hold', c.dwellHours + 'h'],
           ['Minimum standing', c.minStanding || 'open to everyone'],
-          ['Funding wallet', c.fundingWallet || 'none named'],
-          ['Coverage', COVER[(c.funding && c.funding.coverage)] || 'not checked'],
+          ['Funding wallet', (c.fundingWallet || 'none named') + fundBtn],
+          ['Coverage', covText],
           ['Ends', when(c.endsAt)]
         ]);
       }).join('') : '<div class="erow"><p class="empty">No campaigns yet.</p></div>');
@@ -320,3 +518,4 @@
 </script>
 </body>
 </html>
+

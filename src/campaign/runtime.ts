@@ -1007,6 +1007,49 @@ export class CampaignRuntime {
     return null;
   }
 
+  /** Route handler for on-demand funding balance check for a campaign. */
+  async handleCheckFunding(campaignId: string): Promise<Response> {
+    await this.ready();
+    const campaign = this.store.campaign(campaignId);
+    if (!campaign) {
+      return Response.json({ error: 'unknown campaign' }, { status: 404 });
+    }
+    const spent = this.store.spentOnCampaign(campaignId);
+    const funding = this.balances
+      ? await fundingFor(campaign, spent, this.balances)
+      : {
+          campaignId: campaign.campaignId,
+          fundedUsdc: null,
+          poolUsdc: campaign.poolUsdc.toString(),
+          committedUsdc: spent.toString(),
+          coverage: campaign.fundingWallet ? ('unknown' as const) : ('no_wallet' as const),
+          summary: campaign.fundingWallet
+            ? 'Balance reader not configured on this deployment.'
+            : 'This campaign has not named a wallet, so nothing backs its budget yet.',
+        };
+
+    return Response.json({ ok: true, funding });
+  }
+
+  /** Expose latest tick execution status for asynchronous polling. */
+  async handleTickStatus(): Promise<Response> {
+    await this.ready();
+    return Response.json({
+      inProgress: !!this.inFlightTick,
+      lastTick: this.lastTick
+        ? {
+            startedAt: this.lastTick.startedAt,
+            paid: this.lastTick.paid,
+            held: this.lastTick.held,
+            blocked: this.lastTick.blocked,
+            needsApproval: this.lastTick.needsApproval,
+            totalPaidUsdc: this.lastTick.totalPaidUsdc.toString(),
+            errors: this.lastTick.errors,
+          }
+        : null,
+    });
+  }
+
   /** Route handler for `POST /api/tick`. Returns null when the path isn't ours. */
   async handleTick(request: Request): Promise<Response> {
     const expected = this.env.TICK_SECRET;
@@ -1026,6 +1069,33 @@ export class CampaignRuntime {
     }
 
     this.reservations.sweepExpired();
+
+    const url = new URL(request.url);
+    const isAsync =
+      url.searchParams.get('async') === 'true' || request.headers.get('x-tick-async') === 'true';
+
+    if (isAsync) {
+      if (this.inFlightTick) {
+        return Response.json(
+          { ok: true, status: 'already_running', message: 'A tick pass is currently in progress' },
+          { status: 409 },
+        );
+      }
+      const backgroundRun = this.tick();
+      backgroundRun.catch((err) => {
+        console.error(`background tick failed: ${err instanceof Error ? err.message : String(err)}`);
+      });
+      return Response.json(
+        {
+          ok: true,
+          status: 'started',
+          message: 'Tick pass started asynchronously',
+          statusUrl: '/api/tick/status',
+        },
+        { status: 202 },
+      );
+    }
+
     const result = await this.tick();
     return Response.json({
       ...result,
@@ -1042,4 +1112,5 @@ export class CampaignRuntime {
     });
   }
 }
+
 

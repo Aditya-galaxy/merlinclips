@@ -284,3 +284,44 @@ describe('two instances cannot settle the same window', () => {
     expect(second.paid).toBe(0);
   });
 });
+
+describe('on-demand funding check & async tick status', () => {
+  test('handleCheckFunding returns funding status for existing campaign', async () => {
+    const rt = await runtime();
+    const req = new Request('http://localhost/api/campaigns/camp-1/check-funding', { method: 'POST' });
+    const res = await rt.handleCheckFunding('camp-1');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; funding: { campaignId: string } };
+    expect(body.ok).toBe(true);
+    expect(body.funding.campaignId).toBe('camp-1');
+  });
+
+  test('handleCheckFunding returns 404 for unknown campaign', async () => {
+    const rt = await runtime();
+    const res = await rt.handleCheckFunding('camp-unknown');
+    expect(res.status).toBe(404);
+  });
+
+  test('handleTick in async mode returns 202 Accepted immediately', async () => {
+    const rt = await runtime();
+    const req = new Request('http://localhost/api/tick?async=true', {
+      method: 'POST',
+      headers: { 'x-tick-secret': 'correct-horse' },
+    });
+    const res = await rt.handleTick(req);
+    expect(res.status).toBe(202);
+    const body = (await res.json()) as { ok: boolean; status: string; statusUrl: string };
+    expect(body.ok).toBe(true);
+    expect(body.status).toBe('started');
+    expect(body.statusUrl).toBe('/api/tick/status');
+  });
+
+  test('handleTickStatus exposes status of latest pass', async () => {
+    const rt = await runtime();
+    const res = await rt.handleTickStatus();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { inProgress: boolean };
+    expect(typeof body.inProgress).toBe('boolean');
+  });
+});
+

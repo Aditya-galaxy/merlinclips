@@ -170,7 +170,21 @@ const json = (body: unknown, status = 200) =>
 
 const server = Bun.serve({
   port: PORT,
-  idleTimeout: 30,
+  // A pass has a model watching a video inside it. Gemini takes about 25
+  // seconds on a short clip and sometimes longer, so a 30-second idle timeout
+  // sat right on top of the normal case: the work completed server-side and
+  // Bun closed the connection first, so the caller saw HTTP 000 with an empty
+  // body and no error logged anywhere. From the outside that reads as a crash.
+  //
+  // Worse for the scheduler, which would treat a dropped connection as a
+  // failure and retry a pass that had in fact run. The lease stops that
+  // double-settling, but relying on a second mechanism to cover a timeout we
+  // chose is not a design.
+  //
+  // 255 is Bun's ceiling. The tick has its own bounds — the lease window and
+  // the verifier's timeout — so this is a backstop, not the thing keeping a
+  // pass finite.
+  idleTimeout: 255,
   async fetch(request) {
     const url = new URL(request.url);
 
@@ -328,6 +342,15 @@ const server = Bun.serve({
     // as a request, so Cloud Logging records every agent run for free.
     if (url.pathname === '/api/tick' && request.method === 'POST') {
       return campaigns.handleTick(request);
+    }
+
+    if (url.pathname === '/api/tick/status' && request.method === 'GET') {
+      return campaigns.handleTickStatus();
+    }
+
+    const checkFundingMatch = url.pathname.match(/^\/api\/campaigns\/([A-Za-z0-9._-]+)\/check-funding$/);
+    if (checkFundingMatch && (request.method === 'POST' || request.method === 'GET')) {
+      return campaigns.handleCheckFunding(checkFundingMatch[1]!);
     }
 
     // The machine-readable contract. Circle's marketplace requires a published

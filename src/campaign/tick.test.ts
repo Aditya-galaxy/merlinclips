@@ -269,12 +269,12 @@ describe('the investigator is consulted, and can only delay', () => {
     // still went out.
     const { store, gate } = world(['a']);
     const { sent, executor } = spyExecutor();
-    const inv = investigatorSaying('hold', ['count fell 988 views']);
+    const inv = investigatorSaying('hold', ['count fell 600 views']);
 
     const result = await runTick(
       // The oracle reports fewer views than the aged snapshot: the platform
       // scrubbed some. That is what makes the velocity worth investigating.
-      { store, gate, oracle: oracleReturning(12n), executor, agent: { investigator: inv } },
+      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: inv } },
       { agentId: 'agent', now: NOW },
     );
 
@@ -282,7 +282,7 @@ describe('the investigator is consulted, and can only delay', () => {
     expect(sent).toEqual([]);
     expect(result.paid).toBe(0);
     expect(result.held).toBe(1);
-    expect(result.investigationsHeld[0]).toContain('count fell 988 views');
+    expect(result.investigationsHeld[0]).toContain('count fell 600 views');
     expect(store.viewsPaidTo('a')).toBe(0n);
   });
 
@@ -292,7 +292,7 @@ describe('the investigator is consulted, and can only delay', () => {
     const inv = investigatorSaying('clear');
 
     const result = await runTick(
-      { store, gate, oracle: oracleReturning(12n), executor, agent: { investigator: inv } },
+      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: inv } },
       { agentId: 'agent', now: NOW },
     );
     expect(inv.calls).toBe(1);
@@ -304,7 +304,7 @@ describe('the investigator is consulted, and can only delay', () => {
     const { store, gate } = world(['a']);
     const { sent, executor } = spyExecutor();
     const result = await runTick(
-      { store, gate, oracle: oracleReturning(12n), executor, agent: { investigator: investigatorSaying('watch') } },
+      { store, gate, oracle: oracleReturning(400n), executor, agent: { investigator: investigatorSaying('watch') } },
       { agentId: 'agent', now: NOW },
     );
     expect(sent).toEqual(['a']);
@@ -332,7 +332,7 @@ describe('the investigator is consulted, and can only delay', () => {
     const { sent, executor } = spyExecutor();
     const result = await runTick(
       {
-        store, gate, oracle: oracleReturning(12n), executor,
+        store, gate, oracle: oracleReturning(400n), executor,
         agent: { investigator: { async investigate() { throw new Error('502 from the model'); } } },
       },
       { agentId: 'agent', now: NOW },

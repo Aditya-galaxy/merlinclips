@@ -1245,4 +1245,157 @@ main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
   line-height: 1.45;
 }
 
+/* ── Onboarding & Campaign Estimator Component Styles ── */
+.onboarding-banner {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(16, 185, 129, 0.08));
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.onboarding-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--text);
+}
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.onboarding-step-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: start;
+}
+.onboarding-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pop);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.onboarding-step-text h4 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.onboarding-step-text p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.verification-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-hi);
+  border: 1px dashed var(--pop);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+.verification-code-box code {
+  font-family: var(--num);
+  font-size: 14px;
+  font-weight: 600;
+  color: #10B981;
+}
+
+.estimator-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 30px;
+}
+.estimator-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 18px;
+}
+@media(max-width:768px){ .estimator-grid { grid-template-columns: 1fr; } }
+.estimator-output {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.estimator-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.estimator-result-row span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.estimator-result-row strong {
+  font-family: var(--num);
+  font-size: 18px;
+  color: var(--text);
+}
+
+.checklist-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 22px;
+}
+.checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.checklist-item.done {
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+.checklist-icon {
+  font-size: 16px;
+}
+
+
 

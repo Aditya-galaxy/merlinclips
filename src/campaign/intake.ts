@@ -137,7 +137,7 @@ export function openCampaign(
     return bad('perCreatorCapUsdc cannot exceed the pool', 'perCreatorCapUsdc');
   }
 
-  const chain = typeof input.chain === 'string' ? input.chain : 'base-sepolia';
+  const chain = typeof input.chain === 'string' ? input.chain : 'base';
   if (!CHAINS.has(chain)) {
     return bad(`chain must be one of ${[...CHAINS].join(', ')}`, 'chain');
   }

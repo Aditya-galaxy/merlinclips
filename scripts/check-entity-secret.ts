@@ -9,7 +9,9 @@
  */
 
 const key = Bun.env.CIRCLE_API_KEY?.trim() ?? '';
-const secret = Bun.env.ENTITY_SECRET?.trim() ?? '';
+const secretName = Bun.env.ENTITY_SECRET ? 'ENTITY_SECRET'
+  : Bun.env.CIRCLE_ENTITY_SECRET ? 'CIRCLE_ENTITY_SECRET' : 'ENTITY_SECRET';
+const secret = (Bun.env.ENTITY_SECRET ?? Bun.env.CIRCLE_ENTITY_SECRET)?.trim() ?? '';
 const problems: string[] = [];
 const notes: string[] = [];
 
@@ -38,9 +40,9 @@ if (!key) {
 
 // ── entity secret ────────────────────────────────────────────────────────
 if (!secret) {
-  problems.push('ENTITY_SECRET is not set');
+  problems.push('neither ENTITY_SECRET nor CIRCLE_ENTITY_SECRET is set');
 } else {
-  console.log(`  entity secret ${secret.length} chars`);
+  console.log(`  entity secret ${secret.length} chars (from ${secretName})`);
   if (!/^[0-9a-fA-F]+$/.test(secret)) {
     problems.push('ENTITY_SECRET must be hex — no 0x prefix, no quotes, no whitespace');
   } else if (secret.length !== 64) {

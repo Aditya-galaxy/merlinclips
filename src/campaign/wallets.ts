@@ -49,7 +49,12 @@ export interface WalletConfig {
 
 export function walletConfig(env: Record<string, string | undefined>): WalletConfig | undefined {
   const apiKey = env.CIRCLE_API_KEY?.trim();
-  const entitySecret = env.ENTITY_SECRET?.trim();
+  // Either name. The registration script writes CIRCLE_ENTITY_SECRET and
+  // Circle's own examples read ENTITY_SECRET, so whichever a deployment ends
+  // up with, this finds it. A mismatch here fails as "wallet creation is not
+  // enabled" — a message that sends somebody looking for a missing feature
+  // rather than a misspelt variable.
+  const entitySecret = (env.ENTITY_SECRET ?? env.CIRCLE_ENTITY_SECRET)?.trim();
   if (!apiKey || !entitySecret) return undefined;
   return { apiKey, entitySecret, walletSetId: env.CIRCLE_WALLET_SET_ID?.trim() };
 }

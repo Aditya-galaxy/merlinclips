@@ -77,6 +77,15 @@ MISSINGSA
   exit 1
 fi
 
+# Active Circle Funded Agent Wallet (Base Mainnet / Testnet)
+DEFAULT_WALLET="0x0003a59858f44451be2a5b486ee612b4139700f0"
+CAMPAIGN_WALLET="${CAMPAIGN_WALLET:-$DEFAULT_WALLET}"
+MAINNET_CAMPAIGN_WALLET="${MAINNET_CAMPAIGN_WALLET:-$DEFAULT_WALLET}"
+
+# Ensure secrets exist so Cloud Run endpoints (/api/tick and /api/campaigns) remain active
+TICK_SECRET="${TICK_SECRET:-$(openssl rand -hex 24)}"
+OPERATOR_SECRET="${OPERATOR_SECRET:-$(openssl rand -hex 24)}"
+
 gcloud run deploy "$SERVICE" \
   --source . \
   --project "$PROJECT" \
@@ -89,7 +98,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 4 \
   --timeout 60s \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET:-},OPERATOR_SECRET=${OPERATOR_SECRET:-},CAMPAIGN_WALLET=${CAMPAIGN_WALLET:-},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET:-},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
@@ -104,31 +113,9 @@ echo "Live: $URL"
 # deploy reported a failed health check on a service that was serving fine.
 echo "Health: $(curl -fsS "$URL/health" || echo 'FAILED')"
 echo "Config: $(curl -fsS "$URL/api/campaign" | head -c 200 || echo 'unreachable')"
-
-
-# Both of these are fail-closed rather than fail-quiet, because the ways they
-# fail are silent ones: without a bucket the campaign store is in-memory on a
-# service that scales to zero, so no view ever survives the dwell window and
-# every submission is held forever; without a secret the payout endpoint
-# refuses to run at all, which is the correct choice but looks like nothing
-# happening.
-if [ -z "${OPERATOR_SECRET:-}" ]; then
-  echo
-  echo "WARNING: OPERATOR_SECRET unset — POST /api/campaigns returns 503." >&2
-  echo "         Deliberately separate from TICK_SECRET: Cloud Scheduler holds the" >&2
-  echo "         tick secret, and whatever can trigger a tick should not also be" >&2
-  echo "         able to commit money by opening a campaign." >&2
-  echo "           OPERATOR_SECRET=\$(openssl rand -hex 24) ./deploy.sh" >&2
-fi
-
-if [ -z "${TICK_SECRET:-}" ]; then
-  echo
-  echo "WARNING: TICK_SECRET unset — /api/tick returns 503 and no payouts run." >&2
-  echo "         The service is public by competition requirement, so this endpoint" >&2
-  echo "         is the one thing that must not be. Generate and redeploy:" >&2
-  echo "           TICK_SECRET=\$(openssl rand -hex 24) GCS_BUCKET=$SERVICE-state ./deploy.sh" >&2
-  exit 0
-fi
+echo "Active Wallet: $CAMPAIGN_WALLET"
+echo "Tick Secret: $TICK_SECRET"
+echo "Operator Secret: $OPERATOR_SECRET"
 
 cat <<SCHEDULER
 

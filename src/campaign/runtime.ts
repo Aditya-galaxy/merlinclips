@@ -42,6 +42,7 @@ import { RpcBalanceReader } from './balances';
 import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
+import { approveBrand, brandFor } from './brands';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -573,6 +574,16 @@ export class CampaignRuntime {
   }
 
   /** The signed-in account, or undefined. Never trusted from the body. */
+  /** The signed-in email, which is what a brand account is keyed by. */
+  private async emailFor(request: Request): Promise<string | undefined> {
+    const secret = this.env.SESSION_SECRET?.trim();
+    if (!secret) return undefined;
+    const session = await verifySession(
+      readSessionCookie(request.headers.get('cookie'), SESSION_COOKIE_NAME), secret,
+    );
+    return session?.email;
+  }
+
   private async accountFor(request: Request): Promise<string | undefined> {
     const secret = this.env.SESSION_SECRET?.trim();
     if (!secret) return undefined;
@@ -644,6 +655,101 @@ export class CampaignRuntime {
         dwellHours: Math.round(x.acceptedTerms.dwellMs / 3_600_000),
       })),
       payouts,
+    });
+  }
+
+  /**
+   * Turn an approved enquiry into a brand. Operator-gated, because approving
+   * is the decision, and the whole point of manual approval is that a person
+   * makes it.
+   */
+  async handleApproveBrand(request: Request): Promise<Response> {
+    const guard = this.requireOperator(request);
+    if (guard) return guard;
+
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const result = await approveBrand(this.blobs, body);
+    if (!result.ok) {
+      return Response.json({ error: result.error, field: result.field }, { status: 400 });
+    }
+    return Response.json(
+      { brand: result.brand, created: result.created },
+      { status: result.created ? 201 : 200 },
+    );
+  }
+
+  /**
+   * What a brand sees: their campaigns, and nothing else.
+   *
+   * Scoped by ownerId against the signed-in brand, never by anything the
+   * caller supplies. A dashboard that takes a brand id from a query parameter
+   * is a dashboard that shows anybody anybody else's spend.
+   *
+   * Read-only. Campaign creation stays operator-gated, so this reports on
+   * money rather than committing it — and the one endpoint that can commit it
+   * is unreachable from here.
+   */
+  async handleBrandDashboard(request: Request): Promise<Response> {
+    const email = await this.emailFor(request);
+    if (!email) return Response.json({ error: 'not signed in' }, { status: 401 });
+
+    const brand = await brandFor(this.blobs, email);
+    if (!brand) {
+      // Deliberately not a 403. Somebody signed in with a personal address is
+      // not forbidden, they simply have no brand account yet — and the answer
+      // that helps them is where to ask for one.
+      return Response.json(
+        { brand: null, next: 'No brand account for this address yet — tell us about your campaign at /launch.html' },
+        { status: 200 },
+      );
+    }
+
+    await this.ready();
+    const state = this.store.exportState();
+    const mine = state.campaigns.filter((c) => c.ownerId === brand.brandId);
+
+    const campaigns = await Promise.all(mine.map(async (c) => {
+      const subs = state.submissions.filter((x) => x.campaignId === c.campaignId);
+      const paid = state.payouts.filter((x) => x.campaignId === c.campaignId);
+      let spentMicro = 0n;
+      let viewsPaid = 0n;
+      for (const p of paid) { spentMicro += p.amountUsdc.micro; viewsPaid += p.viewsPaidTo; }
+      const funding = this.balances
+        ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances)
+        : undefined;
+
+      return {
+        campaignId: c.campaignId,
+        brief: c.brief,
+        status: c.status,
+        poolUsdc: c.poolUsdc.toString(),
+        spentUsdc: (Number(spentMicro) / 1_000_000).toFixed(6),
+        remainingUsdc: c.poolUsdc.minus(new Decimal(Number(spentMicro) / 1_000_000)).toString(),
+        cpmUsdc: c.cpmUsdc.toString(),
+        perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
+        dwellHours: Math.round(c.dwellMs / 3_600_000),
+        minStanding: c.minStanding,
+        submissions: subs.length,
+        creators: new Set(subs.map((x) => x.creatorId)).size,
+        payouts: paid.length,
+        viewsPaid: viewsPaid.toString(),
+        funding: funding && { coverage: funding.coverage, fundedUsdc: funding.fundedUsdc,
+                              summary: funding.summary },
+        endsAt: c.endsAt,
+      };
+    }));
+
+    return Response.json({
+      brand: { brandId: brand.brandId, company: brand.company, email: brand.email,
+               approvedAt: brand.approvedAt },
+      campaigns,
+      totals: {
+        campaigns: campaigns.length,
+        spentUsdc: campaigns
+          .reduce((a, c) => a + Number(c.spentUsdc), 0).toFixed(6),
+        creators: campaigns.reduce((a, c) => a + c.creators, 0),
+        submissions: campaigns.reduce((a, c) => a + c.submissions, 0),
+      },
     });
   }
 

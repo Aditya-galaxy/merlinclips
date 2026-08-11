@@ -537,8 +537,6 @@ const server = Bun.serve({
             return new Response(gate, {
               headers: {
                 'content-type': 'text/html; charset=utf-8',
-                // The card differs by session, so a shared cache must not hand
-                // a signed-in visitor somebody else's sign-up page.
                 'cache-control': 'private, no-store',
               },
             });
@@ -548,13 +546,13 @@ const server = Bun.serve({
       return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     }
 
-    // Static marketing pages, served from an allowlist rather than by joining
-    // user input onto a path. A traversal bug here would read anything the
-    // container can, and an allowlist cannot be traversed.
+    // Static marketing pages, served from an allowlist.
     const LANDING: Record<string, string> = {
       '/': 'landing/index.html',
       '/index.html': 'landing/index.html',
       '/styles.css': 'landing/styles.css',
+      '/logo.svg': 'landing/logo.svg',
+      '/favicon.ico': 'landing/logo.svg',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
       '/api.html': 'landing/api.html',
@@ -573,11 +571,16 @@ const server = Bun.serve({
     if (asset) {
       const file = Bun.file(asset);
       if (await file.exists()) {
+        const mimeType = asset.endsWith('.css')
+          ? 'text/css; charset=utf-8'
+          : asset.endsWith('.svg')
+          ? 'image/svg+xml'
+          : asset.endsWith('.ico')
+          ? 'image/x-icon'
+          : 'text/html; charset=utf-8';
         return new Response(file, {
           headers: {
-            'content-type': asset.endsWith('.css')
-              ? 'text/css; charset=utf-8'
-              : 'text/html; charset=utf-8',
+            'content-type': mimeType,
           },
         });
       }

@@ -18,21 +18,20 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile --production 2>/dev/null || bun install --production
 
-# The Circle CLI, because the payout executor spawns `circle wallet transfer`.
+# The Circle CLI is deliberately NOT installed.
 #
-# Without it the image runs perfectly right up to the moment it tries to pay,
-# then reports "could not run the Circle CLI" — a failure that only appears
-# once BROADCAST is on and money is meant to move, which is the worst possible
-# time to discover a missing binary.
+# It authenticates with an email-OTP session tied to a person's inbox —
+# `circle wallet login <email>` takes no token or key flag, and a session
+# expires in about a month. A container cannot obtain one, so the binary would
+# sit here unable to do the only thing it is wanted for.
 #
-# Installed globally so it is on PATH for the unprivileged `bun` user.
-RUN bun add -g @circle-fin/cli 2>/dev/null || npm install -g @circle-fin/cli || true
-ENV PATH="/root/.bun/bin:/usr/local/bin:${PATH}"
+# Worse than useless: present, it implies a working fallback. Absent, the
+# executor reports "could not run the Circle CLI" and names the real problem.
+#
+# Payouts on a deployment go through the Wallets SDK instead, which
+# authenticates with CIRCLE_API_KEY and ENTITY_SECRET from the environment —
+# no session, no expiry, no person. See src/campaign/sdk-executor.ts.
 
-# Fail the build rather than the payout if it is not there.
-RUN command -v circle >/dev/null 2>&1 \
-    && echo "circle CLI present: $(command -v circle)" \
-    || (echo "FATAL: circle CLI missing — the payout executor cannot run" && exit 1)
 
 COPY src ./src
 # openapi.json is served at /openapi.json and Circle's marketplace requires it

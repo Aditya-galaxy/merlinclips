@@ -64,7 +64,7 @@ describe('the command it builds', () => {
   test('the USDC token is passed explicitly, not left to default', async () => {
     // --token defaults to the *native* token, so omitting it would send ETH.
     const { calls, runner } = spy();
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner }));
+    await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner }));
     const args = calls[0]!;
     expect(args.slice(0, 3)).toEqual(['wallet', 'transfer', '0xdest']);
     expect(args[args.indexOf('--token') + 1]).toBe('0x036CbD53842c5426634e7929541eC2318f3dCF7e');
@@ -78,7 +78,7 @@ describe('the command it builds', () => {
     // readable intent id straight through silently disabled the guarantee the
     // flag exists for — every settlement failed, and idempotency with it.
     const { calls, runner } = spy();
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner }));
+    await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner }));
     const args = calls[0]!;
     const key = args[args.indexOf('--idempotency-key') + 1]!;
     expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
@@ -97,7 +97,7 @@ describe('the command it builds', () => {
   test('mainnet uses the mainnet token and explorer', async () => {
     const { calls, runner } = spy({ stdout: '{"txHash":"0xabc"}' });
     const outcome = await send(
-      new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner }),
+      new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner }),
       'base',
     );
     expect(calls[0]![calls[0]!.indexOf('--token') + 1]).toBe(
@@ -127,7 +127,7 @@ describe('dry run', () => {
 describe('when settlement fails', () => {
   test('a non-zero exit reports not executed, with the CLI error kept', async () => {
     const { runner } = spy({ code: 1, stderr: 'insufficient USDC balance' });
-    const outcome = await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner }));
+    const outcome = await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner }));
     expect(outcome.executed).toBe(false);
     expect(outcome.error).toContain('insufficient USDC balance');
   });
@@ -139,7 +139,7 @@ describe('when settlement fails', () => {
       },
     };
     const outcome = await send(
-      new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner: broken }),
+      new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner: broken }),
     );
     expect(outcome.executed).toBe(false);
     expect(outcome.error).toContain('command not found');
@@ -166,7 +166,7 @@ describe('reading the receipt', () => {
   test('a successful send carries the explorer URL the rules ask for', async () => {
     const hash = `0x${'b'.repeat(64)}`;
     const { runner } = spy({ stdout: hash });
-    const outcome = await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, runner }));
+    const outcome = await send(new CircleCliExecutor({ fromAddress: '0xfrom', dryRun: false, env: { BROADCAST: 'true' }, runner }));
     expect(outcome.executed).toBe(true);
     expect(outcome.txHash).toBe(hash);
     expect(outcome.explorerUrl).toBe(`https://sepolia.basescan.org/tx/${hash}`);

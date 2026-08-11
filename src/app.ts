@@ -62,6 +62,30 @@ a:hover{text-decoration:underline}
       padding:8px 15px;border-radius:99px;border:1px solid var(--line-2);
       background:var(--card);color:var(--ink);white-space:nowrap;text-decoration:none}
 .gbtn:hover{border-color:var(--ink-3);text-decoration:none}
+/* ── the dashboard ──
+   Four tiles, because four numbers are what a creator opens this page to see:
+   what they earned, what it was earned on, how much is in flight, and whether
+   they are trusted yet. Everything else is detail below. */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0 16px}
+@media(max-width:900px){.tiles{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.tiles{grid-template-columns:1fr}}
+.tile{border:1px solid var(--line);border-radius:16px;background:var(--card);
+      padding:18px 20px;display:flex;flex-direction:column;gap:5px}
+.tlabel{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+        font-weight:600}
+.tnum{font-family:var(--num);font-size:29px;font-weight:600;letter-spacing:-.03em;
+      color:var(--ink);line-height:1.05;font-variant-numeric:tabular-nums}
+.tsub{font-size:13px;color:var(--ink-3)}
+.tile.standing .tnum{text-transform:capitalize}
+.tile.standing[data-level="reliable"] .tnum{color:var(--settled)}
+.tile.standing[data-level="exceptional"] .tnum{color:var(--settled)}
+.tile.standing[data-level="unproven"] .tnum{color:var(--ink-2)}
+/* The bar is the survival rate itself, not a progress-to-next-level guess.
+   Inventing a distance to the next tier would be inventing a number. */
+.meter{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;background:var(--settled);border-radius:99px}
+#dwallets{font-family:var(--num);font-size:12.5px;color:var(--ink-3);
+          overflow-wrap:anywhere}
 .signin-note{margin:0 0 20px;padding:13px 16px;border-radius:11px;
              border:1px solid var(--line-2);background:var(--refused-wash);
              color:var(--refused);font-size:14.5px}
@@ -219,6 +243,39 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
       <div><b>0%</b><span>Fee on your earnings</span></div>
     </div>
   </div>
+
+  <!-- Only for a signed-in creator, and hidden until the profile answers.
+       An empty dashboard rendered first and filled in after is a page that
+       flashes zeroes at somebody who has earned money. -->
+  <section id="dash" hidden>
+    <div class="shead"><h2>Your record</h2><span class="count" id="dwho"></span></div>
+
+    <div class="tiles">
+      <div class="tile">
+        <span class="tlabel">Earned</span>
+        <b class="tnum" id="t-earned">—</b>
+        <span class="tsub">settled to your wallet</span>
+      </div>
+      <div class="tile">
+        <span class="tlabel">Views paid for</span>
+        <b class="tnum" id="t-views">—</b>
+        <span class="tsub">that survived the wait</span>
+      </div>
+      <div class="tile">
+        <span class="tlabel">Clips submitted</span>
+        <b class="tnum" id="t-subs">—</b>
+        <span class="tsub"><span id="t-payouts">0</span> paid so far</span>
+      </div>
+      <div class="tile standing" id="t-standing-card">
+        <span class="tlabel">Standing</span>
+        <b class="tnum" id="t-standing">—</b>
+        <span class="tsub" id="t-standing-says">&nbsp;</span>
+        <div class="meter" id="t-meter" hidden><i></i></div>
+      </div>
+    </div>
+
+    <p class="note" id="dwallets"></p>
+  </section>
 
   <section>
     <div class="shead"><h2>Live campaigns</h2><span class="count" id="ccount"></span></div>
@@ -438,6 +495,48 @@ setInterval(loadClips,20000);
       }
     })
     .catch(function () { /* signed out is the safe assumption */ });
+
+  /* The record, for whoever is signed in. Rendered only once it answers:
+     a dashboard that paints zeroes and corrects itself a moment later tells a
+     creator they earned nothing, which is the one thing it must never say by
+     accident. */
+  fetch('/api/me/profile', { credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (p) {
+      if (!p) return;
+      var dash = document.getElementById('dash');
+      var num = function (id, v) { document.getElementById(id).textContent = v; };
+
+      num('t-earned', '$' + Number(p.totals.earnedUsdc).toLocaleString('en-US',
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      num('t-views', Number(p.totals.viewsPaid).toLocaleString('en-US'));
+      num('t-subs', String(p.totals.submissions));
+      num('t-payouts', String(p.totals.payouts));
+
+      var card = document.getElementById('t-standing-card');
+      card.dataset.level = p.standing.level;
+      num('t-standing', p.standing.level);
+      num('t-standing-says', p.standing.says || '');
+
+      /* A rate only exists once something has been judged. Showing 0% for a
+         creator with nothing counted yet would read as a bad score rather
+         than an absent one. */
+      if (typeof p.standing.survivalRate === 'number') {
+        var meter = document.getElementById('t-meter');
+        meter.hidden = false;
+        meter.firstElementChild.style.width =
+          Math.round(p.standing.survivalRate * 100) + '%';
+      }
+
+      document.getElementById('dwho').textContent =
+        p.standing.clipsJudged + (p.standing.clipsJudged === 1 ? ' clip counted' : ' clips counted');
+      document.getElementById('dwallets').textContent = p.wallets.length
+        ? 'Paid to ' + p.wallets.join(', ')
+        : 'No wallet linked yet — submit a clip and the one you are paid to is linked here.';
+
+      dash.hidden = false;
+    })
+    .catch(function () { /* signed out, or the profile is unavailable */ });
 
   var q = new URLSearchParams(location.search);
   if (q.get('signin') === 'failed') {

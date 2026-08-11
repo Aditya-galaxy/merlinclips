@@ -21,3 +21,6 @@ DESIGN.md
 
 # Internal operations notes — not part of the public repo
 RUNBOOK.md
+
+# Local-only credential scratch files
+check-*.local.ts

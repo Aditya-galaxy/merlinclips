@@ -535,6 +535,8 @@ const server = Bun.serve({
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
       '/api.html': 'landing/api.html',
+      '/brand.html': 'landing/brand.html',
+      '/brand': 'landing/brand.html',
       '/launch.html': 'landing/launch.html',
       '/launch': 'landing/launch.html',
       '/signup.html': 'landing/signup.html',

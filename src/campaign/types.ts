@@ -136,6 +136,8 @@ export interface Submission {
    * closes. Build submissions with `acceptSubmission`.
    */
   readonly acceptedTerms: CampaignTerms;
+  /** Unique 6-character anti-spam ownership code (e.g. MC-9A8F21). */
+  readonly verificationCode?: string;
 }
 
 /**

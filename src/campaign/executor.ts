@@ -253,3 +253,104 @@ export class CircleCliExecutor implements PayoutExecutor {
     };
   }
 }
+
+/**
+ * Circle Developer Controlled Wallets API Executor.
+ * Eliminates host CLI session token expiration in 24/7 serverless Cloud Run.
+ */
+export class CircleDeveloperSdkExecutor implements PayoutExecutor {
+  private readonly apiKey: string;
+  private readonly walletId: string;
+  private readonly fetchImpl: typeof fetch;
+
+  constructor(options: { apiKey: string; walletId: string; fetchImpl?: typeof fetch }) {
+    this.apiKey = options.apiKey.trim();
+    this.walletId = options.walletId.trim();
+    this.fetchImpl = options.fetchImpl ?? fetch;
+  }
+
+  async send(input: {
+    decision: PayoutDecision;
+    creator: Creator;
+    campaign: Campaign;
+  }): Promise<PaymentOutcome> {
+    const { decision, creator, campaign } = input;
+    const chain = campaign.chain;
+    const intentId = `pay-${decision.submissionId}-${decision.confirmedViews}`;
+    const settledAt = new Date().toISOString();
+
+    const body = {
+      idempotencyKey: idempotencyUuid(intentId),
+      walletId: this.walletId,
+      destinationAddress: creator.payoutAddress,
+      amounts: [decision.amountUsdc.toString()],
+      tokenId: USDC_TOKEN[chain],
+      feeLevel: 'MEDIUM',
+    };
+
+    try {
+      const res = await this.fetchImpl('https://api.circle.com/v1/w3s/developer/transactions/transfer', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        data?: { id?: string; txHash?: string };
+        message?: string;
+      };
+
+      if (!res.ok) {
+        return {
+          intentId,
+          executed: false,
+          dryRun: false,
+          detail: `Circle Developer API returned ${res.status}`,
+          error: data.message || JSON.stringify(data),
+          settledAt,
+        };
+      }
+
+      const txHash = data.data?.txHash || data.data?.id;
+      return {
+        intentId,
+        executed: true,
+        dryRun: false,
+        detail: `sent ${decision.amountUsdc} USDC to ${creator.payoutAddress} via Circle Developer API`,
+        txHash,
+        explorerUrl: txHash ? `${EXPLORER[chain]}${txHash}` : undefined,
+        settledAt,
+      };
+    } catch (err) {
+      return {
+        intentId,
+        executed: false,
+        dryRun: false,
+        detail: 'Circle Developer API request failed',
+        error: (err as Error).message,
+        settledAt,
+      };
+    }
+  }
+}
+
+/**
+ * Smart Multi-Provider Executor Router.
+ * Uses Circle Developer SDK if CIRCLE_API_KEY is present, else falls back to Circle CLI.
+ */
+export function createPayoutExecutor(
+  fromAddress: string,
+  env: Record<string, string | undefined> = Bun.env,
+): PayoutExecutor {
+  const circleApiKey = env.CIRCLE_API_KEY?.trim();
+  const circleWalletId = env.CIRCLE_WALLET_ID?.trim();
+
+  if (circleApiKey && circleWalletId) {
+    return new CircleDeveloperSdkExecutor({ apiKey: circleApiKey, walletId: circleWalletId });
+  }
+
+  return new CircleCliExecutor({ fromAddress, env });
+}

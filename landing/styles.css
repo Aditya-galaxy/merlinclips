@@ -95,8 +95,16 @@ a:hover{text-decoration:underline}
 section{padding:96px 0}
 .hero{padding:96px 0 84px}
 hr{height:1px;background:var(--line);border:0;margin:0}
+/* The padding is not decoration, it stops the last letter being sliced.
+   `background-clip:text` paints the gradient only inside the element's
+   background box, and negative letter-spacing is applied after the final
+   character as well as between them — so the box ends ~2.6px short of where
+   the last glyph's ink actually reaches, and the right edge of the "s" in
+   "real views" was simply not painted. The negative margin cancels the
+   padding's effect on layout, so nothing moves. */
 .grad{background:linear-gradient(96deg,#7C3AED 0%,#6D28D9 45%,#0E8FA8 100%);
-      -webkit-background-clip:text;background-clip:text;color:transparent}
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      padding-right:.09em;margin-right:-.09em}
 
 /* ── numbers carry the argument ── */
 .num{font-family:var(--mono);font-size:clamp(76px,15vw,180px);font-weight:600;

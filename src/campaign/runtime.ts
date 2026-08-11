@@ -652,8 +652,9 @@ export class CampaignRuntime {
     }
     await this.ready();
 
-    const wallets = await walletsFor(this.blobs, accountId);
-    const ids = new Set(creatorIdsFor(wallets));
+    const acc = this.store.getCreatorAccount(accountId);
+    const wallets = acc ? walletsFor(acc) : [];
+    const ids = new Set(wallets);
     const state = this.store.exportState();
     const mine = state.submissions.filter((x) => ids.has(x.creatorId));
 
@@ -924,7 +925,7 @@ export class CampaignRuntime {
       // creator is paid to an address, and a failure to record the link does
       // not change the address.
       if (accountId) {
-        await linkWallet(this.blobs, accountId, creator.payoutAddress);
+        linkWallet(this.store, accountId, creator.payoutAddress);
       }
 
       await this.record({ type: 'creator_upserted', creator });

@@ -92,6 +92,31 @@ export interface Creator {
   readonly handles: Readonly<Partial<Record<Platform, string>>>;
 }
 
+export interface LinkedWallet {
+  readonly address: string;
+  readonly chain: Chain;
+  readonly firstSeenAt: string;
+  readonly lastPaidAt?: string;
+}
+
+export interface CreatorAccount {
+  readonly accountId: string;
+  readonly googleSub?: string;
+  readonly name: string;
+  readonly email: string;
+  readonly joinedAt: string;
+  readonly linkedWallets: readonly LinkedWallet[];
+}
+
+export interface BrandProfile {
+  readonly brandId: string;
+  readonly company: string;
+  readonly contactEmail: string;
+  readonly ownerAddress: string;
+  readonly verified: boolean;
+  readonly joinedAt: string;
+}
+
 /**
  * The deal, frozen at the moment a clip was accepted.
  *

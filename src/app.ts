@@ -211,24 +211,93 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
   .ledger{grid-column:2;justify-content:flex-start;text-align:left;margin-top:10px}
   .terms{flex-wrap:wrap}
 }
+
+/* ── dashboard shell ──
+   A violet rail, because the one thing a creator does here repeatedly is move
+   between their own records — and a top bar with seven links is a top bar
+   nobody reads twice. The rail collapses to a scrolling strip on a phone
+   rather than a hamburger: seven destinations is few enough to show. */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.rail{background:linear-gradient(180deg,#5B21B6,#4C1D95);color:#EDE9FE;
+      display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;
+      height:100vh;overflow-y:auto}
+.rmark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;
+       letter-spacing:-.02em;color:#fff;text-decoration:none;padding:0 8px 22px}
+.rmark i{width:19px;height:19px;border-radius:6px;background:#fff;flex:none;position:relative}
+.rmark i::after{content:"";position:absolute;inset:6px 6px auto auto;width:5px;height:5px;
+                border-radius:50%;background:#5B21B6}
+.rnav{display:flex;flex-direction:column;gap:2px}
+.rl{display:block;padding:9px 12px;border-radius:9px;color:#DDD6FE;text-decoration:none;
+    font-size:14.5px;font-weight:500;white-space:nowrap}
+.rl:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
+.rl[aria-current="true"]{background:rgba(255,255,255,.16);color:#fff;font-weight:650}
+.rl b{font-weight:inherit}
+.rfoot{margin-top:auto;padding-top:18px;display:flex;flex-direction:column;gap:2px}
+.rl.quiet{font-size:13px;color:#C4B5FD;opacity:.85}
+.rwho{padding:8px 12px;font-size:13px;color:#DDD6FE;overflow:hidden;text-overflow:ellipsis}
+.rfoot .gbtn{margin:4px 0 8px;justify-content:center}
+.pane{min-width:0;background:var(--paper)}
+.pane .wrap{padding-block:26px 60px}
+
+@media(max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:static;height:auto;padding:14px 12px;
+        flex-direction:row;align-items:center;gap:10px;overflow-x:auto}
+  .rmark{padding:0 10px 0 4px}
+  .rnav{flex-direction:row;gap:4px}
+  .rfoot{margin-top:0;margin-left:auto;padding-top:0;flex-direction:row;align-items:center}
+  .rwho{display:none}
+}
+
+/* ── entity rows ──
+   Label on the left, value on the right, one fact per line. A table would
+   imply the fields are comparable across rows; they are not. */
+.rows{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.erow{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px 18px}
+.erow h4{margin:0 0 10px;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.erow dl{display:grid;grid-template-columns:auto 1fr;gap:7px 18px;margin:0}
+.erow dt{font-size:12.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;
+         font-weight:600}
+.erow dd{margin:0;font-size:14.5px;color:var(--ink);font-family:var(--num);
+         overflow-wrap:anywhere}
+.erow dd.words{font-family:var(--ui)}
+.erow .empty{font-size:14.5px;color:var(--ink-3)}
+@media(max-width:520px){.erow dl{grid-template-columns:1fr;gap:2px 0}
+                        .erow dd{margin-bottom:8px}}
 </style>
 </head>
 <body>
 
-<div class="bar"><div class="wrap">
-  <span class="mark"><i></i>Merlin Clips</span>
-  <a class="nav" href="/console">Console</a>
-  <a class="nav" href="/openapi.json">API</a>
-  <span id="who" class="who" hidden></span>
-  <a id="signin" class="gbtn" href="/auth/google" hidden>
-    <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-      <path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.2-.16-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
-      <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
-      <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
-      <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
-    </svg>Continue with Google</a>
-  <a id="signout" class="nav" href="/auth/logout" hidden>Sign out</a>
-</div></div>
+<div class="shell">
+
+<aside class="rail">
+  <a class="rmark" href="/"><i></i>Merlin Clips</a>
+
+  <nav class="rnav" aria-label="Your account">
+    <a class="rl" href="#overview" data-sec="overview"><b>Overview</b></a>
+    <a class="rl" href="#campaigns" data-sec="campaigns">Campaigns</a>
+    <a class="rl" href="#submit" data-sec="submit">Submit a clip</a>
+    <a class="rl" href="#submissions" data-sec="submissions">Submissions</a>
+    <a class="rl" href="#payouts" data-sec="payouts">Payouts</a>
+    <a class="rl" href="#wallets" data-sec="wallets">Wallets</a>
+    <a class="rl" href="#standing" data-sec="standing">Standing</a>
+  </nav>
+
+  <div class="rfoot">
+    <div class="rwho" id="who" hidden></div>
+    <a id="signin" class="gbtn" href="/auth/google" hidden>
+      <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
+        <path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.2-.16-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
+        <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
+        <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
+      </svg>Continue with Google</a>
+    <a class="rl quiet" href="/api.html">API reference</a>
+    <a id="signout" class="rl quiet" href="/auth/logout" hidden>Sign out</a>
+  </div>
+</aside>
+
+<div class="pane">
 
 <main class="wrap">
 
@@ -247,7 +316,7 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
   <!-- Only for a signed-in creator, and hidden until the profile answers.
        An empty dashboard rendered first and filled in after is a page that
        flashes zeroes at somebody who has earned money. -->
-  <section id="dash" hidden>
+  <section id="overview" hidden>
     <div class="shead"><h2>Your record</h2><span class="count" id="dwho"></span></div>
 
     <div class="tiles">
@@ -277,14 +346,14 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     <p class="note" id="dwallets"></p>
   </section>
 
-  <section>
+  <section id="campaigns">
     <div class="shead"><h2>Live campaigns</h2><span class="count" id="ccount"></span></div>
     <p class="note">Every campaign shows its remaining budget up front, so you know what is left to
       earn before you start editing. When a budget runs out, it runs out.</p>
     <div class="offers" id="campaigns"></div>
   </section>
 
-  <section>
+  <section id="submit">
     <div class="shead"><h2>Submit your clip</h2></div>
     <p class="note">No signup and no follower minimum. Your wallet address is your account, because it
       is the thing that gets paid.</p>
@@ -309,18 +378,41 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     </div>
   </section>
 
-  <section>
+  <section id="submissions">
     <div class="shead"><h2>Your submissions</h2><span class="count" id="lcount"></span></div>
     <p class="note">Your balance updates as the agent runs. When a submission is not paid, the reason
       says why in plain words — and a clip still counting down is never shown as a rejection.</p>
     <div class="lines" id="clips"></div>
   </section>
 
+
+  <section id="payouts" hidden>
+    <div class="shead"><h2>Payouts</h2><span class="count" id="pcount"></span></div>
+    <p class="note">Every settlement, with what it covered and where it went. A payout is written
+      down before it is sent, so this list is the record rather than a summary of one.</p>
+    <div class="rows" id="prows"></div>
+  </section>
+
+  <section id="wallets" hidden>
+    <div class="shead"><h2>Wallets</h2></div>
+    <p class="note">Addresses you have been paid to. The first account to submit with an address
+      claims it, so nobody else can attach your earnings to their record.</p>
+    <div class="rows" id="wrows"></div>
+  </section>
+
+  <section id="standing" hidden>
+    <div class="shead"><h2>Standing</h2></div>
+    <p class="note">The share of your views still there when the wait closed — the same number
+      that decides your payout, shown back to you.</p>
+    <div class="rows" id="srows"></div>
+  </section>
+
 </main>
+</div>
+</div>
 
 <footer><div class="wrap">
   Create, post and earn on YouTube. Every payout decision is written to an append-only record. ·
-  <a href="/console">Operator console</a> ·
   <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
 </div></footer>
 
@@ -535,6 +627,7 @@ setInterval(loadClips,20000);
         : 'No wallet linked yet — submit a clip and the one you are paid to is linked here.';
 
       dash.hidden = false;
+      renderEntities(p);
     })
     .catch(function () { /* signed out, or the profile is unavailable */ });
 
@@ -548,6 +641,98 @@ setInterval(loadClips,20000);
       : 'Sign-in could not be verified, so you were not signed in.';
     document.querySelector('main').prepend(note);
   }
+})();
+
+/* Entity views. Each renders the fields for one thing a creator owns, and
+   nothing renders until the data for it exists — an empty row that fills in
+   later reads as a value that changed. */
+function renderEntities(p) {
+  var esc = function (t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var money = function (n) { return '$' + Number(n).toLocaleString('en-US',
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var when = function (iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }); }
+    catch (e) { return iso; }
+  };
+  var show = function (id, html) {
+    var host = document.getElementById(id);
+    if (!host) return;
+    host.innerHTML = html;
+    host.closest('section').hidden = false;
+  };
+  var row = function (title, pairs) {
+    return '<div class="erow"><h4>' + esc(title) + '</h4><dl>'
+      + pairs.map(function (kv) {
+          return '<dt>' + esc(kv[0]) + '</dt><dd' + (kv[2] ? ' class="words"' : '') + '>'
+            + esc(kv[1]) + '</dd>';
+        }).join('')
+      + '</dl></div>';
+  };
+
+  /* Payouts: amount, views paid, settled at, tx. */
+  document.getElementById('pcount').textContent =
+    p.payouts.length + (p.payouts.length === 1 ? ' payout' : ' payouts');
+  show('prows', p.payouts.length
+    ? p.payouts.map(function (x) {
+        return row(money(x.amountUsdc), [
+          ['Views paid', Number(x.viewsPaidTo).toLocaleString('en-US')],
+          ['Settled', when(x.settledAt)],
+          ['Campaign', x.campaignId],
+          ['Transaction', x.txHash || 'not broadcast — settled in dry run']
+        ]);
+      }).join('')
+    : '<div class="erow"><p class="empty">Nothing settled yet. A clip pays once its wait '
+      + 'closes and the amount clears the minimum worth sending.</p></div>');
+
+  /* Wallets: address, chain, first seen, last paid. */
+  var lastPaidFor = {};
+  p.payouts.forEach(function (x) { lastPaidFor[x.campaignId] = x.settledAt; });
+  show('wrows', p.wallets.length
+    ? p.wallets.map(function (w) {
+        var paid = p.payouts.length ? when(p.payouts[p.payouts.length - 1].settledAt) : 'never';
+        return row(w, [
+          ['Chain', 'Base'],
+          ['Claimed by', 'this account'],
+          ['Last paid', paid]
+        ]);
+      }).join('')
+    : '<div class="erow"><p class="empty">No wallet linked yet. The address you are paid to on '
+      + 'your first submission is claimed by this account.</p></div>');
+
+  /* Standing: rate, level, clips judged. */
+  var rate = typeof p.standing.survivalRate === 'number'
+    ? Math.round(p.standing.survivalRate * 1000) / 10 + '%'
+    : 'not enough history yet';
+  show('srows', row(p.standing.level, [
+    ['Survival rate', rate],
+    ['Clips counted', String(p.standing.clipsJudged)],
+    ['What it means', p.standing.says || '', true]
+  ]));
+}
+
+/* The rail follows the section you are actually looking at, rather than only
+   the last link clicked — otherwise scrolling leaves it pointing at the wrong
+   place, which is worse than not highlighting at all. */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rl[data-sec]'));
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var mark = function (id) {
+    links.forEach(function (a) {
+      a.setAttribute('aria-current', String(a.dataset.sec === id));
+    });
+  };
+  var seen = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  links.forEach(function (a) {
+    var el = document.getElementById(a.dataset.sec);
+    if (el) seen.observe(el);
+  });
 })();
 </script>
 </body>

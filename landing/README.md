@@ -5,7 +5,6 @@ runs the product and the API.
 
     /                  the pitch, for creators and for brands
     /app               the product a creator actually uses
-    /console           the operator view
     /architecture      where the decision lives, and what breaks at scale
     /security          threat model, attacks in scope, the 21 invariants
     /testing           property tests, deterministic simulation, defects found

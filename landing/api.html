@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API reference — Merlin Clips</title>
+<meta name="description" content="Every endpoint, what it needs, and what it refuses. The same contract the app itself runs on." />
+<meta name="theme-color" content="#FAF8F5" />
+<link rel="canonical" href="https://merlinclips.com/api.html" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+  <div class="links" id="navlinks">
+    <a class="l" href="/brands.html">For brands</a>
+    <a class="l" href="/#faq">FAQ</a>
+    <a class="l opt" href="/architecture.html">Architecture</a>
+  </div>
+  <a class="cta" href="/app">Start earning today</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
+          aria-label="Open menu"><span></span><span></span><span></span></button>
+</div></nav>
+
+<main>
+
+<section class="hero page"><div class="wrap">
+  <div><span class="badge"><b>API</b> The contract the app itself runs on</span></div>
+  <h1>API <span class="grad">reference</span></h1>
+  <p class="lede">Nine endpoints. What each one needs, what it refuses, and which of them can
+    move money.</p>
+  <div class="row">
+    <a class="btn ghost" href="/openapi.json">The OpenAPI document &rarr;</a>
+    <a class="btn ghost" href="/architecture.html">How a payout is decided</a>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="shead">
+    <span class="eyebrow">Gates</span>
+    <h2>Three doors, and only one of them is open</h2>
+    <p>Which endpoints anyone may call, and which ones commit money.</p>
+  </div>
+
+  <div class="list">
+    <div class="item"><div class="k">Open</div><div>
+      <h3>No credentials</h3>
+      <p>Reading campaigns, submitting a clip, checking a submission, previewing whether a link
+      can be handled. A creator needs no account to be paid — the wallet address is the
+      counterparty.</p></div></div>
+    <div class="item"><div class="k">Operator</div><div>
+      <h3><span class="mono">x-operator-secret</span></h3>
+      <p>Opening a campaign. This is the one that publishes a budget, so it is gated on a shared
+      secret rather than a session — and it is the reason a brand cannot yet self-serve.</p></div></div>
+    <div class="item"><div class="k">Scheduler</div><div>
+      <h3><span class="mono">x-tick-secret</span></h3>
+      <p>Running a pass. Separate from the operator secret on purpose: the scheduler needs to run
+      passes forever and should never hold the ability to open a campaign.</p></div></div>
+  </div>
+
+  <div class="note"><p>Every write is rate limited per address. A refusal always names its reason
+    and, where a field caused it, that field &mdash; so a caller can fix the request rather than
+    guess at it.</p></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="shead">
+    <span class="eyebrow">Endpoints</span>
+    <h2>All nine</h2>
+    <p>Generated from the OpenAPI document, so this page cannot drift from it.</p>
+  </div>
+
+  <div class="faq">
+    <details class="qa">
+      <summary><span class="k">GET</span><span class="q mono">/api/verify/preview</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Free. Can this link be handled, and when will a real answer exist?</p>
+        <p>Costs nothing and returns no counts. Use it to decide whether a paid call is worth making: it reports whether the URL is supported, whether the post is already under observation, and the timestamp at which a surviving-view figure will first be available.</p>
+        <p class="fine">Open
+           &middot; responds 200, 400</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/views</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Latest and surviving view counts. No verdict.</p>
+        <p>Price: 0.005 USDC per call — a tenth of `/api/verify`, because no model runs. A `brief` sent here is not judged; the response says so rather than dropping it silently.</p>
+        <p class="fine">Open
+           &middot; responds 200, 400, 402</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/verify</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Verify a clip against a brief and report surviving views</p>
+        <p>Price: 0.05 USDC per call, settled over x402.</p>
+        <p class="fine">Open
+           &middot; responds 200, 400, 402</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">GET</span><span class="q mono">/api/campaign</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Public view of active campaigns and remaining pools</p>
+        <p>Returns campaign configurations, total pool allocations, remaining funds, dwell requirements, and tick status.</p>
+        <p class="fine">Open
+           &middot; responds 200</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/campaigns</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Open a new creator marketing campaign (Operator-gated)</p>
+        <p>Requires `x-operator-secret` header matching `OPERATOR_SECRET`.</p>
+        <p class="fine">Operator &middot; x-operator-secret
+           &middot; responds 201, 401, 503</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/submissions</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Submit a creator clip for a campaign</p>
+        <p>Public door for creators. Accepts post URL, payout wallet address, and campaignId. Freezes accepted terms.</p>
+        <p class="fine">Open
+           &middot; responds 201, 400</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">GET</span><span class="q mono">/api/submissions/{id}</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Check status of a submitted clip</p>
+        <p>Returns current disposition (auto_pay, held, blocked, no_op), verdict status, confirmed views, and earned USDC.</p>
+        <p class="fine">Open
+           &middot; responds 200, 404</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/tick</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Execute one agent tick pass (Cloud Scheduler-gated)</p>
+        <p>Requires `x-tick-secret` header matching `TICK_SECRET`. Refreshes views, evaluates payout gate, and triggers settlement.</p>
+        <p class="fine">Scheduler &middot; x-tick-secret
+           &middot; responds 200, 401, 503</p>
+        
+      </div>
+    </details>
+    <details class="qa">
+      <summary><span class="k">POST</span><span class="q mono">/api/job</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="a">
+        <p>Execute an autonomous research job (x402-gated)</p>
+        <p>Requires x402 payment header `X-PAYMENT`. Agent researches, prices, buys data, and answers.</p>
+        <p class="fine">x402 &middot; payment
+           &middot; responds 200, 402</p>
+        
+      </div>
+    </details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="foot-base">
+    <span>&copy; 2026 Merlin Clips</span>
+    <span><a href="/">Home</a> &middot; <a href="/compliance.html">Compliance Terms</a> &middot;
+      <a href="/#contact">Contact</a></span>
+  </div>
+</div></footer>
+
+</main>
+<script>
+(function () {
+  var nav = document.querySelector('nav');
+  if (!nav) return;
+  var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };
+  sync(); addEventListener('scroll', sync, { passive: true });
+  var burger = nav.querySelector('.burger');
+  if (!burger) return;
+  var setOpen = function (open) {
+    nav.dataset.open = String(open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  setOpen(false);
+  burger.addEventListener('click', function () { setOpen(nav.dataset.open !== 'true'); });
+  nav.querySelectorAll('.links a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.dataset.open === 'true') { setOpen(false); burger.focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
+  });
+})();
+</script>
+</body>
+</html>

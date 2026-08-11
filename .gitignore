@@ -18,3 +18,6 @@ package-lock.json
 
 # Internal design notes — not part of the shipped repo
 DESIGN.md
+
+# Internal operations notes — not part of the public repo
+RUNBOOK.md

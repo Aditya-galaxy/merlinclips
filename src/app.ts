@@ -376,6 +376,18 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
         <h3>Live campaigns</h3>
         <p class="sub">Remaining budget is shown up front, so you know what is left to earn
           before you start editing. <span class="count" id="ccount"></span></p>
+        
+        <div class="search-filter-bar">
+          <div class="search-input-wrap">
+            <input id="csearch" placeholder="Search campaign briefs or IDs..." spellcheck="false" />
+          </div>
+          <div class="filter-chips" id="pfilter">
+            <button class="filter-chip active" data-plat="all">All</button>
+            <button class="filter-chip" data-plat="youtube">YouTube</button>
+            <button class="filter-chip" data-plat="x">X / Shorts</button>
+          </div>
+        </div>
+
         <div class="offers" id="campaigns-list"></div>
       </div>
     </section>
@@ -409,6 +421,16 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     <div class="shead"><h2>Your submissions</h2><span class="count" id="lcount"></span></div>
     <p class="note">Your balance updates as the agent runs. When a submission is not paid, the reason
       says why in plain words — and a clip still counting down is never shown as a rejection.</p>
+
+    <div class="search-filter-bar" style="margin-bottom:14px;">
+      <div class="filter-chips" id="subfilter">
+        <button class="filter-chip active" data-state="all">All Submissions</button>
+        <button class="filter-chip" data-state="settled">Paid</button>
+        <button class="filter-chip" data-state="waiting">Counting Down</button>
+        <button class="filter-chip" data-state="refused">Not Paid</button>
+      </div>
+    </div>
+
     <div class="lines" id="clips"></div>
   </section>
 
@@ -445,6 +467,11 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 
 <script>
 var KEY = 'merlinclips.submissions';
+var RAW_CAMPAIGNS = [];
+var RAW_CLIPS = [];
+var ACTIVE_PLATFORM = 'all';
+var ACTIVE_SUB_STATE = 'all';
+
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function mine(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];}}
@@ -490,22 +517,26 @@ function labelFor(st,s){
   return s.settled===false && s.control==='dwell_unmet' ? 'Counting down' : 'In progress';
 }
 
-async function loadCampaigns(){
+function renderCampaignList(){
   var host=document.getElementById('campaigns-list');
   var sel=document.getElementById('camp');
-  var d;
-  try{ d=await (await fetch('/api/campaign')).json(); }catch(e){ d={campaigns:[]}; }
-  var list=d.campaigns||[];
+  var query=(document.getElementById('csearch').value||'').toLowerCase().trim();
+  
+  var list=RAW_CAMPAIGNS.filter(function(c){
+    var plat=(c.platforms&&c.platforms[0])||'youtube';
+    if(ACTIVE_PLATFORM!=='all' && plat!==ACTIVE_PLATFORM) return false;
+    if(query && c.brief.toLowerCase().indexOf(query)<0 && c.campaignId.toLowerCase().indexOf(query)<0) return false;
+    return true;
+  });
+
   document.getElementById('ccount').textContent=list.length?list.length+' live':'';
   if(!list.length){
-    host.innerHTML='<div class="blank">No live campaigns right now. Check back shortly.</div>';
-    sel.innerHTML='<option value="">No live campaigns</option>';
+    host.innerHTML='<div class="blank">No matching campaigns found. Try adjusting filters.</div>';
     return;
   }
   host.innerHTML=list.map(function(c){
     var pool=parseFloat(c.poolUsdc||'0');
     var spent=parseFloat(c.spentUsdc||'0');
-    var left=parseFloat(c.remainingUsdc!=null?c.remainingUsdc:c.poolUsdc||'0');
     var pct=pool>0?Math.max(0,Math.min(100,spent/pool*100)):0;
     var plat=(c.platforms&&c.platforms[0])||'youtube';
     return '<article class="offer">'
@@ -523,30 +554,53 @@ async function loadCampaigns(){
       +   '<div><span>Views paid</span><b>'+compact(c.paidViews)+'</b></div>'
       +   '<div><span>Creators</span><b>'+count(c.creators)+'</b></div>'
       + '</div>'
+      + '<div style="margin-top:12px;"><button class="gbtn" style="width:100%;justify-content:center;" onclick="selectCampaign(\''+esc(c.campaignId)+'\')">⚡ Clip This Brief</button></div>'
       + (c.funding && c.funding.coverage!=='covered'
           ? '<p class="fundnote">'+esc(c.funding.summary)+'</p>' : '')
       + '</article>';
   }).join('');
-  sel.innerHTML=list.map(function(c){
-    return '<option value="'+esc(c.campaignId)+'">'+esc(c.brief.slice(0,54))+(c.brief.length>54?'…':'')+' — '+esc(c.cpmUsdc)+'/1k</option>';
-  }).join('');
 }
 
-async function loadClips(){
-  var ids=mine(), host=document.getElementById('clips');
-  document.getElementById('lcount').textContent=ids.length?ids.length+' submitted':'';
-  if(!ids.length){ host.innerHTML='<div class="blank">No submissions yet. Pick a campaign above to start earning.</div>'; return; }
-  var rows=await Promise.all(ids.map(async function(id){
-    try{ return await (await fetch('/api/submissions/'+encodeURIComponent(id))).json(); }
-    catch(e){ return {submissionId:id,status:'unknown',reason:'Could not load this clip.'}; }
-  }));
-  host.innerHTML=rows.map(function(s){
+function selectCampaign(cid){
+  var sel=document.getElementById('camp');
+  if(sel){ sel.value=cid; }
+  var subSec=document.getElementById('submit');
+  if(subSec){ subSec.scrollIntoView({behavior:'smooth'}); }
+}
+
+async function loadCampaigns(){
+  var d;
+  try{ d=await (await fetch('/api/campaign')).json(); }catch(e){ d={campaigns:[]}; }
+  RAW_CAMPAIGNS=d.campaigns||[];
+  var sel=document.getElementById('camp');
+  if(RAW_CAMPAIGNS.length){
+    sel.innerHTML=RAW_CAMPAIGNS.map(function(c){
+      return '<option value="'+esc(c.campaignId)+'">'+esc(c.brief.slice(0,54))+(c.brief.length>54?'…':'')+' — '+esc(c.cpmUsdc)+'/1k</option>';
+    }).join('');
+  } else {
+    sel.innerHTML='<option value="">No live campaigns</option>';
+  }
+  renderCampaignList();
+}
+
+function renderClipsList(){
+  var host=document.getElementById('clips');
+  var list=RAW_CLIPS.filter(function(s){
+    var st=stateOf(s);
+    if(ACTIVE_SUB_STATE!=='all' && st!==ACTIVE_SUB_STATE) return false;
+    return true;
+  });
+
+  document.getElementById('lcount').textContent=list.length?list.length+' shown':RAW_CLIPS.length+' submitted';
+  if(!list.length){ host.innerHTML='<div class="blank">No submissions match the selected filter.</div>'; return; }
+
+  host.innerHTML=list.map(function(s){
     var st=stateOf(s);
     return '<div class="line is-'+st+'">'
       + '<span class="stripe"></span>'
       + '<div class="what">'
       +   '<span class="tag '+st+'">'+esc(labelFor(st,s))+'</span>'
-      +   '<div class="ref">'+esc(s.url||s.submissionId)+'</div>'
+      +   '<div class="ref"><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.url||s.submissionId)+'</a></div>'
       +   (s.reason?'<p class="why">'+esc(s.reason)+'</p>':'')
       + '</div>'
       + '<div class="ledger">'
@@ -556,6 +610,37 @@ async function loadClips(){
       + '</div></div>';
   }).join('');
 }
+
+async function loadClips(){
+  var ids=mine();
+  if(!ids.length){ document.getElementById('clips').innerHTML='<div class="blank">No submissions yet. Pick a campaign above to start earning.</div>'; return; }
+  RAW_CLIPS=await Promise.all(ids.map(async function(id){
+    try{ return await (await fetch('/api/submissions/'+encodeURIComponent(id))).json(); }
+    catch(e){ return {submissionId:id,status:'unknown',reason:'Could not load this clip.'}; }
+  }));
+  renderClipsList();
+}
+
+// Event Listeners for Filters
+document.getElementById('csearch').addEventListener('input', renderCampaignList);
+
+document.getElementById('pfilter').addEventListener('click', function(e){
+  var btn=e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#pfilter .filter-chip').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  ACTIVE_PLATFORM=btn.dataset.plat;
+  renderCampaignList();
+});
+
+document.getElementById('subfilter').addEventListener('click', function(e){
+  var btn=e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#subfilter .filter-chip').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  ACTIVE_SUB_STATE=btn.dataset.state;
+  renderClipsList();
+});
 
 document.getElementById('go').addEventListener('click',async function(){
   var btn=this, said=document.getElementById('said');

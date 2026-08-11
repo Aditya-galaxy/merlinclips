@@ -173,6 +173,9 @@ export class MemoryBlobStore implements BlobStore {
  * is survivable for a store you only ever read by exact key, and a bug the
  * moment you enumerate one.
  */
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+
 export class FileBlobStore implements BlobStore {
   constructor(private readonly directory: string) {}
 
@@ -186,7 +189,9 @@ export class FileBlobStore implements BlobStore {
   }
 
   async put(key: string, value: string): Promise<void> {
-    await Bun.write(this.path(key), value);
+    const filePath = this.path(key);
+    mkdirSync(dirname(filePath), { recursive: true });
+    await Bun.write(filePath, value);
   }
 
   async list(prefix: string): Promise<string[]> {

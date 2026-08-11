@@ -980,3 +980,269 @@ main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
    assumes the reader knows what it is, and the FAQ exists because many do not. */
 .fc .stamp{display:inline-flex;align-items:center;gap:6px}
 .fc .stamp svg{flex:none}
+
+/* ── Funding Modal & Suite ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(12, 11, 10, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-hi);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.6);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.14s ease, background 0.14s ease;
+}
+.modal-close:hover {
+  color: var(--text);
+  background: var(--line);
+}
+.modal-header h3 {
+  font-size: 22px;
+  margin: 4px 0 6px;
+  letter-spacing: -0.02em;
+}
+.fund-status-banner {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.fund-badge-group, .fund-amount-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.fund-label {
+  color: var(--muted);
+}
+.fund-option-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fund-option-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fund-option-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.option-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--pop);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.address-copy-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+.address-copy-box code {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
+  flex: 1;
+}
+.qr-container {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+.qr-container img {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 6px;
+}
+.web3-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.web3-status-text {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  margin: 0;
+}
+.external-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn.sm {
+  min-height: 34px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* ── Creator & Brand Refined Dashboard Utilities ── */
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+.search-input-wrap input {
+  padding-left: 36px;
+  border-radius: 99px;
+  background: var(--surface);
+}
+.search-input-wrap ::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.6;
+}
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+.filter-chip:hover {
+  border-color: var(--line-hi);
+  color: var(--text);
+}
+.filter-chip.active {
+  background: var(--pop);
+  border-color: var(--pop);
+  color: #fff;
+  font-weight: 600;
+}
+.progress-bar-glow {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill-glow {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED, #10B981);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+.creator-standing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.creator-standing-badge.exceptional {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.creator-standing-badge.reliable {
+  background: rgba(124, 58, 237, 0.15);
+  color: #9333EA;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+.creator-standing-badge.unproven {
+  background: var(--line);
+  color: var(--muted);
+}
+.verdict-reason-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+

@@ -8,6 +8,16 @@ Built on [Circle's Agent Stack](https://agents.circle.com/) for the **Build with
 
 ---
 
+## 🏆 Hackathon Judging Criteria Alignment
+
+| Criteria | Implementation & Proof in Merlin Clips |
+|---|---|
+| **1. Business Viability & Real Revenue** | **Real Revenue Model**: Tiered flat platform fees (**$49** Starter, **$199** Growth, **$499** Scale) + ~$0.05 settlement fee per payout.<br>• **Live On-Chain Payout Proof**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277) on Base Mainnet.<br>• **Circle Treasury Wallet**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (5.763 USDC verified). |
+| **2. AI-Native Operations** | **Autonomous Production AI**: Multimodal **Gemini AI Clip Verifier** runs inside every hourly tick pass without human intervention. Judges video frames against campaign brief rules, checks text/sound requirements, and rejects non-compliant clips with human-readable rationale before any USDC moves. |
+| **3. Category Impact** | **Redefines Creator Marketing ($3B+ Market)**: Eliminates bot-view fraud (where brands lose $1,500+ per campaign on deleted bot views) by replacing raw view metrics with a 24-hour **View-Dwell Survival Engine**. |
+
+---
+
 ## The problem
 
 Brands pay creators per 1,000 views to clip and post their content. It is a real market: Content Rewards alone pays **over $40,000/day across ~1M videos a month** (Forbes, Apr 2026), for clients including Polymarket and ElevenLabs, and Whop settles roughly **$3B/year** in creator payouts.

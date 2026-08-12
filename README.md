@@ -1,6 +1,6 @@
 # Merlin Clips
 
-**You never pay for views that didn't survive.**
+**Never pay for views that didn't survive.**
 
 An autonomous agent that runs creator marketing campaigns end to end — reads the brief, judges each submitted clip against it, pulls real view counts, and settles in USDC under a ceiling it cannot raise.
 

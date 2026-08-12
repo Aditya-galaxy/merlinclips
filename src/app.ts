@@ -381,27 +381,30 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 
   <!-- Only for a signed-in creator, and hidden until the profile answers. -->
   <section id="overview" hidden style="padding-top:10px;">
-    <div class="tiles">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr);">
       <div class="tile">
         <span class="tlabel">Total Earned</span>
         <b class="tnum" id="t-earned" style="color:var(--settled);">—</b>
         <span class="tsub">settled directly to your EVM wallet</span>
       </div>
       <div class="tile">
-        <span class="tlabel">Surviving Views Paid</span>
+        <span class="tlabel">Awaiting 24h Hold</span>
+        <b class="tnum" id="t-holding" style="color:var(--waiting);">—</b>
+        <span class="tsub"><span id="t-holding-views">0</span> views in survival countdown</span>
+      </div>
+      <div class="tile">
+        <span class="tlabel">Surviving Views</span>
         <b class="tnum" id="t-views">—</b>
         <span class="tsub">views present across 24h hold</span>
       </div>
-      <div class="tile">
-        <span class="tlabel">Clips Submitted</span>
-        <b class="tnum" id="t-subs">—</b>
-        <span class="tsub"><span id="t-payouts" style="font-weight:600;color:var(--ink);">0</span> paid submissions</span>
-      </div>
       <div class="tile standing" id="t-standing-card">
-        <span class="tlabel">Creator Standing</span>
-        <b class="tnum" id="t-standing">—</b>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="tlabel">Standing Level</span>
+          <span id="t-next-level" style="font-size:11px;font-weight:600;color:var(--violet);background:var(--violet-wash);padding:2px 7px;border-radius:99px;">—</span>
+        </div>
+        <b class="tnum" id="t-standing" style="text-transform:capitalize;">—</b>
         <span class="tsub" id="t-standing-says">&nbsp;</span>
-        <div class="meter" id="t-meter" hidden><i></i></div>
+        <div class="meter" id="t-meter" hidden><i id="t-meter-fill"></i></div>
       </div>
     </div>
 
@@ -812,37 +815,42 @@ setInterval(loadClips,20000);
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (p) {
       if (!p) return;
-      var dash = document.getElementById('dash');
-      var num = function (id, v) { document.getElementById(id).textContent = v; };
+      var overviewSec = document.getElementById('overview');
+      var num = function (id, v) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = v;
+      };
 
-      num('t-earned', '$' + Number(p.totals.earnedUsdc).toLocaleString('en-US',
-        { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      num('t-views', Number(p.totals.viewsPaid).toLocaleString('en-US'));
-      num('t-subs', String(p.totals.submissions));
-      num('t-payouts', String(p.totals.payouts));
+      num('t-earned', '$' + Number(p.totals.earnedUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      num('t-holding', '$' + Number(p.totals.holdingUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      num('t-holding-views', Number(p.totals.holdingViews || 0).toLocaleString('en-US'));
+      num('t-views', Number(p.totals.viewsPaid || 0).toLocaleString('en-US'));
 
       var card = document.getElementById('t-standing-card');
-      card.dataset.level = p.standing.level;
-      num('t-standing', p.standing.level);
-      num('t-standing-says', p.standing.says || '');
+      if (card) {
+        card.dataset.level = p.standing.level;
+        num('t-standing', p.standing.level);
+        num('t-standing-says', p.standing.says || '');
+        if (p.standing.nextLevelName) {
+          num('t-next-level', 'Next: ' + p.standing.nextLevelName + ' (' + (p.standing.nextLevelProgress || 0) + '%)');
+        }
 
-      /* A rate only exists once something has been judged. Showing 0% for a
-         creator with nothing counted yet would read as a bad score rather
-         than an absent one. */
-      if (typeof p.standing.survivalRate === 'number') {
         var meter = document.getElementById('t-meter');
-        meter.hidden = false;
-        meter.firstElementChild.style.width =
-          Math.round(p.standing.survivalRate * 100) + '%';
+        var fill = document.getElementById('t-meter-fill');
+        if (meter && fill) {
+          meter.hidden = false;
+          fill.style.width = (p.standing.nextLevelProgress || 0) + '%';
+        }
       }
 
-      document.getElementById('dwho').textContent =
-        p.standing.clipsJudged + (p.standing.clipsJudged === 1 ? ' clip counted' : ' clips counted');
-      document.getElementById('dwallets').textContent = p.wallets.length
-        ? 'Paid to ' + p.wallets.join(', ')
-        : 'No wallet linked yet — submit a clip and the one you are paid to is linked here.';
+      var walletText = document.getElementById('dwallets');
+      if (walletText) {
+        walletText.textContent = p.wallets && p.wallets.length
+          ? 'Paid directly to linked Base EVM wallet: ' + p.wallets.join(', ')
+          : 'No wallet linked yet — submit a clip and the one you are paid to is linked here.';
+      }
 
-      dash.hidden = false;
+      if (overviewSec) overviewSec.hidden = false;
       renderEntities(p);
     })
     .catch(function () { /* signed out, or the profile is unavailable */ });
@@ -868,8 +876,7 @@ function renderEntities(p) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   };
-  var money = function (n) { return '$' + Number(n).toLocaleString('en-US',
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var money = function (n) { return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   var when = function (iso) {
     if (!iso) return '—';
     try { return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }); }
@@ -879,56 +886,61 @@ function renderEntities(p) {
     var host = document.getElementById(id);
     if (!host) return;
     host.innerHTML = html;
-    host.closest('section').hidden = false;
+    var sec = host.closest('section');
+    if (sec) sec.hidden = false;
   };
   var row = function (title, pairs) {
     return '<div class="erow"><h4>' + esc(title) + '</h4><dl>'
       + pairs.map(function (kv) {
           return '<dt>' + esc(kv[0]) + '</dt><dd' + (kv[2] ? ' class="words"' : '') + '>'
-            + esc(kv[1]) + '</dd>';
+            + (kv[3] ? kv[1] : esc(kv[1])) + '</dd>';
         }).join('')
       + '</dl></div>';
   };
 
   /* Payouts: amount, views paid, settled at, tx. */
-  document.getElementById('pcount').textContent =
-    p.payouts.length + (p.payouts.length === 1 ? ' payout' : ' payouts');
-  show('prows', p.payouts.length
-    ? p.payouts.map(function (x) {
-        return row(money(x.amountUsdc), [
-          ['Views paid', Number(x.viewsPaidTo).toLocaleString('en-US')],
-          ['Settled', when(x.settledAt)],
-          ['Campaign', x.campaignId],
-          ['Transaction', x.txHash || 'not broadcast — settled in dry run']
-        ]);
-      }).join('')
-    : '<div class="erow"><p class="empty">Nothing settled yet. A clip pays once its wait '
-      + 'closes and the amount clears the minimum worth sending.</p></div>');
+  if (p.payouts) {
+    var pcount = document.getElementById('pcount');
+    if (pcount) pcount.textContent = p.payouts.length + (p.payouts.length === 1 ? ' payout' : ' payouts');
+    show('prows', p.payouts.length
+      ? p.payouts.map(function (x) {
+          var txLink = x.txHash
+            ? '<a href="https://basescan.org/tx/' + esc(x.txHash) + '" target="_blank" rel="noopener"><code>' + esc(x.txHash.slice(0, 10)) + '…</code></a>'
+            : 'not broadcast — settled in dry run';
+          return row(money(x.amountUsdc), [
+            ['Views paid', Number(x.viewsPaidTo).toLocaleString('en-US')],
+            ['Settled', when(x.settledAt)],
+            ['Campaign', x.campaignId],
+            ['Transaction', txLink, false, true]
+          ]);
+        }).join('')
+      : '<div class="erow"><p class="empty">Nothing settled yet. A clip pays once its wait closes and the amount clears the minimum worth sending.</p></div>');
+  }
 
   /* Wallets: address, chain, first seen, last paid. */
-  var lastPaidFor = {};
-  p.payouts.forEach(function (x) { lastPaidFor[x.campaignId] = x.settledAt; });
-  show('wrows', p.wallets.length
-    ? p.wallets.map(function (w) {
-        var paid = p.payouts.length ? when(p.payouts[p.payouts.length - 1].settledAt) : 'never';
-        return row(w, [
-          ['Chain', 'Base'],
-          ['Claimed by', 'this account'],
-          ['Last paid', paid]
-        ]);
-      }).join('')
-    : '<div class="erow"><p class="empty">No wallet linked yet. The address you are paid to on '
-      + 'your first submission is claimed by this account.</p></div>');
+  if (p.linkedWallets) {
+    show('wrows', p.linkedWallets.length
+      ? p.linkedWallets.map(function (w) {
+          return row(w.address, [
+            ['Chain', w.chain || 'Base'],
+            ['First seen', when(w.firstSeenAt)],
+            ['Last paid', when(w.lastPaidAt)]
+          ]);
+        }).join('')
+      : '<div class="erow"><p class="empty">No wallet linked yet. The address you are paid to on your first submission is claimed by this account.</p></div>');
+  }
 
   /* Standing: rate, level, clips judged. */
-  var rate = typeof p.standing.survivalRate === 'number'
-    ? Math.round(p.standing.survivalRate * 1000) / 10 + '%'
-    : 'not enough history yet';
-  show('srows', row(p.standing.level, [
-    ['Survival rate', rate],
-    ['Clips counted', String(p.standing.clipsJudged)],
-    ['What it means', p.standing.says || '', true]
-  ]));
+  if (p.standing) {
+    var rateStr = typeof p.standing.survivalRate === 'number'
+      ? Math.round(p.standing.survivalRate * 1000) / 10 + '%'
+      : 'not enough history yet';
+    show('srows', row(p.standing.level, [
+      ['Survival rate', rateStr],
+      ['Clips counted', String(p.standing.clipsJudged)],
+      ['What it means', p.standing.says || '', true]
+    ]));
+  }
 }
 
 /* The rail follows the section you are actually looking at, rather than only

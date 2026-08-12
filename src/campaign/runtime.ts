@@ -659,14 +659,16 @@ export class CampaignRuntime {
     await this.ready();
 
     const acc = this.store.getCreatorAccount(accountId);
-    const wallets = acc ? walletsFor(acc) : [];
-    const ids = new Set(wallets);
+    const walletAddrs = acc ? walletsFor(acc) : [];
+    const ids = new Set(walletAddrs);
     const state = this.store.exportState();
     const mine = state.submissions.filter((x) => ids.has(x.creatorId));
 
     let earnedMicro = 0n;
     let viewsPaid = 0n;
     const payouts = [];
+    const lastPaidAtMap = new Map<string, string>();
+
     for (const p of state.payouts) {
       if (!ids.has(p.creatorId)) continue;
       earnedMicro += p.amountUsdc.micro;
@@ -679,33 +681,129 @@ export class CampaignRuntime {
         settledAt: p.at,
         txHash: p.txHash,
       });
+      lastPaidAtMap.set(p.creatorId.toLowerCase(), p.at);
     }
+
+    const linkedWallets = walletAddrs.map((w) => ({
+      address: w,
+      chain: 'Base',
+      firstSeenAt: acc ? acc.joinedAt : new Date().toISOString(),
+      lastPaidAt: lastPaidAtMap.get(w.toLowerCase()) || null,
+    }));
 
     const record = standingFor(accountId, mine, this.store);
 
-    return Response.json({
-      accountId,
-      wallets,
-      standing: {
-        level: record.standing,
-        survivalRate: record.survivalRate,
-        clipsJudged: record.judged,
-        says: record.summary,
-      },
-      totals: {
-        earnedUsdc: (Number(earnedMicro) / 1_000_000).toFixed(6),
-        viewsPaid: viewsPaid.toString(),
-        submissions: mine.length,
-        payouts: payouts.length,
-      },
-      submissions: mine.map((x) => ({
+    let holdingMicro = 0n;
+    let holdingViews = 0n;
+    const campaignMap = new Map<
+      string,
+      { campaignId: string; submissionsCount: number; viewsPaid: bigint; earnedMicro: bigint }
+    >();
+
+    const submissionsDetailed = mine.map((x) => {
+      const snapshots = this.store.snapshots(x.submissionId);
+      const paidViews = this.store.viewsPaidTo(x.submissionId);
+      const verdict = this.store.latestVerdict(x.submissionId);
+
+      let peakViews = 0n;
+      for (const s of snapshots) if (s.views > peakViews) peakViews = s.views;
+
+      let st = 'waiting';
+      let reason = '';
+      if (paidViews > 0n) {
+        st = 'settled';
+      } else if (verdict && !verdict.pass) {
+        st = 'refused';
+        reason = verdict.reasons.join(' ') || 'Clip did not meet the brief criteria.';
+      } else {
+        st = 'waiting';
+        const unserved = peakViews - paidViews;
+        if (unserved > 0n) {
+          const micro = (unserved * x.acceptedTerms.cpmUsdc.micro) / 1000n;
+          holdingMicro += micro;
+          holdingViews += unserved;
+        }
+      }
+
+      const earnedSubMicro = (paidViews * x.acceptedTerms.cpmUsdc.micro) / 1000n;
+
+      let cData = campaignMap.get(x.campaignId);
+      if (!cData) {
+        cData = { campaignId: x.campaignId, submissionsCount: 0, viewsPaid: 0n, earnedMicro: 0n };
+        campaignMap.set(x.campaignId, cData);
+      }
+      cData.submissionsCount += 1;
+      cData.viewsPaid += paidViews;
+      cData.earnedMicro += earnedSubMicro;
+
+      return {
         submissionId: x.submissionId,
         campaignId: x.campaignId,
         url: x.url,
         submittedAt: x.submittedAt,
         cpmUsdc: x.acceptedTerms.cpmUsdc.toString(),
         dwellHours: Math.round(x.acceptedTerms.dwellMs / 3_600_000),
-      })),
+        state: st,
+        confirmedViews: peakViews.toString(),
+        paidForViews: paidViews.toString(),
+        earnedUsdc: (Number(earnedSubMicro) / 1_000_000).toFixed(2),
+        refusalReason: reason,
+      };
+    });
+
+    const campaignsBreakdown = Array.from(campaignMap.values()).map((c) => ({
+      campaignId: c.campaignId,
+      submissionsCount: c.submissionsCount,
+      viewsPaid: c.viewsPaid.toString(),
+      earnedUsdc: (Number(c.earnedMicro) / 1_000_000).toFixed(2),
+    }));
+
+    // Standing level progress calculation (Unproven -> Building -> Reliable -> Exceptional)
+    let nextLevelProgress = 100;
+    let nextLevelName = 'Max Level';
+    if (record.standing === 'unproven') {
+      nextLevelProgress = Math.min(100, Math.round((record.judged / 3) * 100));
+      nextLevelName = 'Building';
+    } else if (record.standing === 'building') {
+      const rate = record.survivalRate || 0;
+      nextLevelProgress = Math.min(100, Math.round((rate / 0.7) * 100));
+      nextLevelName = 'Reliable';
+    } else if (record.standing === 'reliable') {
+      const rate = record.survivalRate || 0.7;
+      nextLevelProgress = Math.min(100, Math.round(((rate - 0.7) / 0.2) * 100));
+      nextLevelName = 'Exceptional';
+    }
+
+    return Response.json({
+      account: {
+        accountId,
+        googleSub: acc?.googleSub || accountId,
+        name: acc?.name || 'Creator',
+        email: acc?.email || '',
+        joinedAt: acc?.joinedAt || new Date().toISOString(),
+      },
+      linkedWallets,
+      wallets: walletAddrs,
+      standing: {
+        level: record.standing,
+        survivalRate: record.survivalRate,
+        clipsJudged: record.judged,
+        observedViews: record.observedViews.toString(),
+        survivedViews: record.survivedViews.toString(),
+        says: record.summary,
+        nextLevelProgress,
+        nextLevelName,
+      },
+      totals: {
+        earnedUsdc: (Number(earnedMicro) / 1_000_000).toFixed(2),
+        holdingUsdc: (Number(holdingMicro) / 1_000_000).toFixed(2),
+        holdingViews: holdingViews.toString(),
+        viewsPaid: viewsPaid.toString(),
+        submissions: mine.length,
+        payouts: payouts.length,
+      },
+      submissions: submissionsDetailed,
+      campaignsBreakdown,
       payouts,
     });
   }

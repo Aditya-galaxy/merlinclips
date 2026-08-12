@@ -23,109 +23,50 @@ html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);
      font-size:15.5px;line-height:1.5;font-weight:450;-webkit-font-smoothing:antialiased;
      font-variant-numeric:tabular-nums}
-.wrap{max-width:1120px;margin-inline:auto;padding-inline:28px}
+.wrap{max-width:1080px;margin-inline:auto;padding-inline:24px}
 a{color:var(--violet);text-decoration:none}
 a:hover{text-decoration:underline}
 :focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:4px}
 
-.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
-.rail{background:linear-gradient(180deg,#5B21B6,#4C1D95);color:#EDE9FE;
-      display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;
-      height:100vh;overflow-y:auto}
-.rmark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.02em;color:#fff;text-decoration:none;padding:0 8px 22px}
-.rmark img{border-radius:6px;display:block}
-.rnav{display:flex;flex-direction:column;gap:2px}
-.rl{display:block;padding:9px 12px;border-radius:99px;color:#DDD6FE;text-decoration:none;font-size:14.5px;font-weight:500;white-space:nowrap}
-.rl:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
-.rl[aria-current="true"]{background:rgba(255,255,255,.16);color:#fff;font-weight:650}
-.rfoot{margin-top:auto;padding-top:18px;display:flex;flex-direction:column;gap:2px}
-.rl.quiet{font-size:13px;color:#C4B5FD;opacity:.85}
-.pane{min-width:0;background:var(--paper)}
-.pane .wrap{padding-block:26px 60px}
-
-@media(max-width:860px){
-  .shell{grid-template-columns:1fr}
-  .rail{position:static;height:auto;padding:14px 12px;flex-direction:row;align-items:center;gap:10px;overflow-x:auto}
-  .rmark{padding:0 10px 0 4px}
-  .rnav{flex-direction:row;gap:4px}
-  .rfoot{margin-top:0;margin-left:auto;padding-top:0;flex-direction:row;align-items:center}
+/* Top Glassmorphism Navigation Bar */
+.top-nav {
+  border-bottom: 1px solid var(--line);
+  background: rgba(250, 248, 245, 0.92);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
-
-/* Profile Banner Card */
-.profile-banner-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 26px 28px;
-  margin-bottom: 22px;
+.top-nav .wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-}
-.profile-left {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.profile-avatar {
-  width: 64px;
   height: 64px;
-  border-radius: 18px;
-  background: #5B21B6;
-  color: #FFFFFF;
-  font-size: 28px;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-  flex: none;
 }
-.profile-details h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+.brand-mark {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-weight: 700;
+  font-size: 16.5px;
+  color: var(--ink);
+  text-decoration: none;
 }
-.rank-badge {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--settled-wash);
-  color: var(--settled);
-  letter-spacing: 0.02em;
-}
-.profile-handle {
-  font-size: 13.5px;
-  color: var(--ink-3);
-  margin: 2px 0 6px;
-  font-family: var(--num);
-}
-.profile-bio {
-  font-size: 13.5px;
-  color: var(--ink-2);
-  margin: 0;
-}
-.profile-tags {
+.brand-mark img { border-radius: 6px; display: block; }
+.nav-links {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
 }
-.ptag {
-  font-size: 11.5px;
+.nav-link {
+  font-size: 14.5px;
   font-weight: 550;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--sunk);
   color: var(--ink-2);
+  text-decoration: none;
+  transition: color 0.15s ease;
 }
+.nav-link:hover { color: var(--violet); text-decoration: none; }
+.nav-link.active { color: var(--violet); font-weight: 650; }
 
 .gbtn {
   display: inline-flex;
@@ -139,166 +80,348 @@ a:hover{text-decoration:underline}
   background: var(--card);
   color: var(--ink);
   cursor: pointer;
+  text-decoration: none;
 }
 .gbtn:hover { border-color: var(--ink-3); text-decoration: none; }
+.gbtn-primary {
+  background: var(--violet);
+  color: #FFFFFF;
+  border-color: var(--violet);
+}
+.gbtn-primary:hover { background: var(--violet-2); }
 
-/* Dashboard Tiles */
-.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0 0 22px; }
+/* Hero Profile Card */
+.profile-hero-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  margin: 28px 0 24px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+}
+.profile-cover {
+  height: 120px;
+  background: linear-gradient(135deg, #6D28D9 0%, #4C1D95 50%, #1E1B4B 100%);
+  position: relative;
+}
+.profile-hero-content {
+  padding: 0 32px 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: -40px;
+}
+.hero-user-info {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+.hero-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 24px;
+  background: #5B21B6;
+  color: #FFFFFF;
+  font-size: 38px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--card);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  flex: none;
+}
+.hero-meta h1 {
+  margin: 0 0 2px;
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rank-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--settled-wash);
+  color: var(--settled);
+}
+.hero-handle {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin: 0 0 6px;
+  font-family: var(--num);
+}
+.hero-bio {
+  font-size: 14px;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 540px;
+}
+.hero-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.htag {
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--sunk);
+  color: var(--ink-2);
+}
+
+/* Dashboard Tiles Grid */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
 @media(max-width: 900px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
 @media(max-width: 520px) { .tiles { grid-template-columns: 1fr; } }
 .tile {
-  border: 1px solid var(--line); border-radius: 16px; background: var(--card);
-  padding: 18px 20px; display: flex; flex-direction: column; gap: 5px;
+  border: 1px solid var(--line); border-radius: 18px; background: var(--card);
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.tile:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.04); }
 .tlabel { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
-.tnum { font-family: var(--num); font-size: 28px; font-weight: 600; letter-spacing: -.03em; color: var(--ink); line-height: 1.05; }
+.tnum { font-family: var(--num); font-size: 29px; font-weight: 650; letter-spacing: -.03em; color: var(--ink); line-height: 1.05; }
 .tsub { font-size: 13px; color: var(--ink-3); }
 
-.card { border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 20px 22px; margin-bottom: 16px; }
-.card > h3 { margin: 0 0 4px; font-size: 16px; font-weight: 650; letter-spacing: -.015em; }
-.card > .sub { margin: 0 0 16px; font-size: 13.5px; color: var(--ink-3); }
+/* Navigation Tabs inside Dashboard */
+.dash-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+.dtab {
+  font-family: var(--ui);
+  font-size: 14.5px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+.dtab:hover { color: var(--ink); }
+.dtab.active { color: var(--violet); border-bottom-color: var(--violet); }
+
+/* Cards & Forms */
+.card { border: 1px solid var(--line); border-radius: 18px; background: var(--card); padding: 24px 26px; margin-bottom: 20px; }
+.card > h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; letter-spacing: -.015em; }
+.card > .sub { margin: 0 0 18px; font-size: 13.5px; color: var(--ink-3); }
 
 .f { margin-bottom: 16px; }
-label { display: block; font-size: 12.5px; font-weight: 550; color: var(--ink-2); margin: 0 0 7px; }
-input, select { width: 100%; font-family: var(--ui); font-size: 15px; padding: 11px 13px; border: 1px solid var(--line-2); border-radius: 9px; background: var(--card); color: var(--ink); }
-button.go { font-family: var(--ui); font-size: 15px; font-weight: 550; padding: 13px 20px; border: 0; border-radius: 99px; background: var(--violet); color: #fff; cursor: pointer; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 0 0 7px; }
+input, select, textarea { width: 100%; font-family: var(--ui); font-size: 15px; padding: 11.5px 14px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--violet); outline-offset: -1px; border-color: transparent; }
+
+button.go { font-family: var(--ui); font-size: 15px; font-weight: 600; padding: 13px 22px; border: 0; border-radius: 99px; background: var(--violet); color: #fff; cursor: pointer; transition: background 0.15s ease; }
 button.go:hover { background: var(--violet-2); }
 
-.verification-code-box { display: flex; align-items: center; justify-content: space-between; background: var(--violet-wash); border: 1px dashed var(--violet); border-radius: 10px; padding: 12px 16px; margin: 14px 0; }
-.verification-code-box code { font-family: var(--num); font-size: 16px; font-weight: 700; color: var(--violet); letter-spacing: .05em; }
+.verification-code-box { display: flex; align-items: center; justify-content: space-between; background: var(--violet-wash); border: 1px dashed var(--violet); border-radius: 12px; padding: 14px 18px; margin: 16px 0; }
+.verification-code-box code { font-family: var(--num); font-size: 17px; font-weight: 700; color: var(--violet); letter-spacing: .05em; }
+
+footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60px; color: var(--ink-3); font-size: 13.5px; }
 </style>
 </head>
 <body>
 
-<div class="shell">
+<!-- Full-Width Top Glass Header Navigation -->
+<header class="top-nav">
+  <div class="wrap">
+    <a class="brand-mark" href="/">
+      <img src="/logo.svg" alt="Merlin Clips Logo" width="24" height="24" />
+      Merlin Clips
+    </a>
 
-<aside class="rail">
-  <a class="rmark" href="/"><img src="/logo.svg" alt="Merlin Clips" width="22" height="22" />Merlin Clips</a>
+    <nav class="nav-links">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link active" href="/profile">Creator Profile</a>
+      <a class="nav-link" href="/launch.html">Brand Studio</a>
+    </nav>
 
-  <nav class="rnav" aria-label="Your profile">
-    <a class="rl" href="#profile" aria-current="true"><b>Creator Profile</b></a>
-    <a class="rl" href="#overview">Earnings &amp; Stats</a>
-    <a class="rl" href="#submit">Submit Clip</a>
-    <a class="rl" href="#campaigns">Active Briefs</a>
-    <a class="rl" href="#submissions">Submissions</a>
-  </nav>
-
-  <div class="rfoot">
-    <a class="rl quiet" href="/onboarding">Edit Profile Wizard</a>
-    <a class="rl quiet" href="/api.html">API Reference</a>
-    <a class="rl quiet" href="/launch.html">Brand Studio</a>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/onboarding" class="gbtn">Edit Profile</a>
+      <a href="/onboarding" class="gbtn gbtn-primary">New Setup Wizard</a>
+    </div>
   </div>
-</aside>
+</header>
 
-<div class="pane">
 <main class="wrap">
 
-  <!-- Header Banner Profile Card -->
-  <div class="profile-banner-card" id="profile">
-    <div class="profile-left">
-      <div class="profile-avatar" id="p-avatar">T</div>
-      <div class="profile-details">
-        <h2>
-          <span id="p-name">Tester</span>
-          <span class="rank-badge" id="p-rank">Unproven Tier</span>
-        </h2>
-        <div class="profile-handle" id="p-handle">@tester4webauth</div>
-        <p class="profile-bio" id="p-bio">jhgv</p>
-        <div class="profile-tags" id="p-tags">
-          <span class="ptag" id="ptag-lang">🇺🇸 English</span>
-          <span class="ptag" id="ptag-type">Clipper</span>
-          <span class="ptag" id="ptag-social">YouTube Connected</span>
+  <!-- Full-Width Hero Creator Identity Card -->
+  <div class="profile-hero-card">
+    <div class="profile-cover"></div>
+    <div class="profile-hero-content">
+      <div class="hero-user-info">
+        <div class="hero-avatar" id="p-avatar">T</div>
+        <div class="hero-meta">
+          <h1>
+            <span id="p-name">Tester</span>
+            <span class="rank-badge" id="p-rank">Exceptional Tier</span>
+          </h1>
+          <div class="hero-handle" id="p-handle">@tester4webauth</div>
+          <p class="hero-bio" id="p-bio">jhgv</p>
+          <div class="hero-tags" id="p-tags">
+            <span class="htag" id="ptag-lang">🇺🇸 English</span>
+            <span class="htag" id="ptag-type">Clipper</span>
+            <span class="htag" id="ptag-social">YouTube Connected</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div>
-      <a href="/onboarding" class="gbtn">Edit Profile</a>
+      <div>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:var(--settled-wash);color:var(--settled);font-weight:600;font-size:12.5px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--settled);display:inline-block;"></span>
+          Base Mainnet Payout Active
+        </span>
+      </div>
     </div>
   </div>
 
-  <!-- Earnings & Standing Overview -->
-  <section id="overview">
-    <div class="tiles">
-      <div class="tile">
-        <span class="tlabel">Total Earned</span>
-        <b class="tnum" id="t-earned" style="color:var(--settled);">$1,245.50</b>
-        <span class="tsub">settled directly to EVM wallet</span>
-      </div>
-      <div class="tile">
-        <span class="tlabel">Surviving Views Paid</span>
-        <b class="tnum" id="t-views">1,245,500</b>
-        <span class="tsub">views held across 24h window</span>
-      </div>
-      <div class="tile">
-        <span class="tlabel">Clips Submitted</span>
-        <b class="tnum" id="t-subs">8</b>
-        <span class="tsub">6 paid submissions</span>
-      </div>
-      <div class="tile">
-        <span class="tlabel">Creator Standing</span>
-        <b class="tnum" style="color:var(--settled);">Exceptional</b>
-        <span class="tsub">100% view survival rate</span>
-      </div>
+  <!-- Dashboard Overview Tiles -->
+  <div class="tiles">
+    <div class="tile">
+      <span class="tlabel">Total Earned</span>
+      <b class="tnum" id="t-earned" style="color:var(--settled);">$1,245.50</b>
+      <span class="tsub">settled directly to Base EVM wallet</span>
     </div>
+    <div class="tile">
+      <span class="tlabel">Surviving Views Paid</span>
+      <b class="tnum" id="t-views">1,245,500</b>
+      <span class="tsub">views held across 24h window</span>
+    </div>
+    <div class="tile">
+      <span class="tlabel">Clips Submitted</span>
+      <b class="tnum" id="t-subs">8</b>
+      <span class="tsub">6 paid submissions</span>
+    </div>
+    <div class="tile">
+      <span class="tlabel">Creator Standing</span>
+      <b class="tnum" style="color:var(--settled);">Exceptional</b>
+      <span class="tsub">100% view survival rate</span>
+    </div>
+  </div>
 
-    <p style="margin:0 0 20px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-family:var(--num);font-size:13px;color:var(--ink-2);">
-      Base EVM Wallet: <code id="p-wallet">0x0003a59858f44451be2a5b486ee612b4139700f0</code> (Verified Live USDC on Base Mainnet)
-    </p>
-  </section>
+  <!-- Dashboard Navigation Tabs -->
+  <div class="dash-tabs">
+    <button class="dtab active" id="tab-btn-submit" onclick="switchTab('submit')">Submit Clip &amp; Active Briefs</button>
+    <button class="dtab" id="tab-btn-ledger" onclick="switchTab('ledger')">Submissions &amp; Payout Ledger</button>
+    <button class="dtab" id="tab-btn-wallet" onclick="switchTab('wallet')">EVM Wallet Settings</button>
+  </div>
 
-  <!-- Submit Clip Section -->
-  <section id="submit">
-    <div class="card">
-      <h3>Submit a Clip</h3>
-      <p class="sub">Your CPM rate and 24h hold lock the moment your link is accepted.</p>
+  <!-- Tab 1: Submit Clip & Active Briefs -->
+  <div id="pane-submit">
+    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:20px;">
       
-      <div class="f">
-        <label for="camp">Campaign Brief</label>
-        <select id="camp">
-          <option>camp-bb2bd198 — Showcase Merlin Clips ($1.00 / 1k views)</option>
-        </select>
-      </div>
-
-      <div class="f">
-        <label for="url">Link to Your Video Clip</label>
-        <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
-      </div>
-
-      <div class="verification-code-box">
-        <div>
-          <span style="font-size:12px;color:var(--ink-3);display:block;font-weight:600;">Your Creator Verification Code:</span>
-          <span style="font-size:11.5px;color:var(--ink-2);display:block;margin-bottom:4px;">Paste this token in your video description to prove ownership:</span>
-          <code id="ver-code-val">MC-8F92A1</code>
+      <!-- Submission Form -->
+      <div class="card">
+        <h3>Submit a Video Clip</h3>
+        <p class="sub">Your CPM rate and 24h hold lock the moment your link is accepted.</p>
+        
+        <div class="f">
+          <label for="camp">Campaign Brief</label>
+          <select id="camp">
+            <option>camp-bb2bd198 — Showcase Merlin Clips ($1.00 / 1k views)</option>
+          </select>
         </div>
-        <button type="button" class="gbtn" id="copy-ver-code" style="font-size:12px;padding:6px 12px;background:var(--violet);color:#fff;border-color:var(--violet);">Copy Code</button>
+
+        <div class="f">
+          <label for="url">Link to Your Video Clip</label>
+          <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
+        </div>
+
+        <div class="verification-code-box">
+          <div>
+            <span style="font-size:12px;color:var(--ink-3);display:block;font-weight:600;">Your Creator Verification Code:</span>
+            <span style="font-size:11.5px;color:var(--ink-2);display:block;margin-bottom:4px;">Paste this code in your video description to prove ownership:</span>
+            <code id="ver-code-val">MC-8F92A1</code>
+          </div>
+          <button type="button" class="gbtn" id="copy-ver-code" style="font-size:12px;padding:6px 12px;background:var(--violet);color:#fff;border-color:var(--violet);">Copy Code</button>
+        </div>
+
+        <div class="f">
+          <label for="addr">Base Payout Wallet Address (USDC)</label>
+          <input id="addr" value="0x0003a59858f44451be2a5b486ee612b4139700f0" spellcheck="false" />
+        </div>
+
+        <button class="go" id="go" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;">Submit Clip &amp; Lock Rate</button>
+        <div id="said" style="margin-top:12px;"></div>
       </div>
 
-      <div class="f">
-        <label for="addr">Base Payout Wallet Address (USDC)</label>
-        <input id="addr" value="0x0003a59858f44451be2a5b486ee612b4139700f0" spellcheck="false" />
+      <!-- Active Brief Info Card -->
+      <div class="card" style="background:linear-gradient(180deg, var(--violet-wash), var(--card));border-color:var(--line-2);">
+        <h3 style="color:var(--violet);">⚡ How You Get Paid on Base</h3>
+        <ul style="margin:12px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2);line-height:1.6;">
+          <li style="margin-bottom:8px;"><b>Select Campaign Brief:</b> Pick an active campaign and copy your <code>MC-XXXXXX</code> code into your clip description.</li>
+          <li style="margin-bottom:8px;"><b>Rate Locks Instantly:</b> Your CPM rate and 24h hold lock the moment your link is submitted.</li>
+          <li style="margin-bottom:8px;"><b>Direct Wallet Payout:</b> Views that survive 24 hours are paid directly to your EVM wallet in USDC on Base Mainnet.</li>
+        </ul>
       </div>
 
-      <button class="go" id="go" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;">Submit Clip &amp; Lock Rate</button>
-      <div id="said" style="margin-top:12px;"></div>
     </div>
-  </section>
+  </div>
 
-  <!-- Submissions Ledger -->
-  <section id="submissions">
+  <!-- Tab 2: Submissions Ledger -->
+  <div id="pane-ledger" hidden>
     <div class="card">
-      <h3>Your Submissions &amp; Earnings</h3>
+      <h3>Your Submissions &amp; Earnings Ledger</h3>
       <p class="sub">Every payout decision is written to an append-only record on Base.</p>
-      <div style="padding:14px;background:var(--settled-wash);border-radius:10px;color:var(--settled);font-size:13.5px;font-weight:600;">
+      
+      <div style="padding:16px 20px;background:var(--settled-wash);border-radius:12px;color:var(--settled);font-size:14px;font-weight:600;margin-bottom:14px;">
         ✓ 149,000 views verified &amp; settled → $149.00 USDC paid to 0x0003a59858f44451be2a5b486ee612b4139700f0
       </div>
+
+      <div style="padding:16px 20px;background:var(--waiting-wash);border-radius:12px;color:var(--waiting);font-size:14px;font-weight:600;">
+        ⏳ 24h View Dwell Countdown in progress for submitted Shorts clip.
+      </div>
     </div>
-  </section>
+  </div>
+
+  <!-- Tab 3: EVM Wallet Settings -->
+  <div id="pane-wallet" hidden>
+    <div class="card">
+      <h3>Linked Base EVM Wallet</h3>
+      <p class="sub">Your USDC earnings settle directly to this address. We never hold your funds.</p>
+      <div class="f">
+        <label for="p-wallet-input">Base Wallet Address</label>
+        <input id="p-wallet-input" value="0x0003a59858f44451be2a5b486ee612b4139700f0" style="font-family:var(--num);" spellcheck="false" />
+      </div>
+      <button type="button" class="gbtn gbtn-primary" onclick="alert('Wallet updated!')">Save Base Wallet</button>
+    </div>
+  </div>
 
 </main>
-</div>
-</div>
+
+<footer>
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--ink);">
+      <img src="/logo.svg" alt="Merlin Clips Logo" width="20" height="20" style="border-radius:5px;display:block;" />
+      Merlin Clips
+    </div>
+    <span style="color:var(--ink-3);font-size:13px;">© All rights reserved · Verified Live USDC on Base Mainnet</span>
+    <a href="https://github.com/Aditya-galaxy/merlinclips" style="font-size:13px;">Source</a>
+  </div>
+</footer>
 
 <script>
+function switchTab(tabId) {
+  document.getElementById('pane-submit').hidden = (tabId !== 'submit');
+  document.getElementById('pane-ledger').hidden = (tabId !== 'ledger');
+  document.getElementById('pane-wallet').hidden = (tabId !== 'wallet');
+
+  document.getElementById('tab-btn-submit').classList.toggle('active', tabId === 'submit');
+  document.getElementById('tab-btn-ledger').classList.toggle('active', tabId === 'ledger');
+  document.getElementById('tab-btn-wallet').classList.toggle('active', tabId === 'wallet');
+}
+
 (function() {
   var VER_CODE = 'MC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
   document.getElementById('ver-code-val').textContent = VER_CODE;
@@ -316,7 +439,7 @@ button.go:hover { background: var(--violet-2); }
     if (saved.handle) document.getElementById('p-handle').textContent = '@' + saved.handle.replace(/^@/,'');
     if (saved.bio) document.getElementById('p-bio').textContent = saved.bio;
     if (saved.wallet) {
-      document.getElementById('p-wallet').textContent = saved.wallet;
+      document.getElementById('p-wallet-input').value = saved.wallet;
       document.getElementById('addr').value = saved.wallet;
     }
     if (saved.language) document.getElementById('ptag-lang').textContent = saved.language;

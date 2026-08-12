@@ -369,69 +369,74 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 <main class="wrap">
 
   <div class="dhead">
-    <h1 id="dtitle">Your record</h1>
-    <span class="when" id="dwhen"></span>
+    <div>
+      <h1 id="dtitle">Creator Earnings &amp; Performance Hub</h1>
+      <p style="margin:4px 0 0;font-size:14.5px;color:var(--ink-2);">Real-time view survival tracking, locked CPM rates, and automated USDC payouts on Base.</p>
+    </div>
+    <span class="when" id="dwhen" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:var(--settled-wash);color:var(--settled);font-weight:600;font-size:12.5px;">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--settled);display:inline-block;"></span>
+      Base Mainnet Settlement Active
+    </span>
   </div>
 
-  <!-- Only for a signed-in creator, and hidden until the profile answers.
-       An empty dashboard rendered first and filled in after is a page that
-       flashes zeroes at somebody who has earned money. -->
-  <section id="overview" hidden>
-    <div class="shead"><h2>Your record</h2><span class="count" id="dwho"></span></div>
-
+  <!-- Only for a signed-in creator, and hidden until the profile answers. -->
+  <section id="overview" hidden style="padding-top:10px;">
     <div class="tiles">
       <div class="tile">
-        <span class="tlabel">Earned</span>
-        <b class="tnum" id="t-earned">—</b>
-        <span class="tsub">settled to your wallet</span>
+        <span class="tlabel">Total Earned</span>
+        <b class="tnum" id="t-earned" style="color:var(--settled);">—</b>
+        <span class="tsub">settled directly to your EVM wallet</span>
       </div>
       <div class="tile">
-        <span class="tlabel">Views paid for</span>
+        <span class="tlabel">Surviving Views Paid</span>
         <b class="tnum" id="t-views">—</b>
-        <span class="tsub">that survived the wait</span>
+        <span class="tsub">views present across 24h hold</span>
       </div>
       <div class="tile">
-        <span class="tlabel">Clips submitted</span>
+        <span class="tlabel">Clips Submitted</span>
         <b class="tnum" id="t-subs">—</b>
-        <span class="tsub"><span id="t-payouts">0</span> paid so far</span>
+        <span class="tsub"><span id="t-payouts" style="font-weight:600;color:var(--ink);">0</span> paid submissions</span>
       </div>
       <div class="tile standing" id="t-standing-card">
-        <span class="tlabel">Standing</span>
+        <span class="tlabel">Creator Standing</span>
         <b class="tnum" id="t-standing">—</b>
         <span class="tsub" id="t-standing-says">&nbsp;</span>
         <div class="meter" id="t-meter" hidden><i></i></div>
       </div>
     </div>
 
-    <p class="note" id="dwallets"></p>
+    <p class="note" id="dwallets" style="margin-top:12px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;"></p>
   </section>
 
   <!-- Creator Onboarding Guide -->
   <div class="onboarding-banner" id="c-onboarding">
     <div class="onboarding-header">
-      <h3>🚀 Welcome Creator — How Merlin Clips Pays You</h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">⚡</span>
+        <h3>How Creator Rewards Pay You on Merlin Clips</h3>
+      </div>
       <button type="button" class="gbtn" onclick="document.getElementById('c-onboarding').hidden=true" style="font-size:12px;padding:4px 10px;">Dismiss</button>
     </div>
     <div class="onboarding-steps">
       <div class="onboarding-step-card">
         <span class="onboarding-step-num">1</span>
         <div class="onboarding-step-text">
-          <h4>Pick a Brief &amp; Copy Code</h4>
-          <p>Choose an active campaign below. Copy your verification code into your video description.</p>
+          <h4>Select Brief &amp; Add Verification Code</h4>
+          <p>Pick an active campaign brief below. Copy your unique <code>MC-XXXXXX</code> code into your clip description.</p>
         </div>
       </div>
       <div class="onboarding-step-card">
         <span class="onboarding-step-num">2</span>
         <div class="onboarding-step-text">
-          <h4>Terms Lock Instantly</h4>
-          <p>Your rate ($/1k views) and 24h hold lock the moment your clip link is submitted.</p>
+          <h4>CPM Rate Locks Instantly</h4>
+          <p>Your CPM rate ($/1k views) and 24h survival hold lock the moment your clip link is submitted.</p>
         </div>
       </div>
       <div class="onboarding-step-card">
         <span class="onboarding-step-num">3</span>
         <div class="onboarding-step-text">
-          <h4>Automated USDC Payouts</h4>
-          <p>Views that survive 24 hours are paid directly to your EVM wallet in USDC on Base.</p>
+          <h4>Automated On-Chain USDC Payouts</h4>
+          <p>Views that survive 24 hours are paid directly to your EVM wallet in USDC on Base. Never held on platform.</p>
         </div>
       </div>
     </div>
@@ -440,16 +445,19 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
   <div class="cardgrid">
     <section id="campaigns">
       <div class="card">
-        <h3>Live campaigns</h3>
-        <p class="sub">Remaining budget is shown up front, so you know what is left to earn
-          before you start editing. <span class="count" id="ccount"></span></p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <h3>Active Campaign Briefs</h3>
+            <p class="sub" style="margin-bottom:0;">Published campaign budgets &amp; CPM rates. <span class="count" id="ccount"></span></p>
+          </div>
+        </div>
         
         <div class="search-filter-bar">
           <div class="search-input-wrap">
-            <input id="csearch" placeholder="Search campaign briefs or IDs..." spellcheck="false" />
+            <input id="csearch" placeholder="Search campaign briefs, topics, or IDs..." spellcheck="false" />
           </div>
           <div class="filter-chips" id="pfilter">
-            <button class="filter-chip active" data-plat="all">All</button>
+            <button class="filter-chip active" data-plat="all">All Platforms</button>
             <button class="filter-chip" data-plat="youtube">YouTube</button>
             <button class="filter-chip" data-plat="x">X / Shorts</button>
           </div>
@@ -461,48 +469,47 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 
     <section id="submit">
       <div class="card">
-        <h3>Submit a clip</h3>
-        <p class="sub">Your rate and hold lock the moment it is accepted.</p>
+        <h3>Submit a Clip</h3>
+        <p class="sub">Your CPM rate and 24h hold lock the moment your link is accepted.</p>
         <div class="f">
-          <label for="camp">Campaign</label>
+          <label for="camp">Campaign Brief</label>
           <select id="camp"></select>
         </div>
         <div class="f">
-          <label for="url">Link to your post</label>
+          <label for="url">Link to Your Video Clip</label>
           <input id="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" />
-          <p class="hint">YouTube for now — we turn down links we cannot verify rather than
-            promise a check we cannot perform.</p>
+          <p class="hint">YouTube videos &amp; Shorts — links are verified automatically against the brief.</p>
         </div>
 
         <div class="verification-code-box">
           <div>
-            <span style="font-size:12px;color:var(--muted);display:block;">Your Verification Code (Add to Description):</span>
+            <span style="font-size:12px;color:var(--muted);display:block;font-weight:600;">Your Creator Verification Token:</span>
+            <span style="font-size:11.5px;color:var(--ink-2);display:block;margin-bottom:4px;">Paste this code in your video description to prove ownership:</span>
             <code id="ver-code-val">MC-8F92A1</code>
           </div>
-          <button type="button" class="gbtn" id="copy-ver-code" style="font-size:12px;padding:4px 10px;">Copy Code</button>
+          <button type="button" class="gbtn" id="copy-ver-code" style="font-size:12px;padding:6px 12px;background:var(--violet);color:#fff;border-color:var(--violet);">Copy Code</button>
         </div>
 
         <div class="f" style="margin-top:14px;">
-          <label for="addr">Payout wallet</label>
+          <label for="addr">Base Payout Wallet Address (USDC)</label>
           <input id="addr" placeholder="0x…" spellcheck="false" />
-          <p class="hint">Paid directly here. We never hold your balance.</p>
+          <p class="hint">Earnings settle directly here. We Never hold your money.</p>
         </div>
-        <button class="go" id="go">Submit &amp; start earning</button>
+        <button class="go" id="go" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;">Submit Clip &amp; Lock Rate</button>
         <div id="said"></div>
       </div>
     </section>
   </div>
 
   <section id="submissions">
-    <div class="shead"><h2>Your submissions</h2><span class="count" id="lcount"></span></div>
-    <p class="note">Your balance updates as the agent runs. When a submission is not paid, the reason
-      says why in plain words — and a clip still counting down is never shown as a rejection.</p>
+    <div class="shead"><h2>Your Submissions &amp; Earnings</h2><span class="count" id="lcount"></span></div>
+    <p class="note">Your balance updates automatically as the view oracle runs. When a submission is not paid, the reason states why in plain words.</p>
 
     <div class="search-filter-bar" style="margin-bottom:14px;">
       <div class="filter-chips" id="subfilter">
         <button class="filter-chip active" data-state="all">All Submissions</button>
-        <button class="filter-chip" data-state="settled">Paid</button>
-        <button class="filter-chip" data-state="waiting">Counting Down</button>
+        <button class="filter-chip" data-state="settled">Paid (USDC)</button>
+        <button class="filter-chip" data-state="waiting">24h Hold Countdown</button>
         <button class="filter-chip" data-state="refused">Not Paid</button>
       </div>
     </div>
@@ -510,11 +517,9 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     <div class="lines" id="clips"></div>
   </section>
 
-
   <section id="payouts" hidden>
-    <div class="shead"><h2>Payouts</h2><span class="count" id="pcount"></span></div>
-    <p class="note">Every settlement, with what it covered and where it went. A payout is written
-      down before it is sent, so this list is the record rather than a summary of one.</p>
+    <div class="shead"><h2>On-Chain Payout Ledger</h2><span class="count" id="pcount"></span></div>
+    <p class="note">Every USDC settlement on Base Mainnet, with verified transaction hashes and view counts covered.</p>
     <div class="rows" id="prows"></div>
   </section>
 

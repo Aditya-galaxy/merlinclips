@@ -797,8 +797,8 @@ nav{border-bottom:0;background:transparent;backdrop-filter:none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #2775CA;
-  font-weight: 700;
+  color: inherit;
+  font-weight: inherit;
   vertical-align: middle;
 }
 .usdc-icon-svg {

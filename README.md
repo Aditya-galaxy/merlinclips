@@ -127,7 +127,7 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 | **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
 | **Account to Wallet Linkage & Brand Ownership** | **Done** — `CreatorAccount` links multiple EVM wallets; `Campaign` owned by verified `BrandProfile` |
 | **Slack & Discord Webhook Alerts** | **Done** — `WebhookNotifier` dispatches non-blocking alerts for depleted pools, failed payouts, and lease contention |
-| **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, $999) + ~$0.05 settlement fee |
+| **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, Custom) + ~$0.05 settlement fee |
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
 | **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (5.763 USDC) |

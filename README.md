@@ -130,9 +130,27 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 | **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, $999) + ~$0.05 settlement fee |
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
-| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet `0x0003a59858f44451be2a5b486ee612b4139700f0` (5.763 USDC) |
-| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00053-fh4` live on Base Mainnet |
+| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (5.763 USDC) |
+| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00070-xwx` live on Base Mainnet |
 | **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
+
+### ⛓️ Real On-Chain Base Mainnet Transactions & Judging Verification Proof
+
+As proof of real, verifiable USDC settlement and marketplace transactions on **Base Mainnet (Chain ID 8453)** via **Circle's Agent Stack**:
+
+- **Active Circle Agent Wallet Address**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Base Mainnet, Verified `5.763161 USDC`)
+
+#### Clickable Block Explorer Verification Links (Basescan)
+
+1. 🏦 **Circle Gateway On-Chain USDC Deposit Transaction**:
+   - **Basescan Tx**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277)
+   - **Details**: Real on-chain USDC deposit ($0.50 USDC) directly into Circle Gateway contract (`0x77777777dcc4d5a8b6e418fd04d8997ef11000ee`) on Base Mainnet.
+2. 🔑 **ERC-20 USDC Smart Contract Approval Transaction**:
+   - **Basescan Tx**: [`0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431`](https://basescan.org/tx/0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431)
+   - **Details**: Authorized ERC-20 `approve` call on native Base USDC (`0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`).
+3. ⚡ **Polygon Gateway Eco Transfer Transaction**:
+   - **Basescan Tx**: [`0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f`](https://basescan.org/tx/0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f)
+   - **Details**: Fast Eco Gateway deposit to Domain 7 for Circle Marketplace micro-transactions.
 
 ```bash
 bun install

@@ -80,3 +80,21 @@ When a brand deposits funds (e.g. **$500 Pool** + **$49 Platform Fee** = **$549 
 - **[`src/campaign/intake.ts`](file:///Users/aditya/merlinclips/src/campaign/intake.ts)**: Provisions dedicated sub-wallets on campaign creation.
 - **[`src/campaign/runtime.ts`](file:///Users/aditya/merlinclips/src/campaign/runtime.ts)**: Executes payouts using campaign-specific sub-wallets.
 - **[`src/campaign/cluster.test.ts`](file:///Users/aditya/merlinclips/src/campaign/cluster.test.ts)**: Automated unit tests for fee splitting, Safe Multisig routing, and sub-wallet isolation.
+
+---
+
+## ⛓️ 6. Proof of Real On-Chain Base Mainnet Transactions & Judging Verification
+
+- **Circle Agent Wallet Address**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Base Mainnet, Verified `5.763161 USDC`)
+
+### Clickable Block Explorer Verification Links (Basescan)
+
+1. 🏦 **Circle Gateway On-Chain USDC Deposit Transaction**:
+   - **Basescan Tx**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277)
+   - **Details**: Real on-chain USDC deposit ($0.50 USDC) directly into Circle Gateway contract (`0x77777777dcc4d5a8b6e418fd04d8997ef11000ee`) on Base Mainnet.
+2. 🔑 **ERC-20 USDC Smart Contract Approval Transaction**:
+   - **Basescan Tx**: [`0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431`](https://basescan.org/tx/0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431)
+   - **Details**: Authorized ERC-20 `approve` call on native Base USDC (`0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`).
+3. ⚡ **Polygon Gateway Eco Transfer Transaction**:
+   - **Basescan Tx**: [`0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f`](https://basescan.org/tx/0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f)
+   - **Details**: Fast Eco Gateway deposit to Domain 7 for Circle Marketplace micro-transactions.

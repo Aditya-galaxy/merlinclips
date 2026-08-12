@@ -292,6 +292,42 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
        margin:0 0 20px;flex-wrap:wrap}
 .dhead h1{margin:0;font-size:26px;font-weight:680;letter-spacing:-.03em}
 .dhead .when{font-size:13px;color:var(--ink-3);font-family:var(--num)}
+
+/* ── onboarding banner & filter chips ── */
+.onboarding-banner{background:linear-gradient(135deg,rgba(109,40,217,.06),rgba(124,58,237,.02));
+  border:1px solid var(--line-2);border-radius:16px;padding:20px 24px;margin-bottom:22px}
+.onboarding-header{display:flex;align-items:center;justify-space-between;margin-bottom:16px}
+.onboarding-header h3{margin:0;font-size:17px;font-weight:650;letter-spacing:-.015em;color:var(--ink)}
+.onboarding-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:768px){.onboarding-steps{grid-template-columns:1fr}}
+.onboarding-step-card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.onboarding-step-num{width:26px;height:26px;border-radius:50%;background:var(--violet-wash);
+  color:var(--violet);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.onboarding-step-text h4{margin:0 0 3px;font-size:13.5px;font-weight:650;color:var(--ink)}
+.onboarding-step-text p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.4}
+
+.search-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:16px;flex-wrap:wrap}
+.search-input-wrap{flex:1;min-width:220px}
+.search-input-wrap input{font-size:13.5px;padding:8px 12px;border-radius:8px}
+.filter-chips{display:flex;gap:6px}
+.filter-chip{font-family:var(--ui);font-size:12.5px;font-weight:550;padding:6px 13px;
+  border-radius:99px;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);
+  cursor:pointer;transition:all .15s ease}
+.filter-chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.filter-chip.active{background:var(--violet);color:#fff;border-color:var(--violet)}
+
+.verification-code-box{display:flex;align-items:center;justify-content:space-between;
+  background:var(--violet-wash);border:1px dashed var(--violet);border-radius:10px;
+  padding:12px 16px;margin:14px 0}
+.verification-code-box code{font-family:var(--num);font-size:16px;font-weight:700;
+  color:var(--violet);letter-spacing:.05em}
+
+.tile{transition:transform .15s ease,box-shadow .15s ease}
+.tile:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.04)}
+.offer{transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.offer:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 6px 16px rgba(0,0,0,.05)}
 </style>
 </head>
 <body>
@@ -299,7 +335,7 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 <div class="shell">
 
 <aside class="rail">
-  <a class="rmark" href="/"><i></i>Merlin Clips</a>
+  <a class="rmark" href="/"><img src="/logo.svg" alt="Merlin Clips" width="22" height="22" style="border-radius:6px;display:block;" />Merlin Clips</a>
 
   <nav class="rnav" aria-label="Your account">
     <a class="rl" href="#overview" data-sec="overview"><b>Overview</b></a>

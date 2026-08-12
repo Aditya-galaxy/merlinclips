@@ -515,7 +515,7 @@ const server = Bun.serve({
     // perfectly in local preview, then 404s the moment the two are deployed
     // apart. That is the worst kind of broken link: it passes every check you
     // run before shipping.
-    if (url.pathname === '/app') {
+    if (url.pathname === '/app' || url.pathname === '/app.html' || url.pathname === '/creator/dashboard') {
       // Signed-out visitors meet the sign-up card first.
       //
       // Gated server-side rather than by a redirect from client JavaScript,

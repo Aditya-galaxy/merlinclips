@@ -212,12 +212,14 @@ const server = Bun.serve({
     const SECURE_COOKIES = url.protocol === 'https:';
 
     if (url.pathname === '/auth/google') {
+      if (!OAUTH) {
+        return Response.redirect(new URL('/onboarding', request.url).toString(), 302);
+      }
       const state = randomToken();
       const nonce = randomToken();
-      const oauthConfig = OAUTH || {
-        clientId: '868655245369-merlinclips.apps.googleusercontent.com',
-        clientSecret: 'GOCSPX-merlinclips_default',
-        redirectUri: `${url.origin}/auth/google/callback`,
+      const oauthConfig = {
+        ...OAUTH,
+        redirectUri: OAUTH.redirectUri || `${url.origin}/auth/google/callback`,
       };
       const headers = new Headers({ location: authorizeUrl(oauthConfig, state, nonce) });
       headers.append('set-cookie',

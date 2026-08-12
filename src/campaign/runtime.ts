@@ -28,6 +28,7 @@ import {
   type BlobStore,
 } from './persistence';
 import { EventLog } from './eventlog';
+import { MultiAgentClusterManager } from './cluster';
 import { CampaignStore } from './store';
 import { apply as applyEvent } from './eventlog';
 import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
@@ -147,6 +148,8 @@ export class CampaignRuntime {
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
   public readonly locks = new CampaignLockManager();
+  /** Hierarchical multi-agent cluster manager & Safe Treasury splitter. */
+  public readonly cluster = new MultiAgentClusterManager();
   /** Token bucket rate limiter for public API doors. */
   public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
 

@@ -352,14 +352,15 @@
     var totalViews = Math.round((budget / cpm) * 1000);
     var estCreators = Math.max(1, Math.round(budget / userCap));
     
-    // Tiered fee schedule: $49 under $5k, $199 under $25k, $499 above
-    var platformFee = budget < 5000 ? 49 : budget < 25000 ? 199 : 499;
+    // Tiered fee schedule: $49 under $1k (Starter), $199 under $10k (Growth), $499 under $50k (Scale), Custom above $50k (Enterprise)
+    var isCustomFee = budget > 50000;
+    var platformFee = budget < 1000 ? 49 : budget < 10000 ? 199 : budget <= 50000 ? 499 : 999;
     var totalDeposit = budget + platformFee;
 
     if (vOut) vOut.textContent = Number.isFinite(totalViews) ? totalViews.toLocaleString('en-US') : '0';
     if (crOut) crOut.textContent = Number.isFinite(estCreators) ? estCreators.toLocaleString('en-US') : '0';
-    if (feeOut) feeOut.textContent = '+$' + platformFee.toFixed(2);
-    if (totalOut) totalOut.textContent = '$' + (Number.isFinite(totalDeposit) ? totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00');
+    if (feeOut) feeOut.textContent = isCustomFee ? 'Custom Enterprise Quote' : '+$' + platformFee.toFixed(2);
+    if (totalOut) totalOut.textContent = isCustomFee ? '$' + budget.toLocaleString('en-US') + ' + Custom Fee' : '$' + (Number.isFinite(totalDeposit) ? totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00');
 
     if (formBudgetSelect) {
       if (budget < 1000) formBudgetSelect.value = 'Under $1,000';

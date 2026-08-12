@@ -821,13 +821,19 @@ nav{border-bottom:0;background:transparent;backdrop-filter:none;
   font-size: 13px;
 }
 
-/* ── 3-Card Vercel-Style Pricing Table ── */
+/* ── 4-Card Vercel-Style Pricing Table ── */
 .pricing-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   margin-top: 40px;
   align-items: stretch;
+}
+
+@media (max-width: 1180px) {
+  .pricing-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .price-card {

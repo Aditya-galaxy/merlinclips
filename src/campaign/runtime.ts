@@ -28,11 +28,13 @@ import {
   type BlobStore,
 } from './persistence';
 import { EventLog } from './eventlog';
+import { MultiAgentClusterManager } from './cluster';
 import { CampaignStore } from './store';
 import { apply as applyEvent } from './eventlog';
 import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
+import { webhookFromEnv } from '../telemetry/webhooks';
 import { openCampaign, submitClip } from './intake';
 import { standingFor, type Standing } from './standing';
 import { SESSION_COOKIE as SESSION_COOKIE_NAME, readCookie as readSessionCookie,
@@ -146,6 +148,8 @@ export class CampaignRuntime {
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
   public readonly locks = new CampaignLockManager();
+  /** Hierarchical multi-agent cluster manager & Safe Treasury splitter. */
+  public readonly cluster = new MultiAgentClusterManager();
   /** Token bucket rate limiter for public API doors. */
   public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
 
@@ -314,6 +318,12 @@ export class CampaignRuntime {
     });
     if (!lease.acquired) {
       this.lastTick = skippedTick(at, lease.reason ?? 'lease not acquired');
+      webhookFromEnv(this.env).alert({
+        event: 'lease_contention',
+        title: 'Tick Pass Skipped (Lease Contention)',
+        message: lease.reason ?? 'Another instance holds the tick lease lock.',
+        details: { holder: this.env.AGENT_ID ?? 'campaign-agent', windowMs: this.leaseWindowMs },
+      });
       return this.lastTick;
     }
 
@@ -331,6 +341,34 @@ export class CampaignRuntime {
       { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
     );
     await this.rememberLastTick(this.lastTick);
+
+    // Check for payout failures or depleted campaigns and alert
+    const notifier = webhookFromEnv(this.env);
+    if (notifier.isConfigured) {
+      for (const d of this.lastTick.decisions) {
+        if (d.disposition === 'blocked' && d.reason.includes('failed')) {
+          notifier.alert({
+            event: 'payout_failed',
+            title: 'Payout Execution Failed',
+            message: `Submission ${d.submissionId} failed settlement: ${d.reason}`,
+            details: { submissionId: d.submissionId, campaignId: d.campaignId, reason: d.reason },
+          });
+        }
+      }
+
+      for (const c of this.store.exportState().campaigns) {
+        const remaining = c.poolUsdc.minus(this.store.spentOnCampaign(c.campaignId));
+        if (remaining.micro <= 0n) {
+          notifier.alert({
+            event: 'campaign_depleted',
+            title: 'Campaign Budget Depleted',
+            message: `Campaign ${c.campaignId} ("${c.brief.slice(0, 40)}...") budget is fully exhausted.`,
+            details: { campaignId: c.campaignId, poolUsdc: c.poolUsdc.toString() },
+          });
+        }
+      }
+    }
+
     return this.lastTick;
   }
 
@@ -617,8 +655,9 @@ export class CampaignRuntime {
     }
     await this.ready();
 
-    const wallets = await walletsFor(this.blobs, accountId);
-    const ids = new Set(creatorIdsFor(wallets));
+    const acc = this.store.getCreatorAccount(accountId);
+    const wallets = acc ? walletsFor(acc) : [];
+    const ids = new Set(wallets);
     const state = this.store.exportState();
     const mine = state.submissions.filter((x) => ids.has(x.creatorId));
 
@@ -889,7 +928,7 @@ export class CampaignRuntime {
       // creator is paid to an address, and a failure to record the link does
       // not change the address.
       if (accountId) {
-        await linkWallet(this.blobs, accountId, creator.payoutAddress);
+        linkWallet(this.store, accountId, creator.payoutAddress);
       }
 
       await this.record({ type: 'creator_upserted', creator });

@@ -370,6 +370,37 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
     <p class="note" id="dwallets"></p>
   </section>
 
+  <!-- Creator Onboarding Guide -->
+  <div class="onboarding-banner" id="c-onboarding">
+    <div class="onboarding-header">
+      <h3>🚀 Welcome Creator — How Merlin Clips Pays You</h3>
+      <button type="button" class="gbtn" onclick="document.getElementById('c-onboarding').hidden=true" style="font-size:12px;padding:4px 10px;">Dismiss</button>
+    </div>
+    <div class="onboarding-steps">
+      <div class="onboarding-step-card">
+        <span class="onboarding-step-num">1</span>
+        <div class="onboarding-step-text">
+          <h4>Pick a Brief &amp; Copy Code</h4>
+          <p>Choose an active campaign below. Copy your verification code into your video description.</p>
+        </div>
+      </div>
+      <div class="onboarding-step-card">
+        <span class="onboarding-step-num">2</span>
+        <div class="onboarding-step-text">
+          <h4>Terms Lock Instantly</h4>
+          <p>Your rate ($/1k views) and 24h hold lock the moment your clip link is submitted.</p>
+        </div>
+      </div>
+      <div class="onboarding-step-card">
+        <span class="onboarding-step-num">3</span>
+        <div class="onboarding-step-text">
+          <h4>Automated USDC Payouts</h4>
+          <p>Views that survive 24 hours are paid directly to your EVM wallet in USDC on Base.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="cardgrid">
     <section id="campaigns">
       <div class="card">
@@ -406,7 +437,16 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
           <p class="hint">YouTube for now — we turn down links we cannot verify rather than
             promise a check we cannot perform.</p>
         </div>
-        <div class="f">
+
+        <div class="verification-code-box">
+          <div>
+            <span style="font-size:12px;color:var(--muted);display:block;">Your Verification Code (Add to Description):</span>
+            <code id="ver-code-val">MC-8F92A1</code>
+          </div>
+          <button type="button" class="gbtn" id="copy-ver-code" style="font-size:12px;padding:4px 10px;">Copy Code</button>
+        </div>
+
+        <div class="f" style="margin-top:14px;">
           <label for="addr">Payout wallet</label>
           <input id="addr" placeholder="0x…" spellcheck="false" />
           <p class="hint">Paid directly here. We never hold your balance.</p>
@@ -619,6 +659,21 @@ async function loadClips(){
     catch(e){ return {submissionId:id,status:'unknown',reason:'Could not load this clip.'}; }
   }));
   renderClipsList();
+}
+
+// Verification Code Handler
+var CURRENT_VER_CODE = 'MC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+var verCodeEl = document.getElementById('ver-code-val');
+if(verCodeEl){ verCodeEl.textContent = CURRENT_VER_CODE; }
+
+var copyVerBtn = document.getElementById('copy-ver-code');
+if(copyVerBtn){
+  copyVerBtn.onclick = function(){
+    navigator.clipboard.writeText(CURRENT_VER_CODE).then(function(){
+      copyVerBtn.textContent = 'Copied!';
+      setTimeout(function(){ copyVerBtn.textContent = 'Copy Code'; }, 2000);
+    });
+  };
 }
 
 // Event Listeners for Filters

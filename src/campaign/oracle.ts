@@ -45,61 +45,83 @@ export class YouTubeOracle implements CountOracle {
 
   async count(ref: { platform: string; postId: string }): Promise<bigint | undefined> {
     if (ref.platform !== 'youtube') return undefined;
+    const batch = await this.batchCount([ref.postId]);
+    return batch[ref.postId];
+  }
 
-    const params = new URLSearchParams({
-      part: 'statistics',
-      id: ref.postId,
-      key: this.options.apiKey,
-    });
+  /**
+   * Batch view fetching for up to 50 YouTube videos in a single HTTP request.
+   * Reduces API quota consumption by up to 98%.
+   */
+  async batchCount(videoIds: string[]): Promise<Record<string, bigint | undefined>> {
+    const results: Record<string, bigint | undefined> = {};
+    if (!videoIds.length) return results;
 
-    let response: Response;
-    try {
-      response = await this.fetchImpl(`${YOUTUBE_API}?${params}`, {
-        headers: { accept: 'application/json' },
-        signal: AbortSignal.timeout(10_000),
+    // Deduplicate and chunk into max 50 IDs per request
+    const uniqueIds = Array.from(new Set(videoIds));
+    const chunks: string[][] = [];
+    for (let i = 0; i < uniqueIds.length; i += 50) {
+      chunks.push(uniqueIds.slice(i, i + 50));
+    }
+
+    for (const chunk of chunks) {
+      const params = new URLSearchParams({
+        part: 'statistics',
+        id: chunk.join(','),
+        key: this.options.apiKey,
       });
-    } catch (error) {
-      this.log(`youtube: ${ref.postId} unreachable — ${(error as Error).message}`);
-      return undefined;
+
+      let response: Response;
+      try {
+        response = await this.fetchImpl(`${YOUTUBE_API}?${params}`, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch (error) {
+        this.log(`youtube batch: unreachable — ${(error as Error).message}`);
+        chunk.forEach(id => { results[id] = undefined; });
+        continue;
+      }
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          this.log(`youtube: 403 for ${chunk.join(',')} — quota exhausted or key restricted`);
+        } else {
+          this.log(`youtube batch: HTTP ${response.status}`);
+        }
+        chunk.forEach(id => { results[id] = undefined; });
+        continue;
+      }
+
+      const body = (await response.json().catch(() => ({}))) as {
+        items?: { id?: string; statistics?: { viewCount?: string } }[];
+      };
+
+      const found = new Set<string>();
+      for (const item of body.items ?? []) {
+        const itemId = item.id || (chunk.length === 1 ? chunk[0] : undefined);
+        if (!itemId) continue;
+        found.add(itemId);
+        const raw = item.statistics?.viewCount;
+        if (raw !== undefined) {
+          try {
+            const v = BigInt(raw);
+            results[itemId] = v >= 0n ? v : undefined;
+          } catch {
+            results[itemId] = undefined;
+          }
+        } else {
+          results[itemId] = undefined;
+        }
+      }
+
+      // Mark IDs not returned by YouTube as undefined
+      for (const id of chunk) {
+        if (!found.has(id)) results[id] = undefined;
+      }
     }
 
-    if (response.status === 403) {
-      // Almost always quota. Worth saying out loud: silently returning
-      // undefined for a whole day would look like every clip going quiet.
-      this.log(`youtube: 403 for ${ref.postId} — quota exhausted or key restricted`);
-      return undefined;
-    }
-    if (!response.ok) {
-      this.log(`youtube: HTTP ${response.status} for ${ref.postId}`);
-      return undefined;
-    }
-
-    const body = (await response.json().catch(() => ({}))) as {
-      items?: { statistics?: { viewCount?: string } }[];
-    };
-
-    const item = body.items?.[0];
-    // An empty `items` means deleted, private or never existed. All three are
-    // "we cannot tell you", not "zero views" — and a clip that vanishes after
-    // being paid is exactly what the dwell window is for.
-    if (!item) {
-      this.log(`youtube: ${ref.postId} returned no video — deleted, private, or wrong id`);
-      return undefined;
-    }
-
-    const raw = item.statistics?.viewCount;
-    // Counts are hidden on some videos. Absent is not zero.
-    if (raw === undefined) {
-      this.log(`youtube: ${ref.postId} has view counts hidden`);
-      return undefined;
-    }
-
-    try {
-      const views = BigInt(raw);
-      return views >= 0n ? views : undefined;
-    } catch {
-      return undefined;
-    }
+    return results;
   }
 }
 
@@ -124,6 +146,33 @@ export class PlatformOracle implements CountOracle, ViewOracle {
 
   async count(ref: { platform: string; postId: string }): Promise<bigint | undefined> {
     return this.byPlatform[ref.platform]?.count(ref);
+  }
+
+  /** Batch view fetching across submissions on the same platform. */
+  async batchFetch(submissions: Submission[]): Promise<Map<string, bigint | undefined>> {
+    const results = new Map<string, bigint | undefined>();
+    const ytOracle = this.byPlatform['youtube'] as YouTubeOracle | undefined;
+
+    if (ytOracle && typeof ytOracle.batchCount === 'function') {
+      const ytSubs = submissions.filter(s => s.platform === 'youtube');
+      if (ytSubs.length) {
+        const ids = ytSubs.map(s => s.postId);
+        const counts = await ytOracle.batchCount(ids);
+        for (const s of ytSubs) {
+          results.set(s.submissionId, counts[s.postId]);
+        }
+      }
+    }
+
+    // Fallback for non-batched platforms or missing batch oracle
+    for (const s of submissions) {
+      if (!results.has(s.submissionId)) {
+        const val = await this.count({ platform: s.platform, postId: s.postId });
+        results.set(s.submissionId, val);
+      }
+    }
+
+    return results;
   }
 
   /** The `ViewOracle` shape the tick loop uses. */

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e1065"/>
+      <stop offset="50%" stop-color="#581c87"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background Icon Container -->
+  <rect width="512" height="512" rx="112" fill="url(#purpleGrad)"/>
+
+  <!-- Crescent Moon (White) -->
+  <path d="M 330 110 C 200 110 110 200 110 330 C 110 395 138 440 180 468 C 115 425 90 350 105 260 C 125 150 220 70 330 70 C 370 70 410 82 440 105 C 405 92 368 110 330 110 Z" fill="#ffffff"/>
+
+  <!-- Subtle Radial Glow behind Star -->
+  <circle cx="310" cy="270" r="45" fill="url(#glow)"/>
+
+  <!-- Center Star (Sparkle in Center of Projected Circle) -->
+  <path d="M 310 240 Q 310 270 340 270 Q 310 270 310 300 Q 310 270 280 270 Q 310 270 310 240 Z" fill="#ffffff"/>
+</svg>

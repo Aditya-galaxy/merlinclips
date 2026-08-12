@@ -100,3 +100,23 @@ export async function acquireTickLease(
     };
   }
 }
+
+/**
+ * Periodically renews an active lease lock during long-running background passes.
+ * Stops automatically when the returned cleanup function is invoked.
+ */
+export function startLeaseHeartbeat(
+  key: string,
+  onHeartbeat?: (key: string) => void,
+  intervalMs: number = 30_000,
+): () => void {
+  const timer = setInterval(() => {
+    try {
+      if (onHeartbeat) onHeartbeat(key);
+    } catch {
+      /* ignore heartbeat callback errors */
+    }
+  }, intervalMs);
+
+  return () => clearInterval(timer);
+}

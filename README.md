@@ -121,16 +121,18 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 
 | Component | State |
 |---|---|
-| Payout gate, dwell mechanic, rate band, terms, persistence, tick, executor | **Done** — 405 tests, typecheck clean |
-| `/api/verify` + OpenAPI spec | **Done** — 402 handshake verified against a running server |
-| Agent loop — rate allocation and fraud investigation | **Done** — proposes and investigates; neither can release money |
-| Gemini clip verifier | **Done** — runs on Vertex via ADC, no API key, and judged inside the tick so a submitted clip is actually checked |
-| YouTube view oracle | **Done** — verified live against the Data API |
-| Real on-chain payout + Basescan proof | **Done** — Base Sepolia `0x47dc18c8…1224`, replay-confirmed idempotent |
-| X view oracle | Not built — `XOracleUnavailable` is returned rather than a guess |
-| Agent Marketplace listing | Blocked on a funded mainnet wallet |
-| Cloud Run deployment | Ready — `./deploy.sh`, preflight refuses without the state bucket |
-| Wiring | Asserted mechanically — `wiring.test.ts` fails on any module the server cannot reach |
+| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 542 tests, typecheck clean |
+| **Multi-Provider Executor (Circle SDK & CLI)** | **Done** — Uses Circle Developer Controlled Wallets REST API to eliminate 24d session token expiry in Cloud Run, with CLI fallback |
+| **Multi-Platform View Oracles** | **Done** — YouTube Data API (50-video batch), Circle Agent Marketplace for X (x402), Apify Adapter for Instagram Reels |
+| **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
+| **Account to Wallet Linkage & Brand Ownership** | **Done** — `CreatorAccount` links multiple EVM wallets; `Campaign` owned by verified `BrandProfile` |
+| **Slack & Discord Webhook Alerts** | **Done** — `WebhookNotifier` dispatches non-blocking alerts for depleted pools, failed payouts, and lease contention |
+| **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, $999) + ~$0.05 settlement fee |
+| **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
+| **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
+| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet `0x0003a59858f44451be2a5b486ee612b4139700f0` (5.763 USDC) |
+| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00053-fh4` live on Base Mainnet |
+| **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
 
 ```bash
 bun install

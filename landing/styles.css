@@ -67,8 +67,8 @@ nav .cta:hover{background:#5B21B6;color:#fff;text-decoration:none}
 nav .brand{font-weight:700;font-size:17px;letter-spacing:-.01em;color:var(--text);
        text-decoration:none;display:flex;align-items:center;gap:9px;margin-right:26px}
 nav .brand:hover{text-decoration:none}
-nav .brand .dot{width:9px;height:9px;border-radius:50%;
-            background:linear-gradient(135deg,#C4B5FD,var(--pop));flex:none}
+nav .brand .dot{width:22px;height:22px;border-radius:6px;
+            background:url('/logo.svg') center/cover no-repeat;flex:none}
 nav a.l{font-size:15px;color:var(--text-2);text-decoration:none;font-weight:480}
 nav a.l:hover,nav a.l[aria-current="page"]{color:var(--text)}
 @media(max-width:700px){nav a.l.opt{display:none}}
@@ -792,6 +792,171 @@ hr{display:none}
    passes through the wordmark — but it gains it as a blur, not a border. */
 nav{border-bottom:0;background:transparent;backdrop-filter:none;
     transition:background-color .2s ease,backdrop-filter .2s ease}
+/* ── Official USDC Brand Tag & Badge ── */
+.usdc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+  font-weight: inherit;
+  vertical-align: middle;
+}
+.usdc-icon-svg {
+  width: 18px;
+  height: 18px;
+  vertical-align: sub;
+  flex-shrink: 0;
+}
+.usdc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(39, 117, 202, 0.12);
+  color: #2775CA;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(39, 117, 202, 0.3);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ── 3-Card Vercel-Style Pricing Table ── */
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+  align-items: stretch;
+}
+
+.price-card {
+  position: relative;
+  background: var(--surface, #0F172A);
+  border: 1px solid var(--line-hi, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.price-card:hover {
+  border-color: var(--pop, #a855f7);
+  transform: translateY(-4px);
+}
+
+.price-card.popular {
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.8), var(--surface, #0F172A));
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 40px -15px rgba(168, 85, 247, 0.35);
+}
+
+.pop-badge {
+  position: absolute;
+  top: -12px;
+  right: 28px;
+  background: linear-gradient(135deg, #7e22ce, #a855f7);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.price-card .tier-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text, #ffffff);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.price-card .price-val {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text, #ffffff);
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.price-card .price-val small {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted, #94a3b8);
+  letter-spacing: 0;
+}
+
+.price-card .tier-desc {
+  font-size: 14px;
+  color: var(--muted, #94a3b8);
+  line-height: 1.5;
+  margin: 0;
+  min-height: 42px;
+}
+
+.card-divider {
+  height: 1px;
+  background: var(--line, rgba(255, 255, 255, 0.1));
+  margin: 24px 0;
+}
+
+.card-features {
+  flex-grow: 1;
+  margin-bottom: 28px;
+}
+
+.card-features .feat-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #94a3b8);
+  margin-bottom: 14px;
+}
+
+.card-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--text-2, #cbd5e1);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.card-features li svg {
+  width: 16px;
+  height: 16px;
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.card-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .pricing-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 nav[data-stuck="true"]{background:rgba(250,248,245,.72);backdrop-filter:blur(14px) saturate(1.4)}
 @media(max-width:640px){
   /* The panel needs an edge to sit against; a shadow gives it one. */
@@ -908,8 +1073,14 @@ body::before{
 .ff input,.ff select,.ff textarea{
   font:inherit;font-size:16px;color:var(--text);background:var(--surface);
   border:1px solid var(--line-hi);border-radius:12px;padding:13px 15px;width:100%;
+  height:48px;box-sizing:border-box;line-height:1.3;
   transition:border-color .14s ease,box-shadow .14s ease}
-.ff textarea{resize:vertical;min-height:112px;line-height:1.5}
+.ff textarea{height:auto;resize:vertical;min-height:112px;line-height:1.5}
+.ff select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 15px center;background-size:16px;
+  padding-right:40px;cursor:pointer}
 .ff input:focus,.ff select:focus,.ff textarea:focus{
   outline:none;border-color:var(--pop);box-shadow:0 0 0 3px rgba(109,40,217,.14)}
 .ff input[aria-invalid="true"],.ff select[aria-invalid="true"],.ff textarea[aria-invalid="true"]{
@@ -1244,5 +1415,158 @@ main.centre .alt{margin:22px 0 0;font-size:14.5px;color:var(--muted)}
   margin-top: 8px;
   line-height: 1.45;
 }
+
+/* ── Onboarding & Campaign Estimator Component Styles ── */
+.onboarding-banner {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(16, 185, 129, 0.08));
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.onboarding-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--text);
+}
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.onboarding-step-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: start;
+}
+.onboarding-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pop);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.onboarding-step-text h4 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.onboarding-step-text p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.verification-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-hi);
+  border: 1px dashed var(--pop);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+.verification-code-box code {
+  font-family: var(--num);
+  font-size: 14px;
+  font-weight: 600;
+  color: #10B981;
+}
+
+.estimator-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 30px;
+}
+.estimator-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 18px;
+}
+@media(max-width:768px){ .estimator-grid { grid-template-columns: 1fr; } }
+.estimator-output {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.estimator-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.estimator-result-row span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.estimator-result-row strong {
+  font-family: var(--num);
+  font-size: 18px;
+  color: var(--text);
+}
+
+.checklist-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 22px;
+}
+.checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.checklist-item.done {
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+.checklist-icon {
+  font-size: 16px;
+}
+
 
 

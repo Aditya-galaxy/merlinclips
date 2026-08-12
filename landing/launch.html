@@ -35,79 +35,68 @@
     <p>Tell us what you are trying to do and we will tell you whether this fits.</p>
   </div>
 
-  <!-- Interactive Campaign Estimator Wizard -->
-  <div class="estimator-card" style="background:var(--card-bg, #1E1B4B);border:1px solid rgba(139,92,246,0.3);border-radius:16px;padding:24px;margin-bottom:32px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-      <h3 style="margin:0;font-size:20px;font-weight:700;color:#fff;">🧮 Live Campaign Budget & Fee Calculator</h3>
-      <span class="chip funded" style="font-size:12px;background:rgba(16,185,129,0.15);color:#10B981;padding:4px 10px;border-radius:20px;border:1px solid rgba(10,255,150,0.3);">Transparent $49 Flat Platform Fee</span>
-    </div>
-    <p class="fine" style="margin-bottom:20px;color:rgba(255,255,255,0.7);">Enter your target pool and CPM rate to project guaranteed views, active creator reach, platform fee, and total deposit.</p>
-
-    <div class="estimator-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:24px;">
-      <div>
-        <!-- Target Campaign Pool Input -->
-        <div style="margin-bottom:18px;">
-          <label for="est-budget-num" style="display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:#e2e8f0;">
-            Target Campaign Pool (USDC)
-          </label>
-          <input type="number" id="est-budget-num" value="5000" min="100" max="500000" step="100" 
-                 style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(15,23,42,0.8);color:#fff;font-size:16px;font-weight:600;" />
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-            <button type="button" class="pill-preset" data-budget="500" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$500</button>
-            <button type="button" class="pill-preset" data-budget="1000" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$1,000</button>
-            <button type="button" class="pill-preset" data-budget="5000" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(139,92,246,0.5);background:rgba(139,92,246,0.2);color:#c084fc;font-size:12px;cursor:pointer;font-weight:600;">$5,000</button>
-            <button type="button" class="pill-preset" data-budget="10000" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$10,000</button>
-            <button type="button" class="pill-preset" data-budget="25000" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$25,000</button>
-          </div>
-        </div>
-
-        <!-- Target CPM Rate Input -->
-        <div style="margin-bottom:18px;">
-          <label for="est-cpm-num" style="display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:#e2e8f0;">
-            Target CPM Rate ($ / 1k views)
-          </label>
-          <input type="number" id="est-cpm-num" value="1.00" min="0.50" max="20.00" step="0.25" 
-                 style="width:100%;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(15,23,42,0.8);color:#fff;font-size:16px;font-weight:600;" />
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-            <button type="button" class="cpm-preset" data-cpm="0.50" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$0.50</button>
-            <button type="button" class="cpm-preset" data-cpm="1.00" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(139,92,246,0.5);background:rgba(139,92,246,0.2);color:#c084fc;font-size:12px;cursor:pointer;font-weight:600;">$1.00</button>
-            <button type="button" class="cpm-preset" data-cpm="2.00" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$2.00</button>
-            <button type="button" class="cpm-preset" data-cpm="5.00" style="padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;font-size:12px;cursor:pointer;">$5.00</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Results Summary Panel -->
-      <div class="estimator-output" style="background:rgba(15,23,42,0.9);padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;justify-content:center;gap:12px;">
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-          <span style="color:#94a3b8;">Guaranteed Views:</span>
-          <strong id="est-views-out" style="color:#38bdf8;font-size:16px;">5,000,000</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-          <span style="color:#94a3b8;">Per-Creator Cap:</span>
-          <strong id="est-cap-out" style="color:#e2e8f0;">$50.00</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-          <span style="color:#94a3b8;">Estimated Creator Reach:</span>
-          <strong id="est-creators-out" style="color:#e2e8f0;">100 creators</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-          <span style="color:#94a3b8;">Merlin Platform Fee:</span>
-          <strong id="est-fee-out" style="color:#a855f7;font-size:15px;">+$49.00 USDC</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding-top:4px;">
-          <span style="color:#fff;font-weight:700;">Total Initial Deposit:</span>
-          <strong id="est-total-out" style="color:#10b981;font-size:18px;font-weight:800;">$5,049.00 USDC</strong>
-        </div>
-        <button type="button" id="apply-estimate-btn" 
-                style="margin-top:10px;width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#7e22ce,#a855f7);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s ease;">
-          Pre-Fill Form & Contact Team →
-        </button>
-      </div>
-    </div>
-  </div>
-
   <form class="enq" id="enq" novalidate>
+    <!-- Interactive Estimator Fields (Native Form Styling) -->
+    <div class="ff">
+      <label for="est-budget-num">Target Campaign Pool (USDC) <span class="req" aria-hidden="true">*</span></label>
+      <input type="number" id="est-budget-num" value="5000" min="100" max="500000" step="100" required />
+      <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+        <button type="button" class="pill-preset" data-budget="500" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$500</button>
+        <button type="button" class="pill-preset" data-budget="1000" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$1,000</button>
+        <button type="button" class="pill-preset" data-budget="5000" style="padding:3px 9px;border-radius:8px;border:1px solid var(--pop);background:rgba(109,40,217,0.15);color:var(--pop);font-size:12px;cursor:pointer;font-weight:600;">$5,000</button>
+        <button type="button" class="pill-preset" data-budget="10000" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$10,000</button>
+        <button type="button" class="pill-preset" data-budget="25000" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$25,000</button>
+      </div>
+    </div>
+
+    <div class="ff">
+      <label for="est-cpm-num">Target CPM Rate ($ / 1k views) <span class="req" aria-hidden="true">*</span></label>
+      <input type="number" id="est-cpm-num" value="1.00" min="0.50" max="20.00" step="0.25" required />
+      <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+        <button type="button" class="cpm-preset" data-cpm="0.50" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$0.50</button>
+        <button type="button" class="cpm-preset" data-cpm="1.00" style="padding:3px 9px;border-radius:8px;border:1px solid var(--pop);background:rgba(109,40,217,0.15);color:var(--pop);font-size:12px;cursor:pointer;font-weight:600;">$1.00</button>
+        <button type="button" class="cpm-preset" data-cpm="2.00" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$2.00</button>
+        <button type="button" class="cpm-preset" data-cpm="5.00" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$5.00</button>
+      </div>
+    </div>
+
+    <div class="ff wide">
+      <label for="est-cap-num">Per-Creator Max Cap (USDC) <span class="req" aria-hidden="true">*</span></label>
+      <input type="number" id="est-cap-num" value="250" min="10" max="10000" step="10" required />
+      <p class="hint">Maximum earnings limit per single creator for this campaign (default 5% cap).</p>
+      <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+        <button type="button" class="cap-preset" data-cap="50" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$50 cap</button>
+        <button type="button" class="cap-preset" data-cap="100" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$100 cap</button>
+        <button type="button" class="cap-preset" data-cap="250" style="padding:3px 9px;border-radius:8px;border:1px solid var(--pop);background:rgba(109,40,217,0.15);color:var(--pop);font-size:12px;cursor:pointer;font-weight:600;">$250 cap</button>
+        <button type="button" class="cap-preset" data-cap="500" style="padding:3px 9px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface);color:var(--text-2);font-size:12px;cursor:pointer;">$500 cap</button>
+      </div>
+    </div>
+
+    <!-- Live Calculator Output Projection Box -->
+    <div class="ff wide">
+      <div class="buy" style="margin: 4px 0 12px;padding:20px 24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:16px;">
+          <div>
+            <span style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Guaranteed Views</span>
+            <b id="est-views-out" style="font-family:var(--mono);font-size:22px;color:var(--pop);">5,000,000</b>
+          </div>
+          <div>
+            <span style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Est. Creator Reach</span>
+            <b id="est-creators-out" style="font-family:var(--mono);font-size:22px;color:var(--text);">20 creators</b>
+          </div>
+          <div>
+            <span style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Merlin Flat Fee</span>
+            <b id="est-fee-out" style="font-family:var(--mono);font-size:22px;color:var(--ok);">+$49.00 USDC</b>
+          </div>
+          <div>
+            <span style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Total Initial Deposit</span>
+            <b id="est-total-out" style="font-family:var(--mono);font-size:22px;color:var(--text);">$5,049.00 USDC</b>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Contact Information -->
     <div class="ff">
       <label for="e-name">Your name <span class="req" aria-hidden="true">*</span></label>
       <input id="e-name" name="name" required autocomplete="name" maxlength="120" />
@@ -135,7 +124,7 @@
         <option value="">Choose a range</option>
         <option>Under $1,000</option>
         <option>$1,000 – $10,000</option>
-        <option>$10,000 – $50,000</option>
+        <option selected>$10,000 – $50,000</option>
         <option>$50,000 – $250,000</option>
         <option>Over $250,000</option>
         <option>Not decided yet</option>
@@ -291,37 +280,44 @@
 (function () {
   var bNum = document.getElementById('est-budget-num');
   var cNum = document.getElementById('est-cpm-num');
+  var capNum = document.getElementById('est-cap-num');
   var vOut = document.getElementById('est-views-out');
-  var capOut = document.getElementById('est-cap-out');
   var crOut = document.getElementById('est-creators-out');
   var feeOut = document.getElementById('est-fee-out');
   var totalOut = document.getElementById('est-total-out');
-  var applyBtn = document.getElementById('apply-estimate-btn');
   var formBudgetSelect = document.getElementById('e-budget');
 
   function update() {
     if (!bNum || !cNum) return;
     var budget = Math.max(100, parseFloat(bNum.value) || 0);
     var cpm = Math.max(0.10, parseFloat(cNum.value) || 1.00);
+    var userCap = Math.max(10, parseFloat(capNum ? capNum.value : 0) || Math.round(budget * 0.05));
 
     var totalViews = Math.round((budget / cpm) * 1000);
-    var recCap = Math.max(10, Math.round(budget * 0.05)); // $10 min cap rule
-    var estCreators = Math.max(1, Math.round(budget / recCap));
+    var estCreators = Math.max(1, Math.round(budget / userCap));
     
     // Tiered fee schedule: $49 under $5k, $199 under $25k, $499 above
     var platformFee = budget < 5000 ? 49 : budget < 25000 ? 199 : 499;
     var totalDeposit = budget + platformFee;
 
-    vOut.textContent = totalViews.toLocaleString('en-US');
-    capOut.textContent = '$' + recCap.toFixed(2);
-    crOut.textContent = estCreators + ' creators';
-    feeOut.textContent = '+$' + platformFee.toFixed(2) + ' USDC';
-    totalOut.textContent = '$' + totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' USDC';
+    if (vOut) vOut.textContent = totalViews.toLocaleString('en-US');
+    if (crOut) crOut.textContent = estCreators + ' creators';
+    if (feeOut) feeOut.textContent = '+$' + platformFee.toFixed(2) + ' USDC';
+    if (totalOut) totalOut.textContent = '$' + totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' USDC';
+
+    if (formBudgetSelect) {
+      if (budget < 1000) formBudgetSelect.value = 'Under $1,000';
+      else if (budget <= 10000) formBudgetSelect.value = '$1,000 – $10,000';
+      else if (budget <= 50000) formBudgetSelect.value = '$10,000 – $50,000';
+      else if (budget <= 250000) formBudgetSelect.value = '$50,000 – $250,000';
+      else formBudgetSelect.value = 'Over $250,000';
+    }
   }
 
   if (bNum && cNum) {
     bNum.addEventListener('input', update);
     cNum.addEventListener('input', update);
+    if (capNum) capNum.addEventListener('input', update);
 
     // Pill preset click handlers
     document.querySelectorAll('.pill-preset').forEach(function (btn) {
@@ -338,24 +334,12 @@
       });
     });
 
-    if (applyBtn && formBudgetSelect) {
-      applyBtn.addEventListener('click', function () {
-        var val = parseFloat(bNum.value) || 0;
-        if (val < 1000) formBudgetSelect.value = 'Under $1,000';
-        else if (val <= 10000) formBudgetSelect.value = '$1,000 – $10,000';
-        else if (val <= 50000) formBudgetSelect.value = '$10,000 – $50,000';
-        else if (val <= 250000) formBudgetSelect.value = '$50,000 – $250,000';
-        else formBudgetSelect.value = 'Over $250,000';
-
-        var goalsEl = document.getElementById('e-goals');
-        if (goalsEl && !goalsEl.value) {
-          goalsEl.value = 'Targeting $' + val.toLocaleString() + ' USDC campaign pool at $' + parseFloat(cNum.value).toFixed(2) + ' CPM (' + vOut.textContent + ' estimated views).';
-        }
-
-        var form = document.getElementById('enq');
-        if (form) form.scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.cap-preset').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (capNum) capNum.value = btn.dataset.cap;
+        update();
       });
-    }
+    });
 
     update();
   }

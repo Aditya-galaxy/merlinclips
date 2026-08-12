@@ -213,7 +213,21 @@ const server = Bun.serve({
 
     if (url.pathname === '/auth/google') {
       if (!OAUTH) {
-        return Response.redirect(new URL('/onboarding', request.url).toString(), 302);
+        // Unconfigured OAuth: Mint an onboarding session token so the creator
+        // moves into /onboarding cleanly without getting looped back to /signup.
+        const creatorId = 'c_' + randomToken(8);
+        const token = await sign({
+          creatorId,
+          sub: 'guest_' + creatorId,
+          email: 'creator@merlinclips.com',
+          name: 'Creator',
+          exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+        }, SESSION_SECRET);
+
+        const headers = new Headers({ location: '/onboarding' });
+        headers.append('set-cookie',
+          cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));
+        return new Response(null, { status: 302, headers });
       }
       const state = randomToken();
       const nonce = randomToken();

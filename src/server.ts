@@ -308,6 +308,11 @@ const server = Bun.serve({
       return campaigns.handleProfile(request);
     }
 
+    if (url.pathname === '/api/me/onboarding' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      return json({ ok: true, saved: body });
+    }
+
     // Operator-gated: approving a brand is the decision manual approval exists for.
     if (url.pathname === '/api/brands' && request.method === 'POST') {
       return campaigns.handleApproveBrand(request);
@@ -562,6 +567,8 @@ const server = Bun.serve({
       '/launch': 'landing/launch.html',
       '/signup.html': 'landing/signup.html',
       '/signup': 'landing/signup.html',
+      '/onboarding.html': 'landing/onboarding.html',
+      '/onboarding': 'landing/onboarding.html',
       '/terms.html': 'landing/terms.html',
       '/compliance.html': 'landing/compliance.html',
       '/security.html': 'landing/security.html',

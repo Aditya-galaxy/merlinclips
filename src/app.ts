@@ -359,6 +359,7 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
         <em id="remail"></em>
       </span>
     </div>
+    <a class="rl quiet" href="/onboarding">Edit Creator Profile</a>
     <a class="rl quiet" href="/api.html">API reference</a>
     <a class="rl quiet" href="/auth/logout">Sign out</a>
   </div>

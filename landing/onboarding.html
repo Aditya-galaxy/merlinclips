@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Merlin Clips — Create Your Creator Profile</title>
+<meta name="description" content="Complete your creator profile setup to start clipping and earning USDC on Base." />
+<link rel="icon" href="/logo.svg" type="image/svg+xml" />
+<style>
+:root {
+  --bg: #F8F9FB;
+  --card: #FFFFFF;
+  --line: #E5E7EB;
+  --line-hi: #D1D5DB;
+  --text: #111827;
+  --text-2: #4B5563;
+  --muted: #9CA3AF;
+  --orange: #FF5500;
+  --orange-light: #FFF0E6;
+  --violet: #6D28D9;
+  --violet-light: #F3EEFE;
+  --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--ui); font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+.page-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.onboarding-card {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  width: 100%;
+  max-width: 960px;
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px -12px rgba(0,0,0,0.08);
+  overflow: hidden;
+  min-height: 560px;
+}
+
+@media (max-width: 860px) {
+  .onboarding-card {
+    grid-template-columns: 1fr;
+  }
+  .preview-col {
+    display: none;
+  }
+}
+
+.wizard-col {
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.preview-col {
+  background: #F9FAFB;
+  border-left: 1px solid var(--line);
+  padding: 40px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Progress bar */
+.progress-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.progress-step {
+  height: 4px;
+  flex: 1;
+  border-radius: 99px;
+  background: #E5E7EB;
+  transition: background 0.25s ease;
+}
+.progress-step.active, .progress-step.completed {
+  background: var(--orange);
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+  color: var(--text);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.input-field {
+  width: 100%;
+  font-family: var(--ui);
+  font-size: 14.5px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #F9FAFB;
+  color: var(--text);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--orange);
+  background: #FFFFFF;
+}
+
+.avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.avatar-preview-sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #5B5FC7;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+}
+.btn-sm {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #F3F4F6;
+  color: var(--text);
+  cursor: pointer;
+}
+.btn-sm:hover { background: #E5E7EB; }
+.btn-danger { color: #EF4444; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; }
+
+/* Selector Pills */
+.pills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #F9FAFB;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pill-btn:hover { border-color: var(--line-hi); color: var(--text); }
+.pill-btn.selected {
+  background: var(--orange);
+  color: #FFFFFF;
+  border-color: var(--orange);
+  font-weight: 600;
+}
+
+.counter-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  display: block;
+}
+
+/* Nav Actions */
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.btn-back {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: 0;
+  background: #F3F4F6;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.btn-back:hover { background: #E5E7EB; color: var(--text); }
+
+.btn-continue {
+  font-size: 14px;
+  font-weight: 650;
+  padding: 12px 32px;
+  border-radius: 10px;
+  border: 0;
+  background: #111827;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 140px;
+}
+.btn-continue:hover { background: #000000; }
+
+/* Live Preview Card */
+.preview-card-wrap {
+  width: 100%;
+  max-width: 320px;
+}
+.profile-card {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.04);
+}
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.card-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #5B5FC7;
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.card-user-info {
+  flex: 1;
+  min-width: 0;
+}
+.card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-full-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.card-rank-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #F3F4F6;
+  color: var(--muted);
+}
+.card-handle {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+.card-joined {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.card-bio {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 14px 0;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.card-tag {
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #F3F4F6;
+  color: var(--text-2);
+}
+</style>
+</head>
+<body>
+
+<div class="page-root">
+  <div class="onboarding-card">
+    
+    <!-- Left Column: Wizard Steps -->
+    <div class="wizard-col">
+      <div>
+        <div class="progress-bar">
+          <div class="progress-step active" id="p-1"></div>
+          <div class="progress-step" id="p-2"></div>
+          <div class="progress-step" id="p-3"></div>
+          <div class="progress-step" id="p-4"></div>
+          <div class="progress-step" id="p-5"></div>
+        </div>
+
+        <!-- Step 1: Profile Setup -->
+        <div class="step-pane" id="step-1">
+          <h2 class="step-title">Let's Create Your Profile</h2>
+          
+          <div class="form-group">
+            <span class="form-label">Profile photo</span>
+            <div class="avatar-actions">
+              <div class="avatar-preview-sm" id="av-sm">T</div>
+              <button type="button" class="btn-sm">Change photo</button>
+              <button type="button" class="btn-danger">Remove</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="in-name">Full name</label>
+            <input class="input-field" id="in-name" value="Tester" placeholder="Enter your full name" spellcheck="false" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="in-handle">Username</label>
+            <input class="input-field" id="in-handle" value="tester4webauth" placeholder="username" spellcheck="false" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="in-bio">Bio</label>
+            <textarea class="input-field" id="in-bio" rows="2" maxlength="60" placeholder="Tell brands about yourself...">jhgv</textarea>
+            <span class="counter-text" id="bio-count">4/60</span>
+          </div>
+        </div>
+
+        <!-- Step 2: Content Language -->
+        <div class="step-pane" id="step-2" hidden>
+          <h2 class="step-title">Tell us about your Content</h2>
+          <span class="form-label" style="margin-bottom:12px;">What language do you create content in?</span>
+          
+          <div class="pills-grid" id="lang-pills">
+            <button type="button" class="pill-btn selected" data-lang="English">🇺🇸 English</button>
+            <button type="button" class="pill-btn" data-lang="Spanish">🇪🇸 Spanish</button>
+            <button type="button" class="pill-btn" data-lang="Portuguese">🇧🇷 Portuguese</button>
+            <button type="button" class="pill-btn" data-lang="French">🇫🇷 French</button>
+            <button type="button" class="pill-btn" data-lang="German">🇩🇪 German</button>
+            <button type="button" class="pill-btn" data-lang="Italian">🇮🇹 Italian</button>
+            <button type="button" class="pill-btn" data-lang="Japanese">🇯🇵 Japanese</button>
+            <button type="button" class="pill-btn" data-lang="Korean">🇰🇷 Korean</button>
+            <button type="button" class="pill-btn" data-lang="Hindi">🇮🇳 Hindi</button>
+            <button type="button" class="pill-btn" data-lang="Chinese">🇨🇳 Chinese</button>
+            <button type="button" class="pill-btn" data-lang="Russian">🇷🇺 Russian</button>
+            <button type="button" class="pill-btn" data-lang="Arabic">🇸🇦 Arabic</button>
+          </div>
+          <span class="counter-text" id="lang-count">1/5 selected</span>
+        </div>
+
+        <!-- Step 3: Creator Type & Discovery -->
+        <div class="step-pane" id="step-3" hidden>
+          <h2 class="step-title">What type of Creator are you?</h2>
+          
+          <div class="form-group">
+            <span class="form-label">Select your primary creation style:</span>
+            <div class="pills-grid" id="type-pills">
+              <button type="button" class="pill-btn" data-type="Just getting started">Just getting started</button>
+              <button type="button" class="pill-btn selected" data-type="Clipper">Clipper</button>
+              <button type="button" class="pill-btn" data-type="UGC Faceless">UGC Faceless</button>
+              <button type="button" class="pill-btn" data-type="UGC Face">UGC Face</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:20px;">
+            <span class="form-label">How did you find us?</span>
+            <div class="pills-grid" id="find-pills">
+              <button type="button" class="pill-btn" data-find="TikTok">TikTok</button>
+              <button type="button" class="pill-btn selected" data-find="YouTube">YouTube</button>
+              <button type="button" class="pill-btn" data-find="Twitter/X">Twitter/X</button>
+              <button type="button" class="pill-btn" data-find="AI">AI</button>
+              <button type="button" class="pill-btn" data-find="Word of mouth">Word of mouth</button>
+              <button type="button" class="pill-btn" data-find="Other">Other</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Social Accounts -->
+        <div class="step-pane" id="step-4" hidden>
+          <h2 class="step-title">Link your Social Accounts</h2>
+          <span class="form-label" style="margin-bottom:14px;">Connect channels to auto-verify your clip submissions:</span>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
+              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                YouTube
+              </div>
+              <button type="button" class="btn-sm" style="background:#111827;color:#fff;border:0;">Connected</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
+              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.24-2.39.58-4.83 2.18-6.62 1.52-1.74 3.79-2.73 6.09-2.7.35.01.7.04 1.05.1v4.06c-.46-.09-.94-.12-1.41-.09-1.22.06-2.43.62-3.14 1.61-.83 1.11-.97 2.64-.47 3.92.47 1.25 1.67 2.19 3.01 2.37 1.34.19 2.74-.26 3.63-1.27.77-.85 1.15-2.01 1.13-3.16.02-4.71.01-9.43.01-14.14z"/></svg>
+                TikTok
+              </div>
+              <button type="button" class="btn-sm">Connect</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
+              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                Instagram
+              </div>
+              <button type="button" class="btn-sm">Connect</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
+              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                X / Twitter
+              </div>
+              <button type="button" class="btn-sm">Connect</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Base Wallet Setup -->
+        <div class="step-pane" id="step-5" hidden>
+          <h2 class="step-title">Base Payout Wallet</h2>
+          <span class="form-label" style="margin-bottom:12px;">Where should your surviving USDC clip earnings land?</span>
+
+          <div class="form-group">
+            <label class="form-label" for="in-wallet">Base EVM Wallet Address (USDC)</label>
+            <input class="input-field" id="in-wallet" value="0x0003a59858f44451be2a5b486ee612b4139700f0" placeholder="0x..." spellcheck="false" />
+            <span class="counter-text">Instant USDC payouts on Base Mainnet. Zero platform withdrawal fees.</span>
+          </div>
+
+          <div style="padding:14px;border-radius:12px;background:var(--violet-light);border:1px solid rgba(109,40,217,0.2);margin-top:14px;">
+            <span style="font-weight:650;font-size:13.5px;color:var(--violet);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
+            <span style="font-size:12.5px;color:var(--text-2);">Your wallet is linked directly to your standing profile. Payouts execute automatically after your 24h view hold passes.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="wizard-actions">
+        <button type="button" class="btn-back" id="btn-back" style="visibility:hidden;">Back</button>
+        <button type="button" class="btn-continue" id="btn-continue">Continue</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Profile Preview Card -->
+    <div class="preview-col">
+      <div class="preview-card-wrap">
+        <div class="profile-card">
+          <div class="card-top">
+            <div class="card-avatar" id="prev-avatar">T</div>
+            <div class="card-user-info">
+              <div class="card-name-row">
+                <h4 class="card-full-name" id="prev-name">Tester</h4>
+                <span class="card-rank-badge" id="prev-rank">Unproven</span>
+              </div>
+              <p class="card-handle" id="prev-handle">@tester4webauth</p>
+            </div>
+          </div>
+          
+          <span class="card-joined" id="prev-joined">Joined Aug 2026</span>
+          <p class="card-bio" id="prev-bio">jhgv</p>
+          
+          <div class="card-tags">
+            <span class="card-tag" id="prev-lang">🇺🇸 English</span>
+            <span class="card-tag" id="prev-type">Clipper</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var currentStep = 1;
+  var totalSteps = 5;
+
+  var inName = document.getElementById('in-name');
+  var inHandle = document.getElementById('in-handle');
+  var inBio = document.getElementById('in-bio');
+  var inWallet = document.getElementById('in-wallet');
+
+  var prevAvatar = document.getElementById('prev-avatar');
+  var prevName = document.getElementById('prev-name');
+  var prevHandle = document.getElementById('prev-handle');
+  var prevBio = document.getElementById('prev-bio');
+  var prevLang = document.getElementById('prev-lang');
+  var prevType = document.getElementById('prev-type');
+
+  var btnBack = document.getElementById('btn-back');
+  var btnContinue = document.getElementById('btn-continue');
+
+  function updatePreview() {
+    var name = inName.value.trim() || 'Tester';
+    var handle = inHandle.value.trim() || 'username';
+    var bio = inBio.value.trim() || 'No bio added yet.';
+
+    prevName.textContent = name;
+    prevHandle.textContent = '@' + handle.replace(/^@/, '');
+    prevBio.textContent = bio;
+    
+    var initial = name.charAt(0).toUpperCase() || 'T';
+    prevAvatar.textContent = initial;
+    document.getElementById('av-sm').textContent = initial;
+
+    document.getElementById('bio-count').textContent = inBio.value.length + '/60';
+  }
+
+  inName.addEventListener('input', updatePreview);
+  inHandle.addEventListener('input', updatePreview);
+  inBio.addEventListener('input', updatePreview);
+
+  // Language Pills
+  document.querySelectorAll('#lang-pills .pill-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#lang-pills .pill-btn').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      prevLang.textContent = btn.textContent;
+    });
+  });
+
+  // Creator Type Pills
+  document.querySelectorAll('#type-pills .pill-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#type-pills .pill-btn').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      prevType.textContent = btn.textContent;
+    });
+  });
+
+  // Find Pills
+  document.querySelectorAll('#find-pills .pill-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#find-pills .pill-btn').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+    });
+  });
+
+  function showStep(step) {
+    for (var i = 1; i <= totalSteps; i++) {
+      var pane = document.getElementById('step-' + i);
+      var bar = document.getElementById('p-' + i);
+      if (pane) pane.hidden = (i !== step);
+      if (bar) {
+        if (i <= step) bar.classList.add('active');
+        else bar.classList.remove('active');
+      }
+    }
+
+    btnBack.style.visibility = (step > 1) ? 'visible' : 'hidden';
+    btnContinue.textContent = (step === totalSteps) ? 'Complete Setup & Go to App →' : 'Continue';
+  }
+
+  btnBack.addEventListener('click', function() {
+    if (currentStep > 1) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  btnContinue.addEventListener('click', async function() {
+    if (currentStep < totalSteps) {
+      currentStep++;
+      showStep(currentStep);
+    } else {
+      btnContinue.disabled = true;
+      btnContinue.textContent = 'Saving Profile...';
+      
+      var profileData = {
+        name: inName.value.trim(),
+        handle: inHandle.value.trim(),
+        bio: inBio.value.trim(),
+        wallet: inWallet.value.trim(),
+        language: prevLang.textContent,
+        type: prevType.textContent
+      };
+
+      try {
+        await fetch('/api/me/onboarding', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(profileData)
+        });
+      } catch(e) {}
+
+      window.location.href = '/app';
+    }
+  });
+
+  updatePreview();
+  showStep(1);
+})();
+</script>
+</body>
+</html>

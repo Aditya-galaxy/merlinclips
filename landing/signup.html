@@ -37,6 +37,10 @@
         <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
       </svg>Continue with Google</a>
 
+    <div style="margin-top:10px;text-align:center;">
+      <a href="/onboarding" style="display:inline-block;font-size:13.5px;font-weight:600;color:var(--violet);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(109,40,217,0.06);">⚡ Launch 5-Step Creator Setup Wizard →</a>
+    </div>
+
     <p class="agree">By signing up, you agree to the <a href="/terms.html">Terms of Service</a>
       and <a href="/compliance.html">Compliance Terms</a>.</p>
 
@@ -92,8 +96,8 @@
     .then(function (r) { return r.json(); })
     .then(function (me) {
       // Signed in already and still looking at this? They arrived by URL
-      // rather than by the gate, so send them on.
-      if (me.signedIn) { location.replace('/app'); return; }
+      // rather than by the gate, so send them on to the onboarding wizard.
+      if (me.signedIn) { location.replace('/onboarding'); return; }
       if (!me.available) {
         btn.removeAttribute('href');
         btn.setAttribute('aria-disabled', 'true');

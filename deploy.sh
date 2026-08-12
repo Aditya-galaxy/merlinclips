@@ -87,7 +87,7 @@ TICK_SECRET="${TICK_SECRET:-$(openssl rand -hex 24)}"
 OPERATOR_SECRET="${OPERATOR_SECRET:-$(openssl rand -hex 24)}"
 
 # Google OAuth & Session Configuration
-GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-}"
+GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-868655245369-njpp3v17gd79ab3b85ttcg768ncu2bu4.apps.googleusercontent.com}"
 GOOGLE_OAUTH_REDIRECT_URI="${GOOGLE_OAUTH_REDIRECT_URI:-https://merlinclips.com/auth/google/callback}"
 
 gcloud run deploy "$SERVICE" \

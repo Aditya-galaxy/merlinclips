@@ -3,429 +3,405 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Creator Dashboard &amp; Earnings Studio — Merlin Clips</title>
+<title>Creator Studio &amp; Earnings Console — Merlin Clips</title>
 <meta name="description" content="Manage your short-form content campaigns, view retention analytics, locked CPM rates, and automated USDC payouts on Base." />
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
 <style>
 :root {
-  --bg: #0B0F17;
-  --bg-card: #131B2E;
-  --bg-card-hover: #1A243B;
-  --bg-input: #182238;
-  --border: #23304D;
-  --border-highlight: #3B82F6;
-  --text: #F3F4F6;
-  --text-muted: #9CA3AF;
-  --text-dim: #6B7280;
-  --violet: #8B5CF6;
-  --violet-glow: rgba(139, 92, 246, 0.25);
-  --cyan: #06B6D4;
-  --emerald: #10B981;
-  --emerald-glow: rgba(16, 185, 129, 0.2);
-  --amber: #F59E0B;
-  --rose: #F43F5E;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --bg: #FAF8F5;
+  --surface: #FFFFFF;
+  --surface-2: #F3F0EB;
+  --line: #E8E3DB;
+  --line-hi: #D8D1C6;
+  --text: #151310;
+  --text-2: #5C554C;
+  --muted: #8B8378;
+  --pop: #6D28D9;
+  --pop-2: #7C3AED;
+  --pop-wash: #F3EEFE;
+  --ok: #0F7B4F;
+  --ok-wash: #E7F4EE;
+  --warn: #8A5A00;
+  --warn-wash: #FBF1DF;
+  --bad: #B02A20;
+  --bad-wash: #FBECEA;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--sans);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-.wrap { max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
-a { color: var(--violet); text-decoration: none; transition: color 0.15s ease; }
-a:hover { color: #A78BFA; }
+/* Console Split Layout: Left Sidebar + Main Area */
+.console-app {
+  display: flex;
+  min-height: 100vh;
+}
 
-/* Top Glassmorphism Navigation */
-.top-nav {
-  background: rgba(11, 15, 23, 0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+/* Left Sidebar Navigation */
+.console-sidebar {
+  width: 250px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
+  height: 100vh;
+  padding: 20px 16px;
+  overflow-y: auto;
 }
-.top-nav .wrap {
+
+.sidebar-brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 70px;
+  gap: 10px;
+  font-weight: 750;
+  font-size: 17px;
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 12px;
+  margin-bottom: 20px;
 }
-.brand-mark {
+.sidebar-brand img { border-radius: 6px; }
+
+/* Network Switcher Pill (Console Style) */
+.network-pill-box {
+  background: var(--surface-2);
+  border-radius: 99px;
+  padding: 3px;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 800;
-  font-size: 18px;
-  color: #FFF;
-  text-decoration: none;
-  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
 }
-.brand-mark img { border-radius: 8px; display: block; }
-.nav-links { display: flex; align-items: center; gap: 24px; }
-.nav-link {
-  font-size: 14.5px;
-  font-weight: 550;
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 8px;
+.network-pill-btn {
+  flex: 1;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 6px 10px;
+  border-radius: 99px;
+  color: var(--text-2);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
   transition: all 0.15s ease;
 }
-.nav-link:hover { color: #FFF; background: rgba(255,255,255,0.05); }
-.nav-link.active { color: #FFF; background: var(--border); font-weight: 650; }
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 9px 18px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: #FFF;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  text-decoration: none;
-}
-.btn:hover { border-color: var(--text-muted); transform: translateY(-1px); }
-.btn-primary {
-  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-  border: 1px solid rgba(167, 139, 250, 0.4);
-  box-shadow: 0 4px 14px var(--violet-glow);
-}
-.btn-primary:hover {
-  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-  transform: translateY(-1px);
+.network-pill-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-/* Creator Profile Hero Section */
-.profile-hero {
-  background: linear-gradient(180deg, rgba(30, 27, 75, 0.6) 0%, var(--bg-card) 100%);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  overflow: hidden;
-  margin: 24px 0 28px;
-  position: relative;
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 12px 12px 6px;
 }
-.profile-cover {
-  height: 140px;
-  background: linear-gradient(135deg, #4C1D95 0%, #1E1B4B 40%, #0F172A 100%);
-  position: relative;
-}
-.profile-cover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 60%);
-}
-.profile-body {
-  padding: 0 32px 28px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-top: -45px;
-  position: relative;
-  z-index: 10;
-}
-.user-identity {
-  display: flex;
-  align-items: flex-end;
-  gap: 20px;
-}
-.avatar-box {
-  width: 96px;
-  height: 96px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, #6D28D9, #4C1D95);
-  color: #FFF;
-  font-size: 42px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  border: 4px solid var(--bg-card);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-  flex: none;
-}
-.user-meta h1 {
-  margin: 0 0 4px;
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #FFF;
+
+.sidebar-menu { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
+.sidebar-item {
   display: flex;
   align-items: center;
   gap: 12px;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--text-2);
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.sidebar-item:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.sidebar-item.active {
+  color: var(--pop);
+  background: var(--pop-wash);
+  font-weight: 650;
+}
+.sidebar-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Main Content Surface */
+.console-main {
+  flex: 1;
+  padding: 32px 40px 60px;
+  max-width: 1100px;
+}
+
+/* Header & Breadcrumb Bar */
+.console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.console-title h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.console-title p {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  color: var(--text-2);
+}
+
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: var(--ok-wash);
+  color: var(--ok);
+  border: 1px solid rgba(15, 123, 79, 0.2);
+}
+.dot-green {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: inline-block;
+}
+
+/* Profile Identity Card */
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.avatar-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: var(--pop);
+  color: #FFF;
+  font-size: 30px;
+  font-weight: 750;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.user-details h2 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  font-weight: 750;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .rank-badge {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #34D399;
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: var(--ok-wash);
+  color: var(--ok);
+  border: 1px solid rgba(15, 123, 79, 0.2);
 }
 .user-handle {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--violet);
-  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  color: var(--pop);
+  margin-bottom: 4px;
 }
 .user-bio {
-  font-size: 14px;
-  color: var(--text-muted);
+  font-size: 13.5px;
+  color: var(--text-2);
   margin: 0;
-  max-width: 580px;
+  max-width: 520px;
 }
-.tag-pills { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.pill {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 11px;
-  border-radius: 20px;
-  background: var(--bg-input);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.network-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 99px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: #34D399;
-  font-weight: 600;
-  font-size: 13px;
-}
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #34D399;
-  box-shadow: 0 0 10px #34D399;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1); }
+.tags-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag-chip {
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-2);
 }
 
-/* KPI Overview Grid */
+/* KPI Summary Cards Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  gap: 16px;
   margin-bottom: 28px;
 }
-@media(max-width: 960px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media(max-width: 540px) { .kpi-grid { grid-template-columns: 1fr; } }
+@media(max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 500px) { .kpi-grid { grid-template-columns: 1fr; } }
 
 .kpi-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.015);
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 .kpi-card:hover {
-  border-color: var(--border-highlight);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  border-color: var(--line-hi);
 }
-.kpi-title {
-  font-size: 12.5px;
+.kpi-label {
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--muted);
 }
-.kpi-value {
-  font-family: var(--font-mono);
-  font-size: 32px;
+.kpi-num {
+  font-family: var(--mono);
+  font-size: 28px;
   font-weight: 750;
   letter-spacing: -0.03em;
-  color: #FFF;
-  line-height: 1;
+  color: var(--text);
+  line-height: 1.1;
 }
 .kpi-sub {
-  font-size: 13px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-2);
 }
 
-/* Progress bar inside KPI */
-.progress-bar-bg {
-  width: 100%;
-  height: 6px;
-  background: var(--bg-input);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-top: 4px;
-}
-.progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--violet), var(--cyan));
-  border-radius: 99px;
-  transition: width 0.4s ease;
-}
-
-/* Interactive Navigation Tabs */
-.tab-bar {
-  display: flex;
-  gap: 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 28px;
-}
-.tab-btn {
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px 20px;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s ease;
-}
-.tab-btn:hover { color: #FFF; }
-.tab-btn.active {
-  color: var(--violet);
-  border-bottom-color: var(--violet);
-}
-
-/* Card & Form Layout */
-.panel-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 28px 30px;
+/* Content Panels */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 26px 30px;
   margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.015);
 }
-.panel-card h3 {
-  margin: 0 0 6px;
-  font-size: 19px;
+.panel h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
   font-weight: 750;
-  letter-spacing: -0.015em;
-  color: #FFF;
+  color: var(--text);
 }
-.panel-card .sub-text {
-  margin: 0 0 22px;
-  font-size: 14px;
-  color: var(--text-muted);
+.panel .panel-sub {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: var(--text-2);
 }
 
+/* Forms & Inputs */
 .form-group { margin-bottom: 18px; }
 .form-group label {
   display: block;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-2);
+  margin-bottom: 7px;
 }
 .form-control {
   width: 100%;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  padding: 13px 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-input);
-  color: #FFF;
+  font-family: var(--sans);
+  font-size: 14.5px;
+  padding: 11px 14px;
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
   transition: border-color 0.15s ease;
 }
 .form-control:focus {
-  outline: none;
-  border-color: var(--violet);
-  box-shadow: 0 0 0 3px var(--violet-glow);
+  outline: 2px solid var(--pop);
+  outline-offset: -1px;
+  border-color: transparent;
 }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--line-hi);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.btn:hover { border-color: var(--text-2); text-decoration: none; }
+.btn-primary {
+  background: var(--pop);
+  color: #FFF;
+  border-color: var(--pop);
+}
+.btn-primary:hover { background: var(--pop-2); }
 
 .code-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px dashed var(--violet);
-  border-radius: 14px;
-  padding: 16px 20px;
-  margin: 20px 0;
+  background: var(--pop-wash);
+  border: 1px dashed var(--pop);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 18px 0;
 }
 .code-box code {
-  font-family: var(--font-mono);
-  font-size: 18px;
+  font-family: var(--mono);
+  font-size: 17px;
   font-weight: 700;
-  color: #A78BFA;
-  letter-spacing: 0.05em;
+  color: var(--pop);
+  letter-spacing: 0.04em;
 }
 
-/* Analytics Chart Preview Widget */
-.chart-container {
-  height: 180px;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  padding-top: 20px;
-}
-.chart-bar-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-  justify-content: flex-end;
-}
-.chart-bar {
-  width: 100%;
-  max-width: 38px;
-  background: linear-gradient(180deg, var(--violet) 0%, rgba(109, 40, 217, 0.3) 100%);
-  border-radius: 6px 6px 0 0;
-  transition: height 0.4s ease, background 0.2s ease;
-  position: relative;
-}
-.chart-bar:hover {
-  background: linear-gradient(180deg, #A78BFA 0%, var(--violet) 100%);
-}
-.chart-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-
-/* Payout Ledger Table */
+/* Ledger Table */
 .ledger-table {
   width: 100%;
   border-collapse: collapse;
@@ -433,280 +409,288 @@ a:hover { color: #A78BFA; }
 }
 .ledger-table th {
   text-align: left;
-  padding: 12px 16px;
-  font-size: 12px;
+  padding: 12px 14px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-dim);
-  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
 }
 .ledger-table td {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 14px;
+  padding: 14px;
+  border-bottom: 1px solid var(--surface-2);
+  font-size: 13.5px;
 }
-.ledger-table tr:hover td { background: rgba(255,255,255,0.02); }
 
 .badge-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
 }
-.badge-settled { background: rgba(16, 185, 129, 0.15); color: #34D399; }
-.badge-waiting { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
-.badge-refused { background: rgba(244, 63, 94, 0.15); color: #FB7185; }
+.badge-settled { background: var(--ok-wash); color: var(--ok); }
+.badge-waiting { background: var(--warn-wash); color: var(--warn); }
+.badge-refused { background: var(--bad-wash); color: var(--bad); }
 
-footer {
-  border-top: 1px solid var(--border);
-  margin-top: 60px;
-  padding: 32px 0 60px;
-  color: var(--text-dim);
-  font-size: 14px;
+@media(max-width: 820px) {
+  .console-app { flex-direction: column; }
+  .console-sidebar { width: 100%; height: auto; position: relative; }
+  .console-main { padding: 24px 20px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Top Navigation Bar -->
-<header class="top-nav">
-  <div class="wrap">
-    <a class="brand-mark" href="/">
-      <img src="/logo.svg" alt="Merlin Clips Logo" width="28" height="28" />
+<div class="console-app">
+
+  <!-- Left Sidebar Navigation (Matching Circle Console Theme) -->
+  <aside class="console-sidebar">
+    <a class="sidebar-brand" href="/">
+      <img src="/logo.svg" alt="Merlin Clips Logo" width="24" height="24" />
       Merlin Clips
     </a>
 
-    <nav class="nav-links">
-      <a class="nav-link" href="/">Home</a>
-      <a class="nav-link active" href="/profile">Creator Studio</a>
-      <a class="nav-link" href="/launch.html">Brand Studio</a>
+    <!-- Network Switcher Pill -->
+    <div class="network-pill-box">
+      <button type="button" class="network-pill-btn" onclick="alert('Testnet mode is available for sandbox testing.')">Testnet</button>
+      <button type="button" class="network-pill-btn active">Mainnet</button>
+    </div>
+
+    <div class="sidebar-section-title">Creator Console</div>
+    <nav class="sidebar-menu">
+      <button type="button" class="sidebar-item active" id="nav-item-submit" onclick="switchPane('submit')">
+        <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Submit &amp; Briefs
+      </button>
+
+      <button type="button" class="sidebar-item" id="nav-item-analytics" onclick="switchPane('analytics')">
+        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Views Analytics
+      </button>
+
+      <button type="button" class="sidebar-item" id="nav-item-ledger" onclick="switchPane('ledger')">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Payout Ledger
+      </button>
+
+      <button type="button" class="sidebar-item" id="nav-item-wallet" onclick="switchPane('wallet')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 12h.01"/></svg>
+        EVM Wallet
+      </button>
     </nav>
 
-    <div style="display:flex;align-items:center;gap:12px;">
-      <a href="/onboarding" class="btn">Edit Profile</a>
-      <a href="/onboarding" class="btn btn-primary">Setup Wizard</a>
+    <div class="sidebar-section-title">Navigation</div>
+    <nav class="sidebar-menu">
+      <a class="sidebar-item" href="/">
+        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home Page
+      </a>
+      <a class="sidebar-item" href="/launch.html">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Brand Studio
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/onboarding" class="btn" style="width:100%;font-size:13px;">Edit Profile</a>
     </div>
-  </div>
-</header>
+  </aside>
 
-<main class="wrap">
+  <!-- Main Console Worksurface -->
+  <main class="console-main">
 
-  <!-- Hero Profile Identity Header -->
-  <div class="profile-hero">
-    <div class="profile-cover"></div>
-    <div class="profile-body">
-      <div class="user-identity">
-        <div class="avatar-box" id="p-avatar">C</div>
-        <div class="user-meta">
-          <h1>
+    <!-- Console Header Bar -->
+    <header class="console-header">
+      <div class="console-title">
+        <h1>Creator Studio</h1>
+        <p>Let's start submitting clips and earning USDC on Base</p>
+      </div>
+
+      <div class="badge-live">
+        <span class="dot-green"></span>
+        Base Mainnet Active
+      </div>
+    </header>
+
+    <!-- Profile Summary Identity Card -->
+    <div class="profile-card">
+      <div class="profile-info">
+        <div class="avatar-circle" id="p-avatar">C</div>
+        <div class="user-details">
+          <h2>
             <span id="p-name">Creator Account</span>
             <span class="rank-badge" id="p-rank">UNPROVEN TIER</span>
-          </h1>
+          </h2>
           <div class="user-handle" id="p-handle">@creator</div>
-          <p class="user-bio" id="p-bio">Welcome to Merlin Clips Creator Studio. Submit YouTube Shorts, TikToks &amp; Reels to earn Base USDC payouts.</p>
-          <div class="tag-pills" id="p-tags">
-            <span class="pill" id="ptag-lang">🇺🇸 English</span>
-            <span class="pill" id="ptag-type">Shorts Clipper</span>
-            <span class="pill" id="ptag-social">YouTube Connected</span>
+          <p class="user-bio" id="p-bio">Welcome to Merlin Clips Creator Console. Submit YouTube Shorts, TikToks &amp; Reels to earn Base USDC payouts.</p>
+          <div class="tags-row" id="p-tags">
+            <span class="tag-chip" id="ptag-lang">🇺🇸 English</span>
+            <span class="tag-chip" id="ptag-type">Shorts Clipper</span>
+            <span class="tag-chip" id="ptag-social">YouTube</span>
           </div>
         </div>
       </div>
       <div>
-        <div class="network-badge">
-          <span class="pulse-dot"></span>
-          Base Mainnet Payout Engine Active
-        </div>
+        <a href="/onboarding" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">Wizard Setup</a>
       </div>
     </div>
-  </div>
 
-  <!-- KPI Overview Grid (Whop / Creator Dashboard Style) -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <span class="kpi-title">Total Earned (USDC)</span>
-      <span class="kpi-value" id="t-earned" style="color:#34D399;">$0.00</span>
-      <span class="kpi-sub">✓ Settled on Base Mainnet</span>
-    </div>
-
-    <div class="kpi-card">
-      <span class="kpi-title">Surviving Views Paid</span>
-      <span class="kpi-value" id="t-views">0</span>
-      <span class="kpi-sub">Held across 24h window</span>
-    </div>
-
-    <div class="kpi-card">
-      <span class="kpi-title">Clip Submissions</span>
-      <span class="kpi-value" id="t-subs">0</span>
-      <span class="kpi-sub">Active campaign submissions</span>
-    </div>
-
-    <div class="kpi-card">
-      <span class="kpi-title">Standing Level</span>
-      <span class="kpi-value" id="t-standing" style="font-size:24px;color:#A78BFA;">Unproven</span>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="t-progress-fill" style="width: 15%;"></div>
+    <!-- 4 KPI Overview Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Earned (USDC)</span>
+        <span class="kpi-num" id="t-earned" style="color:var(--ok);">$0.00</span>
+        <span class="kpi-sub">✓ Settled directly to Base wallet</span>
       </div>
-      <span class="kpi-sub" id="t-progress-text" style="font-size:11.5px;margin-top:2px;">15% to Building Tier (+5% CPM)</span>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Surviving Views Paid</span>
+        <span class="kpi-num" id="t-views">0</span>
+        <span class="kpi-sub">Held across 24h window</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Clip Submissions</span>
+        <span class="kpi-num" id="t-subs">0</span>
+        <span class="kpi-sub">Active brief submissions</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Standing Rank</span>
+        <span class="kpi-num" id="t-standing" style="font-size:22px;color:var(--pop);">Unproven</span>
+        <span class="kpi-sub" style="font-size:11.5px;color:var(--muted);">New Creator Record</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Dashboard Navigation Tabs -->
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tab-btn-submit" onclick="switchTab('submit')">⚡ Submit Clip &amp; Active Briefs</button>
-    <button class="tab-btn" id="tab-btn-analytics" onclick="switchTab('analytics')">📊 View Survival Analytics</button>
-    <button class="tab-btn" id="tab-btn-ledger" onclick="switchTab('ledger')">📋 Submissions &amp; Payout Ledger</button>
-    <button class="tab-btn" id="tab-btn-wallet" onclick="switchTab('wallet')">⚙️ EVM Wallet Settings</button>
-  </div>
+    <!-- Pane 1: Submit Clip & Active Briefs -->
+    <div id="pane-submit">
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:24px;">
+        
+        <div class="panel">
+          <h3>Submit a Video Clip</h3>
+          <p class="panel-sub">Your CPM rate and 24h retention hold lock the moment your video URL is submitted.</p>
 
-  <!-- Tab 1: Submit Clip & Active Briefs -->
-  <div id="pane-submit">
-    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:24px;">
-      
-      <!-- Submission Form Card -->
-      <div class="panel-card">
-        <h3>Submit a Short Video Clip</h3>
-        <p class="sub-text">Your CPM rate and 24h retention hold lock the instant your video URL is verified.</p>
-
-        <div class="form-group">
-          <label for="camp">Select Active Campaign Brief</label>
-          <select id="camp" class="form-control">
-            <option>camp-bb2bd198 — Showcase Merlin Clips ($1.00 USDC / 1k views)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="url">Video Clip URL (YouTube Shorts, TikTok, IG Reels)</label>
-          <input id="url" class="form-control" placeholder="https://www.youtube.com/shorts/..." spellcheck="false" />
-        </div>
-
-        <div class="code-box">
-          <div>
-            <span style="font-size:12px;color:var(--text-dim);display:block;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Your Verification Code:</span>
-            <span style="font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;margin-bottom:6px;">Paste in video description to prove clip ownership:</span>
-            <code id="ver-code-val">MC-8F92A1</code>
+          <div class="form-group">
+            <label for="camp">Campaign Brief</label>
+            <select id="camp" class="form-control">
+              <option>camp-bb2bd198 — Showcase Merlin Clips ($1.00 USDC / 1k views)</option>
+            </select>
           </div>
-          <button type="button" class="btn btn-primary" id="copy-ver-code" style="font-size:13px;padding:8px 16px;">Copy Code</button>
+
+          <div class="form-group">
+            <label for="url">Video Clip URL (YouTube Shorts, TikTok, IG Reels)</label>
+            <input id="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." spellcheck="false" />
+          </div>
+
+          <div class="code-box">
+            <div>
+              <span style="font-size:11.5px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">Your Verification Code:</span>
+              <span style="font-size:12px;color:var(--text-2);display:block;margin-top:2px;margin-bottom:4px;">Paste in video description to prove ownership:</span>
+              <code id="ver-code-val">MC-8F92A1</code>
+            </div>
+            <button type="button" class="btn btn-primary" id="copy-ver-code" style="font-size:12.5px;padding:6px 14px;">Copy Code</button>
+          </div>
+
+          <div class="form-group">
+            <label for="addr">Base Payout EVM Wallet Address (USDC)</label>
+            <input id="addr" class="form-control" placeholder="0x..." style="font-family:var(--mono);" spellcheck="false" />
+          </div>
+
+          <button class="btn btn-primary" id="go" style="width:100%;padding:12px 20px;font-size:15px;margin-top:6px;">Submit Clip &amp; Lock Rate</button>
+          <div id="said" style="margin-top:12px;"></div>
         </div>
 
+        <div class="panel" style="background:var(--surface-2);border-color:var(--line-hi);">
+          <h3 style="color:var(--pop);">⚡ How Base USDC Payouts Work</h3>
+          <ul style="margin:14px 0 0;padding-left:18px;color:var(--text-2);font-size:13.5px;line-height:1.6;">
+            <li style="margin-bottom:10px;"><b style="color:var(--text);">Verification Code:</b> Put your unique <code>MC-XXXXXX</code> code in your video description.</li>
+            <li style="margin-bottom:10px;"><b style="color:var(--text);">CPM Rate Lock:</b> CPM rate (*$1.00 / 1k views*) locks the moment your URL is submitted.</li>
+            <li style="margin-bottom:10px;"><b style="color:var(--text);">24h Retention Hold:</b> Views are verified across 24h to eliminate bot-farmed spikes.</li>
+            <li style="margin-bottom:10px;"><b style="color:var(--text);">Direct Settlement:</b> Surviving views are paid out directly to your EVM wallet in USDC on Base Mainnet.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Pane 2: Analytics -->
+    <div id="pane-analytics" hidden>
+      <div class="panel">
+        <h3>View Retention Analytics</h3>
+        <p class="panel-sub">Track your 24h view survival rates and daily earnings performance.</p>
+
+        <div style="height:180px;display:flex;align-items:flex-end;gap:16px;padding-top:20px;">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+            <div style="width:100%;max-width:32px;height:35%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">Mon</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+            <div style="width:100%;max-width:32px;height:60%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">Tue</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+            <div style="width:100%;max-width:32px;height:45%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">Wed</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+            <div style="width:100%;max-width:32px;height:85%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">Thu</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+            <div style="width:100%;max-width:32px;height:70%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">Fri</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pane 3: Submissions Ledger -->
+    <div id="pane-ledger" hidden>
+      <div class="panel">
+        <h3>Submissions &amp; Payout Ledger</h3>
+        <p class="panel-sub">Every submission and automated USDC transfer is permanently recorded on Base.</p>
+        
+        <div id="ledger-list">
+          <div style="padding:16px;background:var(--surface-2);border-radius:12px;color:var(--text-2);font-size:13.5px;text-align:center;">
+            No clip submissions recorded yet. Submit your first video clip above!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pane 4: EVM Wallet Settings -->
+    <div id="pane-wallet" hidden>
+      <div class="panel">
+        <h3>Linked Base EVM Wallet</h3>
+        <p class="panel-sub">Your USDC earnings settle directly to this wallet address on Base Mainnet.</p>
+        
         <div class="form-group">
-          <label for="addr">Base Payout EVM Wallet Address (USDC)</label>
-          <input id="addr" class="form-control" placeholder="0x..." style="font-family:var(--font-mono);" spellcheck="false" />
+          <label for="p-wallet-input">Base EVM Wallet Address</label>
+          <input id="p-wallet-input" class="form-control" placeholder="0x..." style="font-family:var(--mono);" spellcheck="false" />
         </div>
-
-        <button class="btn btn-primary" id="go" style="width:100%;padding:14px 20px;font-size:16px;margin-top:8px;">Submit Clip &amp; Lock Rate</button>
-        <div id="said" style="margin-top:14px;"></div>
-      </div>
-
-      <!-- Active Brief Info Card -->
-      <div class="panel-card" style="background:linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-card) 100%);border-color:rgba(139, 92, 246, 0.25);">
-        <h3 style="color:#A78BFA;">⚡ How Automated Base Payouts Work</h3>
-        <ul style="margin:16px 0 0;padding-left:20px;color:var(--text-muted);font-size:14px;line-height:1.7;">
-          <li style="margin-bottom:12px;"><b style="color:#FFF;">Paste Verification Code:</b> Put your unique <code>MC-XXXXXX</code> verification code in the description of your video clip.</li>
-          <li style="margin-bottom:12px;"><b style="color:#FFF;">CPM Rate Lock:</b> The moment your link is submitted, your CPM rate (*$1.00 USDC / 1k views*) is locked.</li>
-          <li style="margin-bottom:12px;"><b style="color:#FFF;">24-Hour Survival Hold:</b> Views are tracked across a 24h retention window to filter out fake bot spikes.</li>
-          <li style="margin-bottom:12px;"><b style="color:#FFF;">Direct EVM Transfer:</b> Surviving views are paid out directly to your Base Mainnet wallet in USDC.</li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Tab 2: Analytics Chart Widget -->
-  <div id="pane-analytics" hidden>
-    <div class="panel-card">
-      <h3>Views &amp; Retention Analytics</h3>
-      <p class="sub-text">Track your 24h view survival rates and daily earnings performance.</p>
-
-      <div class="chart-container">
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 35%;"></div>
-          <span class="chart-label">Mon</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 55%;"></div>
-          <span class="chart-label">Tue</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 40%;"></div>
-          <span class="chart-label">Wed</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 80%;"></div>
-          <span class="chart-label">Thu</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 65%;"></div>
-          <span class="chart-label">Fri</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 95%;"></div>
-          <span class="chart-label">Sat</span>
-        </div>
-        <div class="chart-bar-group">
-          <div class="chart-bar" style="height: 70%;"></div>
-          <span class="chart-label">Sun</span>
-        </div>
+        
+        <button type="button" class="btn btn-primary" onclick="alert('Base EVM Wallet Updated!')">Save Wallet Settings</button>
       </div>
     </div>
-  </div>
 
-  <!-- Tab 3: Submissions & Payout Ledger -->
-  <div id="pane-ledger" hidden>
-    <div class="panel-card">
-      <h3>Submissions &amp; Payout Ledger</h3>
-      <p class="sub-text">Every submission and automated USDC transfer is permanently recorded on Base.</p>
-      
-      <div id="ledger-list">
-        <div style="padding:20px;background:var(--bg-input);border-radius:14px;color:var(--text-muted);font-size:14px;text-align:center;">
-          No clip submissions recorded yet. Submit your first video clip above!
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tab 4: EVM Wallet Settings -->
-  <div id="pane-wallet" hidden>
-    <div class="panel-card">
-      <h3>Linked Base EVM Wallet</h3>
-      <p class="sub-text">Your USDC earnings settle directly to this wallet address on Base Mainnet.</p>
-      
-      <div class="form-group">
-        <label for="p-wallet-input">Base EVM Wallet Address</label>
-        <input id="p-wallet-input" class="form-control" placeholder="0x..." style="font-family:var(--font-mono);" spellcheck="false" />
-      </div>
-      
-      <button type="button" class="btn btn-primary" onclick="alert('Base EVM Wallet Updated Successfully!')">Save Wallet Settings</button>
-    </div>
-  </div>
-
-</main>
-
-<footer>
-  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-    <div style="display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#FFF;">
-      <img src="/logo.svg" alt="Merlin Clips Logo" width="22" height="22" style="border-radius:6px;display:block;" />
-      Merlin Clips
-    </div>
-    <span style="color:var(--text-dim);font-size:13.5px;">© All rights reserved · Automated USDC Payouts on Base Mainnet</span>
-    <a href="https://github.com/Aditya-galaxy/merlinclips" style="font-size:13.5px;">Source Code</a>
-  </div>
-</footer>
+  </main>
+</div>
 
 <script>
-function switchTab(tabId) {
-  document.getElementById('pane-submit').hidden = (tabId !== 'submit');
-  document.getElementById('pane-analytics').hidden = (tabId !== 'analytics');
-  document.getElementById('pane-ledger').hidden = (tabId !== 'ledger');
-  document.getElementById('pane-wallet').hidden = (tabId !== 'wallet');
+function switchPane(paneId) {
+  document.getElementById('pane-submit').hidden = (paneId !== 'submit');
+  document.getElementById('pane-analytics').hidden = (paneId !== 'analytics');
+  document.getElementById('pane-ledger').hidden = (paneId !== 'ledger');
+  document.getElementById('pane-wallet').hidden = (paneId !== 'wallet');
 
-  document.getElementById('tab-btn-submit').classList.toggle('active', tabId === 'submit');
-  document.getElementById('tab-btn-analytics').classList.toggle('active', tabId === 'analytics');
-  document.getElementById('tab-btn-ledger').classList.toggle('active', tabId === 'ledger');
-  document.getElementById('tab-btn-wallet').classList.toggle('active', tabId === 'wallet');
+  document.getElementById('nav-item-submit').classList.toggle('active', paneId === 'submit');
+  document.getElementById('nav-item-analytics').classList.toggle('active', paneId === 'analytics');
+  document.getElementById('nav-item-ledger').classList.toggle('active', paneId === 'ledger');
+  document.getElementById('nav-item-wallet').classList.toggle('active', paneId === 'wallet');
 }
 
 (function() {
@@ -757,10 +741,10 @@ function switchTab(tabId) {
           var badgeText = isPaid ? '✓ Paid' : (isRefused ? ('Refused: ' + s.refusalReason) : '⏳ 24h Hold');
 
           return '<tr>'
-            + '<td><b style="color:#FFF;">' + s.url + '</b></td>'
+            + '<td><b style="color:var(--text);">' + s.url + '</b></td>'
             + '<td>' + Number(s.confirmedViews || 0).toLocaleString() + ' views</td>'
             + '<td><span class="badge-status ' + badgeClass + '">' + badgeText + '</span></td>'
-            + '<td><b style="color:#34D399;">$' + (s.earnedUsdc || '0.00') + ' USDC</b></td>'
+            + '<td><b style="color:var(--ok);">$' + (s.earnedUsdc || '0.00') + ' USDC</b></td>'
             + '</tr>';
         }).join('') + '</tbody></table>';
       document.getElementById('ledger-list').innerHTML = ledgerHtml;
@@ -787,7 +771,7 @@ function switchTab(tabId) {
       var urlInput = document.getElementById('url').value.trim();
       var addrInput = document.getElementById('addr').value.trim();
       if (!urlInput) {
-        said.innerHTML = '<div style="padding:12px 16px;border-radius:10px;background:rgba(244, 63, 94, 0.15);color:#FB7185;font-size:14px;">Please enter your video clip URL.</div>';
+        said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--bad-wash);color:var(--bad);font-size:13.5px;">Please enter your video clip URL.</div>';
         return;
       }
 
@@ -807,13 +791,13 @@ function switchTab(tabId) {
         });
         var d = await r.json();
         if (!r.ok) {
-          said.innerHTML = '<div style="padding:12px 16px;border-radius:10px;background:rgba(244, 63, 94, 0.15);color:#FB7185;font-size:14px;"><b>Submission Refused:</b> ' + (d.error || 'Could not verify clip.') + '</div>';
+          said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--bad-wash);color:var(--bad);font-size:13.5px;"><b>Submission Refused:</b> ' + (d.error || 'Could not verify clip.') + '</div>';
         } else {
-          said.innerHTML = '<div style="padding:12px 16px;border-radius:10px;background:rgba(16, 185, 129, 0.15);color:#34D399;font-size:14px;"><b>Clip Accepted &amp; CPM Locked!</b> Your CPM rate is locked at $' + (d.agreedTerms ? d.agreedTerms.cpmUsdc : '1.00') + ' per 1k views on a 24h hold.</div>';
+          said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--ok-wash);color:var(--ok);font-size:13.5px;"><b>Clip Accepted &amp; CPM Locked!</b> Your CPM rate is locked at $' + (d.agreedTerms ? d.agreedTerms.cpmUsdc : '1.00') + ' per 1k views on a 24h hold.</div>';
           document.getElementById('url').value = '';
         }
       } catch(err) {
-        said.innerHTML = '<div style="padding:12px 16px;border-radius:10px;background:rgba(244, 63, 94, 0.15);color:#FB7185;font-size:14px;">Network error submitting clip. Please check your connection.</div>';
+        said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--bad-wash);color:var(--bad);font-size:13.5px;">Network error submitting clip. Please check your connection.</div>';
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Clip & Lock Rate';

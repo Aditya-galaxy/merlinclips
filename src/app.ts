@@ -536,8 +536,12 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;
 </div>
 </div>
 
-<footer><div class="wrap">
-  Create, post and earn on YouTube. Every payout decision is written to an append-only record. ·
+<footer><div class="wrap" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:8px;font-weight:650;font-size:15px;color:var(--ink);">
+    <img src="/logo.svg" alt="Merlin Clips Logo" width="20" height="20" style="border-radius:5px;display:block;" />
+    Merlin Clips
+  </div>
+  <span style="color:var(--ink-3);">· Create, post and earn on YouTube. Every payout decision is written to an append-only record. ·</span>
   <a href="https://github.com/Aditya-galaxy/merlinclips">Source</a>
 </div></footer>
 

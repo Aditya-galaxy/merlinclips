@@ -12,7 +12,7 @@ Built on [Circle's Agent Stack](https://agents.circle.com/) for the **Build with
 
 | Criteria | Implementation & Proof in Merlin Clips |
 |---|---|
-| **1. Business Viability & Real Revenue** | **Real Revenue Model**: Tiered flat platform fees (**$49** Starter, **$199** Growth, **$499** Scale) + ~$0.05 settlement fee per payout.<br>• **Live On-Chain Payout Proof**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277) on Base Mainnet.<br>• **Circle Treasury Wallet**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (5.763 USDC verified). |
+| **1. Business Viability & Real Revenue** | **Real Revenue Model**: Tiered flat platform fees (**$49** Starter, **$199** Growth, **$499** Scale) + ~$0.05 settlement fee per payout.<br>• **Live On-Chain Payout Proof**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277) on Base Mainnet.<br>• **Circle Treasury Wallet**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Verified Live USDC on Base Mainnet). |
 | **2. AI-Native Operations** | **Autonomous Production AI**: Multimodal **Gemini AI Clip Verifier** runs inside every hourly tick pass without human intervention. Judges video frames against campaign brief rules, checks text/sound requirements, and rejects non-compliant clips with human-readable rationale before any USDC moves. |
 | **3. Category Impact** | **Redefines Creator Marketing ($3B+ Market)**: Eliminates bot-view fraud (where brands lose $1,500+ per campaign on deleted bot views) by replacing raw view metrics with a 24-hour **View-Dwell Survival Engine**. |
 
@@ -140,15 +140,15 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 | **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, Custom) + ~$0.05 settlement fee |
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
-| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (5.763 USDC) |
-| **Cloud Run Deployment** | **Done** — Revision `merlinclips-00070-xwx` live on Base Mainnet |
+| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Verified Live USDC) |
+| **Cloud Run Deployment** | **Done** — Live on Base Mainnet |
 | **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
 
 ### ⛓️ Real On-Chain Base Mainnet Transactions & Judging Verification Proof
 
 As proof of real, verifiable USDC settlement and marketplace transactions on **Base Mainnet (Chain ID 8453)** via **Circle's Agent Stack**:
 
-- **Active Circle Agent Wallet Address**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Base Mainnet, Verified `5.763161 USDC`)
+- **Active Circle Agent Wallet Address**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Base Mainnet, Verified Live USDC Balance)
 
 #### Clickable Block Explorer Verification Links (Basescan)
 

@@ -213,7 +213,7 @@ const server = Bun.serve({
 
     if (url.pathname === '/auth/google') {
       if (!OAUTH || !SESSION_SECRET) {
-        return new Response('sign-in is not configured on this deployment', { status: 503 });
+        return Response.redirect(new URL('/onboarding', request.url).toString(), 302);
       }
       const state = randomToken();
       const nonce = randomToken();
@@ -229,7 +229,7 @@ const server = Bun.serve({
 
     if (url.pathname === '/auth/google/callback') {
       if (!OAUTH || !SESSION_SECRET) {
-        return new Response('sign-in is not configured on this deployment', { status: 503 });
+        return Response.redirect(new URL('/onboarding', request.url).toString(), 302);
       }
       const pending = readCookie(request.headers.get('cookie'), STATE_COOKIE);
       const [wantState, nonce] = (pending ?? '').split('.');
@@ -237,7 +237,7 @@ const server = Bun.serve({
       const code = url.searchParams.get('code');
 
       const fail = (why: string) => {
-        const h = new Headers({ location: `/app?signin=failed&why=${encodeURIComponent(why)}` });
+        const h = new Headers({ location: `/onboarding?signin=failed&why=${encodeURIComponent(why)}` });
         h.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
         return new Response(null, { status: 302, headers: h });
       };
@@ -265,7 +265,7 @@ const server = Bun.serve({
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
       }, SESSION_SECRET);
 
-      const headers = new Headers({ location: '/app?signin=ok' });
+      const headers = new Headers({ location: '/onboarding?signin=ok' });
       headers.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
       headers.append('set-cookie',
         cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));

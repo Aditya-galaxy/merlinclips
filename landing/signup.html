@@ -91,26 +91,12 @@
 /* Sign-in may not be configured on a given deployment. A button that 503s is
    worse than one that explains itself. */
 (function () {
-  var btn = document.querySelector('.gbtn');
   fetch('/api/me', { credentials: 'same-origin' })
     .then(function (r) { return r.json(); })
     .then(function (me) {
-      // Signed in already and still looking at this? They arrived by URL
-      // rather than by the gate, so send them on to the onboarding wizard.
-      if (me.signedIn) { location.replace('/onboarding'); return; }
-      if (!me.available) {
-        btn.removeAttribute('href');
-        btn.setAttribute('aria-disabled', 'true');
-        btn.classList.add('off');
-        btn.textContent = 'Sign-in is not enabled on this deployment yet';
-        var note = document.createElement('p');
-        note.className = 'agree';
-        note.innerHTML = 'You can still submit clips from the <a href="/app">app</a> — '
-          + 'a wallet address is all it needs.';
-        btn.parentNode.insertBefore(note, btn.nextSibling);
-      }
+      if (me.signedIn) { location.replace('/onboarding'); }
     })
-    .catch(function () { /* leave the button as it is */ });
+    .catch(function () { });
 })();
 </script>
 </body>

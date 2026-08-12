@@ -328,6 +328,73 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;colo
         </div>
         <button class="go" id="go" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;">Submit Clip &amp; Lock Rate</button>
         <div id="said"></div>
+      <!-- Brand Studio: Deploy New Campaign (Operator Gated) -->
+      <div class="card" style="border:1px solid var(--violet);background:linear-gradient(180deg,var(--violet-wash),var(--card));margin-top:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h3 style="margin:0;font-size:17px;font-weight:700;color:var(--ink);">🏢 Brand Studio — Deploy New Campaign</h3>
+            <p class="sub" style="margin:2px 0 0;">Create an autonomous creator campaign with Gemini brief validation &amp; Base USDC settlement.</p>
+          </div>
+          <span class="chip funded" style="font-size:11.5px;padding:4px 10px;">Operator Gated</span>
+        </div>
+
+        <form id="deploy-campaign-form">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="f">
+              <label for="c-title">Campaign Brief Title <span style="color:var(--refused);">*</span></label>
+              <input id="c-title" placeholder="e.g. Clip the factory tour, fold-out in first 5s" required maxlength="120" />
+            </div>
+            <div class="f">
+              <label for="c-brand">Brand Identifier <span style="color:var(--refused);">*</span></label>
+              <input id="c-brand" placeholder="e.g. boxabl-official or lovable-clipping" required maxlength="60" />
+            </div>
+          </div>
+
+          <div class="f">
+            <label for="c-rules">Video Brief Guidelines (Judged by Gemini AI) <span style="color:var(--refused);">*</span></label>
+            <textarea id="c-rules" rows="3" style="width:100%;font-family:var(--ui);font-size:14px;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;background:var(--card);" placeholder="State clear criteria for Gemini AI to verify. e.g. Show app building a real project for at least 5s, sound on." required minlength="10"></textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;">
+            <div class="f">
+              <label for="c-pool">Total Pool (USDC) <span style="color:var(--refused);">*</span></label>
+              <input id="c-pool" type="number" step="10" min="100" value="1000" required />
+            </div>
+            <div class="f">
+              <label for="c-cpm">CPM Rate ($/1k views) <span style="color:var(--refused);">*</span></label>
+              <input id="c-cpm" type="number" step="0.10" min="0.10" value="1.00" required />
+            </div>
+            <div class="f">
+              <label for="c-cap">Per-Creator Cap (USDC) <span style="color:var(--refused);">*</span></label>
+              <input id="c-cap" type="number" step="10" min="10" value="250" required />
+            </div>
+            <div class="f">
+              <label for="c-dwell">Dwell Hold <span style="color:var(--refused);">*</span></label>
+              <select id="c-dwell">
+                <option value="24">24 Hours (Standard)</option>
+                <option value="48">48 Hours (High Security)</option>
+              </select>
+            </div>
+            <div class="f">
+              <label for="c-standing">Standing Floor</label>
+              <select id="c-standing">
+                <option value="unproven">Open to All</option>
+                <option value="building">Building (≥ 3 clips)</option>
+                <option value="reliable">Reliable (≥ 70% rate)</option>
+                <option value="exceptional">Exceptional (≥ 90% rate)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="f" style="margin-top:4px;">
+            <label for="c-secret">Operator Secret Key <span style="color:var(--refused);">*</span></label>
+            <input id="c-secret" type="password" placeholder="Enter Operator Secret to authorize &amp; fund" required />
+            <p class="hint">Ensures money is only committed by authorized brand owners &amp; platform operators.</p>
+          </div>
+
+          <button type="submit" class="go" id="btn-deploy-campaign" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;margin-top:10px;">🚀 Deploy &amp; Fund Campaign on Base</button>
+          <div id="c-deploy-status" style="margin-top:12px;"></div>
+        </form>
       </div>
     </section>
   </div>
@@ -382,6 +449,60 @@ document.getElementById('copy-ver-code').onclick = function(){
     setTimeout(function(){ document.getElementById('copy-ver-code').textContent = 'Copy Code'; }, 2000);
   });
 };
+
+var deployForm = document.getElementById('deploy-campaign-form');
+if (deployForm) {
+  deployForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('btn-deploy-campaign');
+    var status = document.getElementById('c-deploy-status');
+    btn.disabled = true;
+    btn.textContent = 'Deploying Campaign on Base…';
+    status.innerHTML = '';
+
+    var secret = document.getElementById('c-secret').value.trim();
+    var brandId = document.getElementById('c-brand').value.trim().toLowerCase();
+    var title = document.getElementById('c-title').value.trim();
+    var rules = document.getElementById('c-rules').value.trim();
+
+    var payload = {
+      campaignId: 'camp-' + Math.random().toString(36).substring(2, 10),
+      ownerId: brandId,
+      brief: title + ': ' + rules,
+      poolUsdc: document.getElementById('c-pool').value,
+      cpmUsdc: document.getElementById('c-cpm').value,
+      perCreatorCapUsdc: document.getElementById('c-cap').value,
+      dwellHours: parseInt(document.getElementById('c-dwell').value, 10),
+      minStanding: document.getElementById('c-standing').value,
+      fundingWallet: '0x0003a59858f44451be2a5b486ee612b4139700f0',
+      chain: 'base',
+      platforms: ['youtube']
+    };
+
+    try {
+      var r = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-operator-secret': secret
+        },
+        body: JSON.stringify(payload)
+      });
+      var data = await r.json();
+      if (!r.ok) {
+        status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;"><b>Campaign Creation Refused:</b> ' + (data.error || 'Invalid operator secret key or invalid payload.') + '</div>';
+      } else {
+        status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--settled-wash);color:var(--settled);font-size:13.5px;"><b>🚀 Campaign Activated on Base!</b> Campaign ID <code>' + data.campaignId + '</code> published. Pool funded with $' + Number(data.poolUsdc).toFixed(2) + ' USDC.</div>';
+        deployForm.reset();
+      }
+    } catch (err) {
+      status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;">Network error deploying campaign. Check your connection.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 Deploy & Fund Campaign on Base';
+    }
+  });
+}
 </script>
 </body>
 </html>

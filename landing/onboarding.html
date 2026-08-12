@@ -344,18 +344,18 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 
           <div class="form-group">
             <label class="form-label" for="in-name">Full name</label>
-            <input class="input-field" id="in-name" value="Tester" placeholder="Enter your full name" spellcheck="false" />
+            <input class="input-field" id="in-name" value="" placeholder="Enter your full name" spellcheck="false" />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="in-handle">Username</label>
-            <input class="input-field" id="in-handle" value="tester4webauth" placeholder="username" spellcheck="false" />
+            <input class="input-field" id="in-handle" value="" placeholder="username (e.g. alexclips)" spellcheck="false" />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="in-bio">Bio</label>
-            <textarea class="input-field" id="in-bio" rows="2" maxlength="60" placeholder="Tell brands about yourself...">jhgv</textarea>
-            <span class="counter-text" id="bio-count">4/60</span>
+            <textarea class="input-field" id="in-bio" rows="2" maxlength="60" placeholder="Tell brands about yourself..."></textarea>
+            <span class="counter-text" id="bio-count">0/60</span>
           </div>
         </div>
 
@@ -461,7 +461,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
               <label class="form-label" for="in-wallet" style="margin:0;">Base EVM Wallet Address (USDC)</label>
               <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--violet-wash);color:var(--violet);border-color:rgba(109,40,217,0.3);">⚡ Generate New Base Wallet</button>
             </div>
-            <input class="input-field" id="in-wallet" value="0x0003a59858f44451be2a5b486ee612b4139700f0" placeholder="0x..." spellcheck="false" />
+            <input class="input-field" id="in-wallet" value="" placeholder="0x... (or click generate button above)" spellcheck="false" />
             <span class="counter-text" id="gen-wallet-status">Instant USDC payouts on Base Mainnet. Zero platform withdrawal fees.</span>
           </div>
 
@@ -608,20 +608,30 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     });
   });
 
-  // Auto-Generate Dedicated Base EVM Payout Wallet
+  // Auto-Generate Dedicated Base EVM Payout Wallet (1 Click Only)
   var genBtn = document.getElementById('btn-gen-wallet');
   if (genBtn) {
     genBtn.addEventListener('click', function() {
+      if (genBtn.disabled) return;
       var chars = '0123456789abcdefABCDEF';
       var addr = '0x';
       for (var i = 0; i < 40; i++) {
         addr += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      document.getElementById('in-wallet').value = addr;
+      var walletInput = document.getElementById('in-wallet');
+      walletInput.value = addr;
+      walletInput.readOnly = true;
+
+      genBtn.disabled = true;
+      genBtn.style.opacity = '0.6';
+      genBtn.style.cursor = 'not-allowed';
+      genBtn.textContent = '✓ Base Wallet Allotted';
+
       var statusEl = document.getElementById('gen-wallet-status');
       if (statusEl) {
-        statusEl.textContent = '✓ Dedicated Circle Agent Wallet allotted: ' + addr.substring(0, 10) + '...';
+        statusEl.textContent = '✓ Dedicated Circle Agent Wallet allotted: ' + addr;
         statusEl.style.color = '#0F7B4F';
+        statusEl.style.fontWeight = '600';
       }
     });
   }

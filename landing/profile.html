@@ -262,18 +262,18 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
     <div class="profile-cover"></div>
     <div class="profile-hero-content">
       <div class="hero-user-info">
-        <div class="hero-avatar" id="p-avatar">T</div>
+        <div class="hero-avatar" id="p-avatar">C</div>
         <div class="hero-meta">
           <h1>
-            <span id="p-name">Tester</span>
-            <span class="rank-badge" id="p-rank">Exceptional Tier</span>
+            <span id="p-name">Creator</span>
+            <span class="rank-badge" id="p-rank">UNPROVEN TIER</span>
           </h1>
-          <div class="hero-handle" id="p-handle">@tester4webauth</div>
-          <p class="hero-bio" id="p-bio">jhgv</p>
+          <div class="hero-handle" id="p-handle">@creator</div>
+          <p class="hero-bio" id="p-bio">Welcome to Merlin Clips! Complete setup to unlock campaign submissions.</p>
           <div class="hero-tags" id="p-tags">
             <span class="htag" id="ptag-lang">🇺🇸 English</span>
             <span class="htag" id="ptag-type">Clipper</span>
-            <span class="htag" id="ptag-social">YouTube Connected</span>
+            <span class="htag" id="ptag-social">YouTube</span>
           </div>
         </div>
       </div>
@@ -290,23 +290,23 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
   <div class="tiles">
     <div class="tile">
       <span class="tlabel">Total Earned</span>
-      <b class="tnum" id="t-earned" style="color:var(--settled);">$1,245.50</b>
+      <b class="tnum" id="t-earned" style="color:var(--settled);">$0.00</b>
       <span class="tsub">settled directly to Base EVM wallet</span>
     </div>
     <div class="tile">
       <span class="tlabel">Surviving Views Paid</span>
-      <b class="tnum" id="t-views">1,245,500</b>
+      <b class="tnum" id="t-views">0</b>
       <span class="tsub">views held across 24h window</span>
     </div>
     <div class="tile">
       <span class="tlabel">Clips Submitted</span>
-      <b class="tnum" id="t-subs">8</b>
-      <span class="tsub">6 paid submissions</span>
+      <b class="tnum" id="t-subs">0</b>
+      <span class="tsub">active submissions</span>
     </div>
     <div class="tile">
       <span class="tlabel">Creator Standing</span>
-      <b class="tnum" style="color:var(--settled);">Exceptional</b>
-      <span class="tsub">100% view survival rate</span>
+      <b class="tnum" id="t-standing" style="color:var(--ink-2);">Unproven</b>
+      <span class="tsub">New Creator Standing</span>
     </div>
   </div>
 
@@ -349,7 +349,7 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
 
         <div class="f">
           <label for="addr">Base Payout Wallet Address (USDC)</label>
-          <input id="addr" value="0x0003a59858f44451be2a5b486ee612b4139700f0" spellcheck="false" />
+          <input id="addr" value="" placeholder="0x..." spellcheck="false" />
         </div>
 
         <button class="go" id="go" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;">Submit Clip &amp; Lock Rate</button>
@@ -376,11 +376,8 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
       <p class="sub">Every payout decision is written to an append-only record on Base.</p>
       
       <div id="ledger-list">
-        <div style="padding:16px 20px;background:var(--settled-wash);border-radius:12px;color:var(--settled);font-size:14px;font-weight:600;margin-bottom:14px;">
-          ✓ 149,000 views verified &amp; settled → $149.00 USDC paid to 0x0003a59858f44451be2a5b486ee612b4139700f0
-        </div>
-        <div style="padding:16px 20px;background:var(--waiting-wash);border-radius:12px;color:var(--waiting);font-size:14px;font-weight:600;">
-          ⏳ 24h View Dwell Countdown in progress for submitted Shorts clip.
+        <div style="padding:16px 20px;background:var(--sunk);border-radius:12px;color:var(--ink-2);font-size:13.5px;">
+          No clip submissions recorded yet. Submit your first clip above!
         </div>
       </div>
     </div>
@@ -393,7 +390,7 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
       <p class="sub">Your USDC earnings settle directly to this address. We never hold your funds.</p>
       <div class="f">
         <label for="p-wallet-input">Base Wallet Address</label>
-        <input id="p-wallet-input" value="0x0003a59858f44451be2a5b486ee612b4139700f0" style="font-family:var(--num);" spellcheck="false" />
+        <input id="p-wallet-input" value="" placeholder="0x..." style="font-family:var(--num);" spellcheck="false" />
       </div>
       <button type="button" class="gbtn gbtn-primary" onclick="alert('Wallet updated!')">Save Base Wallet</button>
     </div>

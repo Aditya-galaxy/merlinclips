@@ -92,13 +92,13 @@
           <!-- Metric 2: Est. Creator Reach -->
           <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
             <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">EST. CREATOR REACH</span>
-            <b id="est-creators-out" style="font-family:var(--mono);font-size:clamp(14px, 1.8vw, 20px);font-weight:700;color:var(--text);word-break:break-all;display:block;line-height:1.25;">20 creators</b>
+            <b id="est-creators-out" style="font-family:var(--mono);font-size:clamp(14px, 1.8vw, 20px);font-weight:700;color:var(--text);word-break:break-all;display:block;line-height:1.25;">20</b>
           </div>
 
           <!-- Metric 3: Total Initial Deposit -->
           <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
             <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">TOTAL INITIAL DEPOSIT</span>
-            <b id="est-total-out" style="font-family:var(--mono);font-size:clamp(14px, 1.8vw, 20px);font-weight:700;color:var(--text);word-break:break-all;display:block;line-height:1.25;">$5,049.00 USDC</b>
+            <b id="est-total-out" style="font-family:var(--mono);font-size:clamp(14px, 1.8vw, 20px);font-weight:700;color:var(--text);word-break:break-all;display:block;line-height:1.25;">$5,049.00</b>
           </div>
         </div>
       </div>
@@ -308,10 +308,10 @@
     var platformFee = budget < 5000 ? 49 : budget < 25000 ? 199 : 499;
     var totalDeposit = budget + platformFee;
 
-    if (vOut) vOut.textContent = totalViews.toLocaleString('en-US');
-    if (crOut) crOut.textContent = estCreators + ' creators';
-    if (feeOut) feeOut.textContent = '+$' + platformFee.toFixed(2) + ' USDC';
-    if (totalOut) totalOut.textContent = '$' + totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' USDC';
+    if (vOut) vOut.textContent = Number.isFinite(totalViews) ? totalViews.toLocaleString('en-US') : '0';
+    if (crOut) crOut.textContent = Number.isFinite(estCreators) ? estCreators.toLocaleString('en-US') : '0';
+    if (feeOut) feeOut.textContent = '+$' + platformFee.toFixed(2);
+    if (totalOut) totalOut.textContent = '$' + (Number.isFinite(totalDeposit) ? totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00');
 
     if (formBudgetSelect) {
       if (budget < 1000) formBudgetSelect.value = 'Under $1,000';

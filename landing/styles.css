@@ -949,6 +949,10 @@ nav{border-bottom:0;background:transparent;backdrop-filter:none;
   width: 100%;
   text-align: center;
   justify-content: center;
+  white-space: nowrap;
+  font-size: 13.5px;
+  padding: 11px 12px;
+  font-weight: 600;
 }
 
 @media (max-width: 900px) {

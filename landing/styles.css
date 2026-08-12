@@ -820,6 +820,143 @@ nav{border-bottom:0;background:transparent;backdrop-filter:none;
   font-size: 13px;
 }
 
+/* ── 3-Card Vercel-Style Pricing Table ── */
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+  align-items: stretch;
+}
+
+.price-card {
+  position: relative;
+  background: var(--surface, #0F172A);
+  border: 1px solid var(--line-hi, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.price-card:hover {
+  border-color: var(--pop, #a855f7);
+  transform: translateY(-4px);
+}
+
+.price-card.popular {
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.8), var(--surface, #0F172A));
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 40px -15px rgba(168, 85, 247, 0.35);
+}
+
+.pop-badge {
+  position: absolute;
+  top: -12px;
+  right: 28px;
+  background: linear-gradient(135deg, #7e22ce, #a855f7);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.price-card .tier-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text, #ffffff);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.price-card .price-val {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text, #ffffff);
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.price-card .price-val small {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted, #94a3b8);
+  letter-spacing: 0;
+}
+
+.price-card .tier-desc {
+  font-size: 14px;
+  color: var(--muted, #94a3b8);
+  line-height: 1.5;
+  margin: 0;
+  min-height: 42px;
+}
+
+.card-divider {
+  height: 1px;
+  background: var(--line, rgba(255, 255, 255, 0.1));
+  margin: 24px 0;
+}
+
+.card-features {
+  flex-grow: 1;
+  margin-bottom: 28px;
+}
+
+.card-features .feat-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #94a3b8);
+  margin-bottom: 14px;
+}
+
+.card-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--text-2, #cbd5e1);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.card-features li svg {
+  width: 16px;
+  height: 16px;
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.card-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .pricing-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 nav[data-stuck="true"]{background:rgba(250,248,245,.72);backdrop-filter:blur(14px) saturate(1.4)}
 @media(max-width:640px){
   /* The panel needs an edge to sit against; a shadow gives it one. */

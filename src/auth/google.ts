@@ -48,6 +48,10 @@ export function googleConfig(env: Record<string, string | undefined>): GoogleCon
   const clientSecret = env.GOOGLE_OAUTH_CLIENT_SECRET?.trim();
   const redirectUri = env.GOOGLE_OAUTH_REDIRECT_URI?.trim();
   if (!clientId || !clientSecret || !redirectUri) return undefined;
+  // Ignore dummy/placeholder client IDs that trigger Google 401 invalid_client
+  if (clientId === '868655245369-merlinclips.apps.googleusercontent.com' || clientId === 'dummy' || clientId.startsWith('GOCSPX-dummy')) {
+    return undefined;
+  }
   return { clientId, clientSecret, redirectUri };
 }
 

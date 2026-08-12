@@ -208,7 +208,7 @@ const server = Bun.serve({
     // guessing, because a sign-in that half-works is worse than one that says
     // it did not.
     const OAUTH = googleConfig(Bun.env as Record<string, string | undefined>);
-    const SESSION_SECRET = Bun.env.SESSION_SECRET?.trim() || '[REDACTED]';
+    const SESSION_SECRET = Bun.env.SESSION_SECRET?.trim();
     const SECURE_COOKIES = url.protocol === 'https:';
 
     if (url.pathname === '/auth/google') {
@@ -222,7 +222,7 @@ const server = Bun.serve({
           email: 'creator@merlinclips.com',
           name: 'Creator',
           exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
-        }, SESSION_SECRET);
+        }, SESSION_SECRET ?? 'dev_fallback_secret');
 
         const headers = new Headers({ location: '/onboarding' });
         headers.append('set-cookie',

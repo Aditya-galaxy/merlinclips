@@ -87,16 +87,6 @@
   });
 })();
 
-/* Sign-in may not be configured on a given deployment. A button that 503s is
-   worse than one that explains itself. */
-(function () {
-  fetch('/api/me', { credentials: 'same-origin' })
-    .then(function (r) { return r.json(); })
-    .then(function (me) {
-      if (me.signedIn) { location.replace('/onboarding'); }
-    })
-    .catch(function () { });
-})();
 </script>
 </body>
 </html>

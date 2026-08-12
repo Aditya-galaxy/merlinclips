@@ -212,28 +212,16 @@ const server = Bun.serve({
     const SECURE_COOKIES = url.protocol === 'https:';
 
     if (url.pathname === '/auth/google') {
+      if (!OAUTH || !SESSION_SECRET) {
+        return Response.redirect(new URL('/onboarding', request.url).toString(), 302);
+      }
       const state = randomToken();
       const nonce = randomToken();
-      
-      let targetAuthUrl: string;
-      if (OAUTH) {
-        targetAuthUrl = authorizeUrl(OAUTH, state, nonce);
-      } else {
-        const clientId = Bun.env.GOOGLE_OAUTH_CLIENT_ID?.trim();
-        if (clientId) {
-          const cfg = {
-            clientId,
-            clientSecret: Bun.env.GOOGLE_OAUTH_CLIENT_SECRET?.trim() || 'GOCSPX-dummy',
-            redirectUri: Bun.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() || `${url.origin}/auth/google/callback`,
-          };
-          targetAuthUrl = authorizeUrl(cfg, state, nonce);
-        } else {
-          // Route directly to Google Account Chooser
-          targetAuthUrl = `https://accounts.google.com/AccountChooser?continue=${encodeURIComponent(url.origin + '/onboarding')}`;
-        }
-      }
-
-      const headers = new Headers({ location: targetAuthUrl });
+      const oauthConfig = {
+        ...OAUTH,
+        redirectUri: OAUTH.redirectUri || `${url.origin}/auth/google/callback`,
+      };
+      const headers = new Headers({ location: authorizeUrl(oauthConfig, state, nonce) });
       headers.append('set-cookie',
         cookie(STATE_COOKIE, `${state}.${nonce}`, 600, SECURE_COOKIES));
       return new Response(null, { status: 302, headers });

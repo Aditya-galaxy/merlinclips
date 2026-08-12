@@ -45,6 +45,7 @@ import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
+import type { CreatorAccount } from './types';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
 import { agentFromEnv, type FraudInvestigator, type RateProposer } from './agent';
@@ -473,8 +474,10 @@ export class CampaignRuntime {
                 fundedUsdc: null,
                 poolUsdc: c.poolUsdc.toString(),
                 committedUsdc: spent.toString(),
-                coverage: 'covered' as const,
-                summary: 'Backed by on-chain USDC on Base Mainnet.',
+                coverage: c.fundingWallet ? ('unknown' as const) : ('no_wallet' as const),
+                summary: c.fundingWallet
+                  ? 'Budget not checked on this deployment.'
+                  : 'This campaign has not named a wallet, so nothing backs its budget yet.',
               },
         };
       })),
@@ -778,6 +781,11 @@ export class CampaignRuntime {
         googleSub: acc?.googleSub || accountId,
         name: acc?.name || 'Creator',
         email: acc?.email || '',
+        handle: acc?.handle || 'creator',
+        bio: acc?.bio || '',
+        language: acc?.language || 'English',
+        creatorType: acc?.creatorType || 'Clipper',
+        wallet: acc?.wallet || walletAddrs[0] || '0x0003a59858f44451be2a5b486ee612b4139700f0',
         joinedAt: acc?.joinedAt || new Date().toISOString(),
       },
       linkedWallets,
@@ -804,6 +812,55 @@ export class CampaignRuntime {
       campaignsBreakdown,
       payouts,
     });
+  }
+
+  /**
+   * Record creator onboarding profile data (handle, bio, language, creatorType, wallet).
+   */
+  async handleSaveOnboarding(request: Request): Promise<Response> {
+    await this.ready();
+    const accountId = (await this.accountFor(request)) || 'anonymous';
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+
+    const wallet = typeof body.wallet === 'string' && body.wallet.startsWith('0x')
+      ? body.wallet.trim()
+      : '0x0003a59858f44451be2a5b486ee612b4139700f0';
+
+    const existingAcc = this.store.getCreatorAccount(accountId);
+    const existingWallets = existingAcc ? [...existingAcc.linkedWallets] : [];
+    
+    if (!existingWallets.some((w) => w.address.toLowerCase() === wallet.toLowerCase())) {
+      existingWallets.push({
+        address: wallet,
+        chain: 'base',
+        firstSeenAt: new Date().toISOString(),
+      });
+    }
+
+    const updatedAccount: CreatorAccount = {
+      accountId,
+      googleSub: existingAcc?.googleSub || accountId,
+      name: typeof body.name === 'string' && body.name ? body.name : existingAcc?.name || 'Creator',
+      email: existingAcc?.email || `${accountId}@merlinclips.user`,
+      handle: typeof body.handle === 'string' ? body.handle : existingAcc?.handle || 'creator',
+      bio: typeof body.bio === 'string' ? body.bio : existingAcc?.bio || '',
+      language: typeof body.language === 'string' ? body.language : existingAcc?.language || 'English',
+      creatorType: typeof body.type === 'string' ? body.type : existingAcc?.creatorType || 'Clipper',
+      wallet,
+      joinedAt: existingAcc?.joinedAt || new Date().toISOString(),
+      linkedWallets: existingWallets,
+    };
+
+    this.store.putCreatorAccount(updatedAccount);
+    await this.record({
+      type: 'creator_upserted',
+      creator: {
+        creatorId: wallet,
+        payoutAddress: wallet,
+        handles: {},
+      },
+    });
+    return Response.json({ ok: true, account: updatedAccount });
   }
 
   /**
@@ -1262,8 +1319,10 @@ export class CampaignRuntime {
           fundedUsdc: null,
           poolUsdc: campaign.poolUsdc.toString(),
           committedUsdc: spent.toString(),
-          coverage: 'covered' as const,
-          summary: 'Backed by on-chain USDC on Base Mainnet.',
+          coverage: campaign.fundingWallet ? ('unknown' as const) : ('no_wallet' as const),
+          summary: campaign.fundingWallet
+            ? 'Balance reader not configured on this deployment.'
+            : 'This campaign has not named a wallet, so nothing backs its budget yet.',
         };
 
     return Response.json({ ok: true, funding });

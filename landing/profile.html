@@ -375,12 +375,13 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 28px 0 60
       <h3>Your Submissions &amp; Earnings Ledger</h3>
       <p class="sub">Every payout decision is written to an append-only record on Base.</p>
       
-      <div style="padding:16px 20px;background:var(--settled-wash);border-radius:12px;color:var(--settled);font-size:14px;font-weight:600;margin-bottom:14px;">
-        ✓ 149,000 views verified &amp; settled → $149.00 USDC paid to 0x0003a59858f44451be2a5b486ee612b4139700f0
-      </div>
-
-      <div style="padding:16px 20px;background:var(--waiting-wash);border-radius:12px;color:var(--waiting);font-size:14px;font-weight:600;">
-        ⏳ 24h View Dwell Countdown in progress for submitted Shorts clip.
+      <div id="ledger-list">
+        <div style="padding:16px 20px;background:var(--settled-wash);border-radius:12px;color:var(--settled);font-size:14px;font-weight:600;margin-bottom:14px;">
+          ✓ 149,000 views verified &amp; settled → $149.00 USDC paid to 0x0003a59858f44451be2a5b486ee612b4139700f0
+        </div>
+        <div style="padding:16px 20px;background:var(--waiting-wash);border-radius:12px;color:var(--waiting);font-size:14px;font-weight:600;">
+          ⏳ 24h View Dwell Countdown in progress for submitted Shorts clip.
+        </div>
       </div>
     </div>
   </div>
@@ -432,22 +433,104 @@ function switchTab(tabId) {
     });
   };
 
-  // Populate Creator Profile from localStorage / session
+  function applyProfileData(p) {
+    if (!p) return;
+    if (p.account) {
+      if (p.account.name) document.getElementById('p-name').textContent = p.account.name;
+      if (p.account.handle) document.getElementById('p-handle').textContent = '@' + p.account.handle.replace(/^@/,'');
+      if (p.account.bio) document.getElementById('p-bio').textContent = p.account.bio;
+      if (p.account.language) document.getElementById('ptag-lang').textContent = p.account.language;
+      if (p.account.creatorType) document.getElementById('ptag-type').textContent = p.account.creatorType;
+      
+      var initial = (p.account.name || 'T').charAt(0).toUpperCase();
+      document.getElementById('p-avatar').textContent = initial;
+    }
+
+    if (p.standing) {
+      document.getElementById('p-rank').textContent = p.standing.level.toUpperCase() + ' TIER';
+    }
+
+    if (p.wallets && p.wallets.length) {
+      document.getElementById('p-wallet-input').value = p.wallets[0];
+      document.getElementById('addr').value = p.wallets[0];
+    }
+
+    if (p.totals) {
+      document.getElementById('t-earned').textContent = '$' + Number(p.totals.earnedUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('t-views').textContent = Number(p.totals.viewsPaid || 0).toLocaleString('en-US');
+      document.getElementById('t-subs').textContent = p.totals.submissions || 0;
+    }
+
+    if (p.submissions && p.submissions.length) {
+      var ledgerHtml = p.submissions.map(function(s) {
+        var isPaid = s.state === 'settled';
+        var isRefused = s.state === 'refused';
+        var badgeBg = isPaid ? 'var(--settled-wash)' : (isRefused ? 'var(--refused-wash)' : 'var(--waiting-wash)');
+        var badgeColor = isPaid ? 'var(--settled)' : (isRefused ? 'var(--refused)' : 'var(--waiting)');
+        var badgeText = isPaid ? ('✓ $' + s.earnedUsdc + ' USDC Paid') : (isRefused ? ('Refused: ' + s.refusalReason) : '⏳ 24h Dwell Hold Countdown');
+
+        return '<div style="padding:16px 20px;background:' + badgeBg + ';border-radius:12px;color:' + badgeColor + ';font-size:13.5px;font-weight:600;margin-bottom:12px;">'
+          + '<b>' + s.url + '</b><br/>'
+          + badgeText + ' (' + Number(s.confirmedViews || 0).toLocaleString() + ' views counted at $' + s.cpmUsdc + ' CPM)'
+          + '</div>';
+      }).join('');
+      document.getElementById('ledger-list').innerHTML = ledgerHtml;
+    }
+  }
+
+  // First apply local storage fast preview
   try {
     var saved = JSON.parse(localStorage.getItem('mc_creator_profile') || '{}');
-    if (saved.name) document.getElementById('p-name').textContent = saved.name;
-    if (saved.handle) document.getElementById('p-handle').textContent = '@' + saved.handle.replace(/^@/,'');
-    if (saved.bio) document.getElementById('p-bio').textContent = saved.bio;
-    if (saved.wallet) {
-      document.getElementById('p-wallet-input').value = saved.wallet;
-      document.getElementById('addr').value = saved.wallet;
-    }
-    if (saved.language) document.getElementById('ptag-lang').textContent = saved.language;
-    if (saved.type) document.getElementById('ptag-type').textContent = saved.type;
-    
-    var initial = (saved.name || 'T').charAt(0).toUpperCase();
-    document.getElementById('p-avatar').textContent = initial;
+    if (saved.name) applyProfileData({ account: saved, wallets: [saved.wallet] });
   } catch(e) {}
+
+  // Then fetch real live server database profile
+  fetch('/api/me/profile', { credentials: 'same-origin' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(p) { applyProfileData(p); })
+    .catch(function() {});
+
+  // Handle Clip Form Submission
+  var submitBtn = document.getElementById('go');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async function() {
+      var said = document.getElementById('said');
+      var urlInput = document.getElementById('url').value.trim();
+      var addrInput = document.getElementById('addr').value.trim();
+      if (!urlInput) {
+        said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;">Please enter your video clip URL.</div>';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting Clip...';
+      said.innerHTML = '';
+
+      try {
+        var r = await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            campaignId: 'camp-bb2bd198',
+            url: urlInput,
+            payoutAddress: addrInput
+          })
+        });
+        var d = await r.json();
+        if (!r.ok) {
+          said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;"><b>Submission Refused:</b> ' + (d.error || 'Could not verify clip.') + '</div>';
+        } else {
+          said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--settled-wash);color:var(--settled);font-size:13.5px;"><b>Clip Accepted &amp; CPM Locked!</b> Your CPM rate is locked at $' + (d.agreedTerms ? d.agreedTerms.cpmUsdc : '1.00') + ' per 1k views on a 24h hold.</div>';
+          document.getElementById('url').value = '';
+        }
+      } catch(err) {
+        said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;">Network error submitting clip. Please check your connection.</div>';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Clip & Lock Rate';
+      }
+    });
+  }
 })();
 </script>
 </body>

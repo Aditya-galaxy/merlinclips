@@ -104,6 +104,11 @@ export interface CreatorAccount {
   readonly googleSub?: string;
   readonly name: string;
   readonly email: string;
+  readonly handle?: string;
+  readonly bio?: string;
+  readonly language?: string;
+  readonly creatorType?: string;
+  readonly wallet?: string;
   readonly joinedAt: string;
   readonly linkedWallets: readonly LinkedWallet[];
 }

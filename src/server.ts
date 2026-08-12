@@ -309,8 +309,7 @@ const server = Bun.serve({
     }
 
     if (url.pathname === '/api/me/onboarding' && request.method === 'POST') {
-      const body = await request.json().catch(() => ({}));
-      return json({ ok: true, saved: body });
+      return campaigns.handleSaveOnboarding(request);
     }
 
     // Operator-gated: approving a brand is the decision manual approval exists for.

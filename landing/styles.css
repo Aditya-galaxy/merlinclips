@@ -792,6 +792,34 @@ hr{display:none}
    passes through the wordmark — but it gains it as a blur, not a border. */
 nav{border-bottom:0;background:transparent;backdrop-filter:none;
     transition:background-color .2s ease,backdrop-filter .2s ease}
+/* ── Official USDC Brand Tag & Badge ── */
+.usdc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #2775CA;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.usdc-icon-svg {
+  width: 18px;
+  height: 18px;
+  vertical-align: sub;
+  flex-shrink: 0;
+}
+.usdc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(39, 117, 202, 0.12);
+  color: #2775CA;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(39, 117, 202, 0.3);
+  font-weight: 700;
+  font-size: 13px;
+}
+
 nav[data-stuck="true"]{background:rgba(250,248,245,.72);backdrop-filter:blur(14px) saturate(1.4)}
 @media(max-width:640px){
   /* The panel needs an edge to sit against; a shadow gives it one. */

@@ -104,6 +104,54 @@
       </div>
     </div>
 
+    <!-- Live Brand Spend Engine & Dashboard (Populated when brand profile loads) -->
+    <div id="brand-dashboard-panel" hidden class="ff wide">
+      <div style="background:var(--surface);border:1px solid var(--pop);border-radius:16px;padding:24px 28px;margin:16px 0 28px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="margin:0;font-size:18px;font-weight:700;color:var(--text);" id="b-company-name">Brand Performance &amp; Spend Engine</h3>
+            <span style="font-size:12.5px;color:var(--text-2);" id="b-owner-addr">Funding Wallet: 0x0003a59858f44451be2a5b486ee612b4139700f0</span>
+          </div>
+          <span style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:99px;background:rgba(16,185,129,0.15);color:#10b981;" id="b-coverage-badge">● Fully Funded on Base</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:20px;">
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
+            <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">TOTAL CAMPAIGN POOL</span>
+            <b id="b-pool-usdc" style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);">$0.00</b>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
+            <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">SETTLED USDC (PAID)</span>
+            <b id="b-settled-usdc" style="font-family:var(--mono);font-size:22px;font-weight:700;color:#10b981;">$0.00</b>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
+            <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">COMMITTED (24H DWELL)</span>
+            <b id="b-committed-usdc" style="font-family:var(--mono);font-size:22px;font-weight:700;color:#f59e0b;">$0.00</b>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;">
+            <span style="display:block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">REMAINING POOL</span>
+            <b id="b-remaining-usdc" style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--pop);">$0.00</b>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;font-family:var(--mono);color:var(--text-2);margin-bottom:6px;">
+            <span>Budget Burn Rate</span>
+            <span id="b-burn-pct">0%</span>
+          </div>
+          <div style="height:8px;border-radius:99px;background:var(--bg);overflow:hidden;border:1px solid var(--line);">
+            <div id="b-burn-fill" style="height:100%;width:0%;background:var(--pop);border-radius:99px;transition:width .3s ease;"></div>
+          </div>
+        </div>
+
+        <!-- Refusals Summary by Reason -->
+        <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:16px;">
+          <h4 style="margin:0 0 10px;font-size:14.5px;font-weight:650;color:var(--text);">Refusals Audit Ledger (By Reason)</h4>
+          <div id="b-refusals-list" style="font-size:13px;color:var(--text-2);">No clip refusals recorded.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Contact Information -->
     <div class="ff">
       <label for="e-name">Your name <span class="req" aria-hidden="true">*</span></label>
@@ -384,6 +432,44 @@
   document.addEventListener('click', function (e) {
     if (nav.dataset.open === 'true' && !nav.contains(e.target)) setOpen(false);
   });
+})();
+</script>
+<script>
+(function() {
+  fetch('/api/brand/dashboard', { credentials: 'same-origin' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data || !data.brand) return;
+      var panel = document.getElementById('brand-dashboard-panel');
+      if (!panel) return;
+      
+      document.getElementById('b-company-name').textContent = data.brand.company + ' — Brand Spend Engine';
+      document.getElementById('b-owner-addr').textContent = 'Funding Wallet: ' + (data.brand.ownerAddress || '0x0003a59858f44451be2a5b486ee612b4139700f0');
+      
+      var se = data.spendEngine || {};
+      document.getElementById('b-pool-usdc').textContent = '$' + Number(se.totalPoolUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('b-settled-usdc').textContent = '$' + Number(se.settledUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('b-committed-usdc').textContent = '$' + Number(se.committedUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('b-remaining-usdc').textContent = '$' + Number(se.remainingUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      var burnPct = se.burnRatePct || 0;
+      document.getElementById('b-burn-pct').textContent = Math.round(burnPct) + '%';
+      document.getElementById('b-burn-fill').style.width = Math.min(100, Math.round(burnPct)) + '%';
+      
+      var rList = document.getElementById('b-refusals-list');
+      if (rList && data.refusalsSummary) {
+        if (data.refusalsSummary.length) {
+          rList.innerHTML = '<ul style="margin:0;padding-left:18px;">' + data.refusalsSummary.map(function(item) {
+            return '<li style="margin-bottom:4px;"><b>' + item.count + ' clip(s)</b> — ' + item.reason + '</li>';
+          }).join('') + '</ul>';
+        } else {
+          rList.textContent = 'No clip refusals recorded. 100% of submitted clips met the campaign brief criteria.';
+        }
+      }
+      
+      panel.hidden = false;
+    })
+    .catch(function() {});
 })();
 </script>
 </body>

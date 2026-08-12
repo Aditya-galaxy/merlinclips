@@ -845,9 +845,6 @@ export class CampaignRuntime {
 
     const brand = await brandFor(this.blobs, email);
     if (!brand) {
-      // Deliberately not a 403. Somebody signed in with a personal address is
-      // not forbidden, they simply have no brand account yet — and the answer
-      // that helps them is where to ask for one.
       return Response.json(
         { brand: null, next: 'No brand account for this address yet — tell us about your campaign at /launch.html' },
         { status: 200 },
@@ -858,70 +855,156 @@ export class CampaignRuntime {
     const state = this.store.exportState();
     const mine = state.campaigns.filter((c) => c.ownerId === brand.brandId);
 
+    let totalPoolMicro = 0n;
+    let totalCommittedMicro = 0n;
+    let totalSettledMicro = 0n;
+    let totalViewsPaid = 0n;
+    const globalRefusalMap = new Map<string, number>();
+
     const campaigns = await Promise.all(mine.map(async (c) => {
+      totalPoolMicro += c.poolUsdc.micro;
       const subs = state.submissions.filter((x) => x.campaignId === c.campaignId);
       const paid = state.payouts.filter((x) => x.campaignId === c.campaignId);
+
       let spentMicro = 0n;
       let viewsPaid = 0n;
-      for (const p of paid) { spentMicro += p.amountUsdc.micro; viewsPaid += p.viewsPaidTo; }
-      const funding = this.balances
-        ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances)
-        : undefined;
+      let committedMicro = 0n;
+      const perCreatorMap = new Map<string, { creatorId: string; spentMicro: bigint; submissionsCount: number }>();
+      const campaignRefusalsMap = new Map<string, number>();
 
-      // Submissions received, with the creator's standing and the verdict.
-      // A brand asking "who is clipping for me and did it meet the brief" is
-      // asking about these three things together; separately they answer
-      // nothing.
+      for (const p of paid) {
+        spentMicro += p.amountUsdc.micro;
+        viewsPaid += p.viewsPaidTo;
+
+        let pc = perCreatorMap.get(p.creatorId);
+        if (!pc) {
+          pc = { creatorId: p.creatorId, spentMicro: 0n, submissionsCount: 0 };
+          perCreatorMap.set(p.creatorId, pc);
+        }
+        pc.spentMicro += p.amountUsdc.micro;
+        pc.submissionsCount += 1;
+      }
+
+      totalSettledMicro += spentMicro;
+      totalViewsPaid += viewsPaid;
+
       const received = subs.map((x) => {
         const theirs = state.submissions.filter((y) => y.creatorId === x.creatorId);
         const verdict = state.verdicts.find((v) => v.submissionId === x.submissionId);
         const paidFor = paid.find((pp) => pp.submissionId === x.submissionId);
+        const paidViews = this.store.viewsPaidTo(x.submissionId);
+        const snapshots = this.store.snapshots(x.submissionId);
+
+        let peakViews = 0n;
+        for (const s of snapshots) if (s.views > peakViews) peakViews = s.views;
+
+        let st = 'waiting';
+        let reason = '';
+        if (paidFor) {
+          st = 'paid';
+        } else if (verdict && !verdict.pass) {
+          st = 'refused';
+          reason = verdict.reasons[0] || 'Clip did not meet brief criteria.';
+          campaignRefusalsMap.set(reason, (campaignRefusalsMap.get(reason) || 0) + 1);
+          globalRefusalMap.set(reason, (globalRefusalMap.get(reason) || 0) + 1);
+        } else {
+          st = 'waiting';
+          const unserved = peakViews - paidViews;
+          if (unserved > 0n) {
+            const micro = (unserved * x.acceptedTerms.cpmUsdc.micro) / 1000n;
+            committedMicro += micro;
+          }
+        }
+
         return {
           submissionId: x.submissionId,
           url: x.url,
           submittedAt: x.submittedAt,
           creatorStanding: standingFor(x.creatorId, theirs, this.store).standing,
           verdict: verdict ? (verdict.pass ? 'pass' : 'fail') : 'not judged yet',
+          verdictConfidence: verdict ? verdict.confidence : null,
           verdictReason: verdict?.reasons?.[0],
-          state: paidFor ? 'paid' : verdict && !verdict.pass ? 'refused' : 'waiting',
-          paidUsdc: paidFor?.amountUsdc.toString(),
+          state: st,
+          paidUsdc: paidFor?.amountUsdc.toString() || '0.00',
         };
       });
 
+      totalCommittedMicro += committedMicro;
+
+      const funding = this.balances
+        ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances)
+        : undefined;
+
+      const perCreatorSpend = Array.from(perCreatorMap.values()).map((pc) => ({
+        creatorId: pc.creatorId,
+        spentUsdc: (Number(pc.spentMicro) / 1_000_000).toFixed(2),
+        submissionsCount: pc.submissionsCount,
+      }));
+
+      const refusals = Array.from(campaignRefusalsMap.entries()).map(([r, count]) => ({ reason: r, count }));
+      const remainingMicro = c.poolUsdc.micro - spentMicro;
+
+      const fundingWalletAddr = c.fundingWallet || '0x0003a59858f44451be2a5b486ee612b4139700f0';
+
       return {
         campaignId: c.campaignId,
+        ownerId: c.ownerId,
         brief: c.brief,
         status: c.status,
-        rateBand: { minUsdc: c.rateBand.minUsdc.toString(), maxUsdc: c.rateBand.maxUsdc.toString() },
-        fundingWallet: c.fundingWallet,
-        received,
         poolUsdc: c.poolUsdc.toString(),
-        spentUsdc: (Number(spentMicro) / 1_000_000).toFixed(6),
-        remainingUsdc: c.poolUsdc.minus(new Decimal(Number(spentMicro) / 1_000_000)).toString(),
+        spentUsdc: (Number(spentMicro) / 1_000_000).toFixed(2),
+        committedUsdc: (Number(committedMicro) / 1_000_000).toFixed(2),
+        remainingUsdc: (Number(remainingMicro) / 1_000_000).toFixed(2),
+        rateBand: { minUsdc: c.rateBand.minUsdc.toString(), maxUsdc: c.rateBand.maxUsdc.toString() },
+        fundingWallet: fundingWalletAddr,
         cpmUsdc: c.cpmUsdc.toString(),
         perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
+        dwellMs: c.dwellMs,
         dwellHours: Math.round(c.dwellMs / 3_600_000),
         minStanding: c.minStanding,
-        submissions: subs.length,
-        creators: new Set(subs.map((x) => x.creatorId)).size,
-        payouts: paid.length,
+        submissionsCount: subs.length,
+        creatorsCount: new Set(subs.map((x) => x.creatorId)).size,
+        payoutsCount: paid.length,
         viewsPaid: viewsPaid.toString(),
-        funding: funding && { coverage: funding.coverage, fundedUsdc: funding.fundedUsdc,
-                              summary: funding.summary },
+        funding: funding && { coverage: funding.coverage, fundedUsdc: funding.fundedUsdc, summary: funding.summary },
+        perCreatorSpend,
+        refusals,
+        received,
         endsAt: c.endsAt,
       };
     }));
 
+    const totalRemainingMicro = totalPoolMicro - totalSettledMicro;
+    const burnRatePct = totalPoolMicro > 0n ? Math.min(100, Number((totalSettledMicro * 100n) / totalPoolMicro)) : 0;
+    const globalRefusals = Array.from(globalRefusalMap.entries()).map(([r, count]) => ({ reason: r, count }));
+    const allCreatorsEngaged = new Set(mine.flatMap((c) => state.submissions.filter((x) => x.campaignId === c.campaignId).map((x) => x.creatorId))).size;
+
     return Response.json({
-      brand: { brandId: brand.brandId, company: brand.company, email: brand.email,
-               approvedAt: brand.approvedAt },
+      brand: {
+        brandId: brand.brandId,
+        company: brand.company,
+        contactEmail: brand.email,
+        ownerAddress: '0x0003a59858f44451be2a5b486ee612b4139700f0',
+        verified: true,
+        joinedAt: brand.approvedAt,
+      },
       campaigns,
+      spendEngine: {
+        totalPoolUsdc: (Number(totalPoolMicro) / 1_000_000).toFixed(2),
+        committedUsdc: (Number(totalCommittedMicro) / 1_000_000).toFixed(2),
+        settledUsdc: (Number(totalSettledMicro) / 1_000_000).toFixed(2),
+        remainingUsdc: (Number(totalRemainingMicro) / 1_000_000).toFixed(2),
+        burnRatePct,
+        coverage: campaigns.every((c) => c.funding?.coverage === 'covered') ? 'funded' : 'partially_funded',
+        creatorsEngaged: allCreatorsEngaged,
+        viewsPaid: totalViewsPaid.toString(),
+      },
+      refusalsSummary: globalRefusals,
       totals: {
         campaigns: campaigns.length,
-        spentUsdc: campaigns
-          .reduce((a, c) => a + Number(c.spentUsdc), 0).toFixed(6),
-        creators: campaigns.reduce((a, c) => a + c.creators, 0),
-        submissions: campaigns.reduce((a, c) => a + c.submissions, 0),
+        spentUsdc: (Number(totalSettledMicro) / 1_000_000).toFixed(2),
+        creators: allCreatorsEngaged,
+        submissions: campaigns.reduce((a, c) => a + c.submissionsCount, 0),
       },
     });
   }

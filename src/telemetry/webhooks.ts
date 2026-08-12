@@ -7,7 +7,7 @@
  * 3. `lease_contention`: Multi-instance Cloud Run lease acquisition is contention-blocked.
  */
 
-export type AlertEvent = 'campaign_depleted' | 'payout_failed' | 'lease_contention';
+export type AlertEvent = 'campaign_depleted' | 'payout_failed' | 'lease_contention' | 'enquiry_received';
 
 export interface WebhookAlertPayload {
   readonly event: AlertEvent;

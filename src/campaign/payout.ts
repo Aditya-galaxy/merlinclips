@@ -52,7 +52,7 @@ import { Decimal } from '../decimal';
  * so sending it spends a brand's budget on fees rather than on views. Held
  * amounts roll forward, so the floor delays a payment and never cancels one.
  */
-export const MINIMUM_PAYOUT_USDC = new Decimal('0.25');
+export const MINIMUM_PAYOUT_USDC = new Decimal('1.00');
 import type { PaymentPolicyEngine } from '../policy';
 import type { PaymentDecision, PaymentIntent, PolicyControl } from '../schemas';
 import type { CampaignView } from './store';

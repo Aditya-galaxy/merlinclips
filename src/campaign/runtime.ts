@@ -103,6 +103,7 @@ export interface CampaignRuntimeOptions {
   oracle?: ViewOracle;
   executor?: PayoutExecutor;
   mandates?: MandateStore;
+  webhooks?: import('../telemetry/webhooks').WebhookNotifier;
   /** Injectable so a test can run the loop without a network. */
   agent?: { rate?: RateProposer; investigator?: FraudInvestigator };
   /** Lease window. Two passes inside one window: the second is refused. */
@@ -114,6 +115,7 @@ export class CampaignRuntime {
   readonly store = new CampaignStore();
   readonly gate: PayoutGate;
   readonly mandates: MandateStore;
+  public readonly webhooks: import('../telemetry/webhooks').WebhookNotifier;
   private readonly blobs: BlobStore;
   private readonly log: EventLog;
   private readonly oracle: ViewOracle;
@@ -155,6 +157,7 @@ export class CampaignRuntime {
 
   constructor(options: CampaignRuntimeOptions = {}) {
     this.env = options.env ?? Bun.env;
+    this.webhooks = options.webhooks ?? webhookFromEnv(this.env);
     this.blobs = options.blobs ?? chooseBlobStore(this.env);
     this.log = new EventLog(this.blobs);
     // The tick's view source is the same YouTube oracle the paid endpoint
@@ -843,6 +846,25 @@ export class CampaignRuntime {
     const stored = await this.blobs.putIfAbsent(
       enquiryKey(result.value), JSON.stringify(result.value, null, 2),
     );
+
+    if (stored) {
+      const enquiry = result.value;
+      const notifyEmail = process.env.ENQUIRY_NOTIFY_EMAIL ?? process.env.OPERATOR_EMAIL ?? 'aditya@merlinclips.com';
+      await this.webhooks.alert({
+        event: 'enquiry_received',
+        title: `New Brand Enquiry from ${enquiry.name} (${enquiry.email})`,
+        message: `New brand enquiry ready for operator response (Forwarded to ${notifyEmail}):\nCompany Website: ${enquiry.website}\nBudget Range: ${enquiry.budget}\nAgency Managed: ${enquiry.wantsAgency ? 'YES' : 'NO'}\nGoals: ${enquiry.goals}`,
+        details: {
+          enquiryId: enquiry.enquiryId,
+          name: enquiry.name,
+          email: enquiry.email,
+          website: enquiry.website,
+          budget: enquiry.budget,
+          wantsAgency: enquiry.wantsAgency,
+          forwardToEmail: notifyEmail,
+        },
+      });
+    }
 
     return Response.json(
       {

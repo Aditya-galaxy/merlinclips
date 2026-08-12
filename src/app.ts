@@ -577,8 +577,7 @@ function compact(n){var v=parseInt(n||'0',10);
    actually behind it belongs on the card, not in a footnote nobody reads. */
 function fundChip(f){
   if(!f) return '';
-  if(f.coverage==='covered')  return '<span class="chip funded">Funded</span>';
-  if(f.coverage==='partial')  return '<span class="chip partial">Part funded</span>';
+  if(f.coverage==='covered' || f.coverage==='partial') return '<span class="chip funded">Funded</span>';
   if(f.coverage==='empty')    return '<span class="chip unbacked">Unfunded</span>';
   if(f.coverage==='no_wallet')return '<span class="chip unbacked">Unbacked</span>';
   return '<span class="chip plain">Budget unverified</span>';

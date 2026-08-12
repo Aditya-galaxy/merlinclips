@@ -521,34 +521,7 @@ const server = Bun.serve({
     // apart. That is the worst kind of broken link: it passes every check you
     // run before shipping.
     if (url.pathname === '/app' || url.pathname === '/app.html' || url.pathname === '/creator/dashboard') {
-      // Signed-out visitors meet the sign-up card first.
-      //
-      // Gated server-side rather than by a redirect from client JavaScript,
-      // which would flash the whole app for a moment before bouncing — the one
-      // frame where a signed-out visitor sees everything the gate exists to
-      // put behind it.
-      //
-      // Only when sign-in actually works. On a deployment without OAuth
-      // configured there is no way through the gate, so gating would lock
-      // everyone out permanently rather than asking them to sign in. A gate
-      // with no door is not a gate.
-      if (OAUTH && SESSION_SECRET) {
-        const session = await verify(
-          readCookie(request.headers.get('cookie'), SESSION_COOKIE), SESSION_SECRET,
-        );
-        if (!session) {
-          const gate = Bun.file('landing/signup.html');
-          if (await gate.exists()) {
-            return new Response(gate, {
-              headers: {
-                'content-type': 'text/html; charset=utf-8',
-                'cache-control': 'private, no-store',
-              },
-            });
-          }
-        }
-      }
-      return new Response(APP_HTML, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+      return Response.redirect(new URL('/signup', request.url).toString(), 302);
     }
 
     // Static marketing pages, served from an allowlist.

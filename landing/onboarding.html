@@ -556,20 +556,20 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
         <!-- Step 6: Base Payout Wallet -->
         <div class="step-pane" id="step-6" hidden>
           <h2 class="step-title">Base Payout Wallet</h2>
-          <span class="form-label" style="margin-bottom:12px;">Where should your surviving USDC clip earnings land?</span>
+          <p style="font-size:14px;color:var(--text-2);margin:0 0 20px;">Enter your wallet address to receive your USDC earnings directly on Base.</p>
 
           <div class="form-group">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
               <label class="form-label" for="in-wallet" style="margin:0;">Base EVM Wallet Address (USDC)</label>
-              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--orange-wash);color:var(--orange);border-color:rgba(255,80,0,0.3);">⚡ Generate New Base Wallet</button>
+              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:5px 12px;background:var(--orange-wash);color:var(--orange);border-color:rgba(255,80,0,0.3);font-weight:600;">⚡ Generate Free Base Wallet</button>
             </div>
-            <input class="input-field" id="in-wallet" value="" placeholder="0x... (or click generate button above)" spellcheck="false" />
-            <span class="counter-text" id="gen-wallet-status">Instant USDC payouts on Base Mainnet. Zero platform withdrawal fees.</span>
+            <input class="input-field" id="in-wallet" value="" placeholder="0x... (paste your MetaMask / Coinbase Wallet or click generate)" spellcheck="false" />
+            <span class="counter-text" id="gen-wallet-status">Paste an existing address or click Generate for a free Circle Developer-Controlled payout wallet.</span>
           </div>
 
-          <div style="padding:14px;border-radius:12px;background:var(--orange-wash);border:1px solid rgba(255,80,0,0.2);margin-top:14px;">
-            <span style="font-weight:700;font-size:13.5px;color:var(--orange);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
-            <span style="font-size:12.5px;color:var(--text-2);">Your wallet is linked directly to your standing profile. Payouts execute automatically after your 24h view hold passes.</span>
+          <div style="padding:16px;border-radius:14px;background:var(--orange-wash);border:1px solid rgba(255,80,0,0.25);margin-top:16px;">
+            <span style="font-weight:750;font-size:14px;color:var(--orange);display:block;margin-bottom:4px;">⚡ How Automatic Payouts Work</span>
+            <span style="font-size:13px;color:var(--text-2);line-height:1.5;display:block;">We check your video's real views over 24 hours to filter out fake bot traffic. Once 24 hours pass, your USDC earnings are sent directly to your wallet automatically.</span>
           </div>
         </div>
 
@@ -891,6 +891,9 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       currentStep++;
       showStep(currentStep);
     } else {
+      if (!inWallet.value.trim() && genBtn) {
+        genBtn.click();
+      }
       btnContinue.disabled = true;
       btnContinue.textContent = 'Saving Profile...';
       

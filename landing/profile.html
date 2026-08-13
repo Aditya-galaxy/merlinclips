@@ -395,9 +395,11 @@ body {
 }
 .form-control {
   width: 100%;
+  box-sizing: border-box;
+  height: 44px;
   font-family: var(--sans);
   font-size: 14.5px;
-  padding: 11px 14px;
+  padding: 10px 14px;
   border: 1px solid var(--line-hi);
   border-radius: 10px;
   background: var(--surface);
@@ -584,7 +586,10 @@ body {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
           <a href="/onboarding" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">Wizard Setup</a>
-          <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted);" id="p-wallet-snippet">Base EVM: 0x0003...00f0</span>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface-2);padding:5px 10px;border-radius:8px;border:1px solid var(--line);">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--text-2);" id="p-wallet-snippet">USDC Base Wallet: 0x0003...00f0</span>
+            <button type="button" id="btn-copy-wallet" style="font-size:11px;font-weight:700;padding:2px 8px;background:var(--pop-wash);color:var(--pop);border:1px solid rgba(109,40,217,0.3);cursor:pointer;border-radius:5px;">Copy</button>
+          </div>
         </div>
       </div>
 
@@ -592,10 +597,10 @@ body {
       <div class="standing-progress-box">
         <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;">
           <span style="font-weight:700;color:var(--text);">Standing Tier Level: <b style="color:var(--pop);" id="tier-name-label">UNPROVEN TIER</b></span>
-          <span style="color:var(--text-2);" id="tier-status-sub">85% retention rate • Submit 3 more verified clips to reach RELIABLE TIER</span>
+          <span style="color:var(--text-2);font-weight:600;" id="tier-next-label">Progress to RELIABLE TIER</span>
         </div>
         <div class="standing-bar-bg">
-          <div class="standing-bar-fill" id="tier-bar-fill"></div>
+          <div class="standing-bar-fill" id="tier-bar-fill" style="width:65%;"></div>
         </div>
       </div>
     </div>
@@ -866,9 +871,12 @@ function submitToBrief(campId) {
 
     if (p.standing) {
       var tier = (p.standing.level || 'UNPROVEN').toUpperCase();
+      var nextTier = (tier === 'UNPROVEN') ? 'RELIABLE TIER' : (tier === 'RELIABLE' ? 'EXCEPTIONAL TIER' : 'MAX RANK');
       document.getElementById('p-rank').textContent = tier + ' TIER';
       document.getElementById('t-standing').textContent = (p.standing.level || 'Unproven');
       document.getElementById('tier-name-label').textContent = tier + ' TIER';
+      var nextEl = document.getElementById('tier-next-label');
+      if (nextEl) nextEl.textContent = 'Progress to ' + nextTier;
     }
 
     if (p.wallets && p.wallets.length) {
@@ -876,7 +884,16 @@ function submitToBrief(campId) {
       document.getElementById('p-wallet-input').value = w;
       document.getElementById('addr').value = w;
       var snip = w.length > 10 ? (w.slice(0, 6) + '...' + w.slice(-4)) : w;
-      document.getElementById('p-wallet-snippet').textContent = 'Base EVM: ' + snip;
+      document.getElementById('p-wallet-snippet').textContent = 'USDC Base Wallet: ' + snip;
+      var btnCopyW = document.getElementById('btn-copy-wallet');
+      if (btnCopyW) {
+        btnCopyW.onclick = function() {
+          navigator.clipboard.writeText(w).then(function() {
+            btnCopyW.textContent = 'Copied!';
+            setTimeout(function() { btnCopyW.textContent = 'Copy'; }, 2000);
+          });
+        };
+      }
     }
 
     if (p.totals) {

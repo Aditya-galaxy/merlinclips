@@ -83,10 +83,8 @@ export function authorizeUrl(
   u.searchParams.set('scope', 'openid email profile');
   u.searchParams.set('state', state);
   u.searchParams.set('nonce', nonce);
-  // Consent is not re-prompted on every visit, but we do want a refreshable
-  // session rather than one that dies with the tab.
   u.searchParams.set('access_type', 'online');
-  u.searchParams.set('prompt', 'select_account');
+  // Avoid forcing select_account on every request to prevent Google session conflicts
   return u.toString();
 }
 

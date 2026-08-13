@@ -1,8 +1,8 @@
 # Merlin Clips
 
-**Never pay for views that didn't survive.**
+**Pays creators only for views that survived.**
 
-An autonomous agent that runs creator marketing campaigns end to end — reads the brief, judges each submitted clip against it, pulls real view counts, and settles in USDC under a ceiling it cannot raise.
+An autonomous agent runs creator marketing campaigns end to end: Gemini judges each clip against the brief, a deterministic engine holds the pool, USDC settles on Base.
 
 Built on [Circle's Agent Stack](https://agents.circle.com/) for the **Build with Gemini XPRIZE** — category *Money & Financial Access*, opted in to the **Circle Agentic Economy Prize**.
 

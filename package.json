@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Governed autonomous payments on Circle Agent Stack: the deterministic layer that decides whether an AI agent's USDC payment should happen",
+  "description": "Pays creators only for views that survived. An autonomous agent runs creator marketing campaigns end to end: Gemini judges each clip against the brief, a deterministic engine holds the pool, USDC settles on Base.",
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit",

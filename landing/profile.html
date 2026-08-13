@@ -11,7 +11,7 @@
 :root {
   --bg: #FAF8F5;
   --surface: #FFFFFF;
-  --surface-2: #F3F0EB;
+  --surface-2: #F4F1EC;
   --line: #E8E3DB;
   --line-hi: #D8D1C6;
   --text: #151310;
@@ -26,6 +26,8 @@
   --warn-wash: #FBF1DF;
   --bad: #B02A20;
   --bad-wash: #FBECEA;
+  --orange: #FF5000;
+  --orange-wash: #FFF2EC;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -122,10 +124,10 @@ body {
 .console-main {
   flex: 1;
   padding: 32px 40px 60px;
-  max-width: 1100px;
+  max-width: 1120px;
 }
 
-/* Header & Breadcrumb Bar */
+/* Header Bar */
 .console-header {
   display: flex;
   align-items: center;
@@ -173,6 +175,11 @@ body {
   padding: 24px 28px;
   margin-bottom: 28px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.profile-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -240,7 +247,28 @@ body {
   color: var(--text-2);
 }
 
-/* KPI Summary Cards Grid */
+/* Standing Rank Progress Bar */
+.standing-progress-box {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+}
+.standing-bar-bg {
+  height: 8px;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.standing-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pop), var(--pop-2));
+  border-radius: 99px;
+  width: 75%;
+}
+
+/* 4 KPI Summary Cards Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -304,6 +332,20 @@ body {
   margin: 0 0 20px;
   font-size: 13.5px;
   color: var(--text-2);
+}
+
+/* Pipeline Dwell Hold Items */
+.pipeline-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 /* Campaign Card Styling */
@@ -523,45 +565,59 @@ body {
 
     <!-- Profile Summary Identity Card -->
     <div class="profile-card">
-      <div class="profile-info">
-        <div class="avatar-circle" id="p-avatar">C</div>
-        <div class="user-details">
-          <h2>
-            <span id="p-name">Creator Account</span>
-            <span class="rank-badge" id="p-rank">UNPROVEN TIER</span>
-          </h2>
-          <div class="user-handle" id="p-handle">@creator</div>
-          <p class="user-bio" id="p-bio">Welcome to Merlin Clips Creator Console. Submit YouTube Shorts, TikToks &amp; Reels to earn Base USDC payouts.</p>
-          <div class="tags-row" id="p-tags">
-            <span class="tag-chip" id="ptag-lang">🇺🇸 English</span>
-            <span class="tag-chip" id="ptag-type">Shorts Clipper</span>
-            <span class="tag-chip" id="ptag-social">YouTube</span>
+      <div class="profile-card-top">
+        <div class="profile-info">
+          <div class="avatar-circle" id="p-avatar">C</div>
+          <div class="user-details">
+            <h2>
+              <span id="p-name">Creator Account</span>
+              <span class="rank-badge" id="p-rank">UNPROVEN TIER</span>
+            </h2>
+            <div class="user-handle" id="p-handle">@creator</div>
+            <p class="user-bio" id="p-bio">Welcome to Merlin Clips Creator Console. Submit YouTube Shorts, TikToks &amp; Reels to earn Base USDC payouts.</p>
+            <div class="tags-row" id="p-tags">
+              <span class="tag-chip" id="ptag-lang">🇺🇸 English</span>
+              <span class="tag-chip" id="ptag-type">Shorts Clipper</span>
+              <span class="tag-chip" id="ptag-social">YouTube</span>
+            </div>
           </div>
         </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <a href="/onboarding" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">Wizard Setup</a>
+          <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted);" id="p-wallet-snippet">Base EVM: 0x0003...00f0</span>
+        </div>
       </div>
-      <div>
-        <a href="/onboarding" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">Wizard Setup</a>
+
+      <!-- Standing Tier Progress Indicator -->
+      <div class="standing-progress-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;">
+          <span style="font-weight:700;color:var(--text);">Standing Tier Level: <b style="color:var(--pop);" id="tier-name-label">UNPROVEN TIER</b></span>
+          <span style="color:var(--text-2);" id="tier-status-sub">85% retention rate • Submit 3 more verified clips to reach RELIABLE TIER</span>
+        </div>
+        <div class="standing-bar-bg">
+          <div class="standing-bar-fill" id="tier-bar-fill"></div>
+        </div>
       </div>
     </div>
 
     <!-- 4 KPI Overview Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <span class="kpi-label">Total Earned (USDC)</span>
+        <span class="kpi-label">Total Paid (USDC)</span>
         <span class="kpi-num" id="t-earned" style="color:var(--ok);">$0.00</span>
         <span class="kpi-sub">✓ Settled directly to Base wallet</span>
       </div>
 
       <div class="kpi-card">
-        <span class="kpi-label">Surviving Views Paid</span>
-        <span class="kpi-num" id="t-views">0</span>
-        <span class="kpi-sub">Held across 24h window</span>
+        <span class="kpi-label">Pending 24h Hold</span>
+        <span class="kpi-num" id="t-pending" style="color:var(--warn);">$0.00</span>
+        <span class="kpi-sub">⏳ Unlocks after 24h view hold</span>
       </div>
 
       <div class="kpi-card">
-        <span class="kpi-label">Clip Submissions</span>
-        <span class="kpi-num" id="t-subs">0</span>
-        <span class="kpi-sub">Active brief submissions</span>
+        <span class="kpi-label">Surviving Views Paid</span>
+        <span class="kpi-num" id="t-views">0</span>
+        <span class="kpi-sub">98.4% retention hold rate</span>
       </div>
 
       <div class="kpi-card">
@@ -583,11 +639,12 @@ body {
             <label for="camp">Campaign Brief</label>
             <select id="camp" class="form-control">
               <option value="camp-bb2bd198">camp-bb2bd198 — Showcase Merlin Clips ($1.00 USDC / 1k views)</option>
+              <option value="camp-x402base">camp-x402base — Base Agentic Payments Spotlight ($1.50 USDC / 1k views)</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label for="url">Video Clip URL (YouTube Shorts, TikTok, IG Reels)</label>
+            <label for="url">Video Clip URL (YouTube Shorts, TikTok, IG Reels, X)</label>
             <input id="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." spellcheck="false" />
           </div>
 
@@ -613,7 +670,7 @@ body {
           <h3 style="color:var(--pop);">⚡ How Base USDC Payouts Work</h3>
           <ul style="margin:14px 0 0;padding-left:18px;color:var(--text-2);font-size:13.5px;line-height:1.6;">
             <li style="margin-bottom:10px;"><b style="color:var(--text);">Verification Code:</b> Put your unique <code>MC-XXXXXX</code> code in your video description.</li>
-            <li style="margin-bottom:10px;"><b style="color:var(--text);">CPM Rate Lock:</b> CPM rate (*$1.00 / 1k views*) locks the moment your URL is submitted.</li>
+            <li style="margin-bottom:10px;"><b style="color:var(--text);">CPM Rate Lock:</b> CPM rate (*$1.00 - $1.50 / 1k views*) locks the moment your URL is submitted.</li>
             <li style="margin-bottom:10px;"><b style="color:var(--text);">24h Retention Hold:</b> Views are verified across 24h to eliminate bot-farmed spikes.</li>
             <li style="margin-bottom:10px;"><b style="color:var(--text);">Direct Settlement:</b> Surviving views are paid out directly to your EVM wallet in USDC on Base Mainnet.</li>
           </ul>
@@ -721,11 +778,16 @@ body {
       </div>
     </div>
 
-    <!-- Pane 4: Submissions Ledger -->
+    <!-- Pane 4: Submissions Ledger & BaseScan Audit -->
     <div id="pane-ledger" hidden>
       <div class="panel">
-        <h3>Submissions &amp; Payout Ledger</h3>
-        <p class="panel-sub">Every submission and automated USDC transfer is permanently recorded on Base.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+          <div>
+            <h3 style="margin:0;">Submissions &amp; Payout Ledger</h3>
+            <p class="panel-sub" style="margin:2px 0 0;">Every submission and automated USDC transfer is permanently recorded on Base.</p>
+          </div>
+          <a href="https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0" target="_blank" rel="noopener" class="btn" style="font-size:12.5px;padding:6px 14px;">View BaseScan Contract ↗</a>
+        </div>
         
         <div id="ledger-list">
           <div style="padding:16px;background:var(--surface-2);border-radius:12px;color:var(--text-2);font-size:13.5px;text-align:center;">
@@ -803,13 +865,18 @@ function submitToBrief(campId) {
     }
 
     if (p.standing) {
-      document.getElementById('p-rank').textContent = (p.standing.level || 'UNPROVEN').toUpperCase() + ' TIER';
+      var tier = (p.standing.level || 'UNPROVEN').toUpperCase();
+      document.getElementById('p-rank').textContent = tier + ' TIER';
       document.getElementById('t-standing').textContent = (p.standing.level || 'Unproven');
+      document.getElementById('tier-name-label').textContent = tier + ' TIER';
     }
 
     if (p.wallets && p.wallets.length) {
-      document.getElementById('p-wallet-input').value = p.wallets[0];
-      document.getElementById('addr').value = p.wallets[0];
+      var w = p.wallets[0];
+      document.getElementById('p-wallet-input').value = w;
+      document.getElementById('addr').value = w;
+      var snip = w.length > 10 ? (w.slice(0, 6) + '...' + w.slice(-4)) : w;
+      document.getElementById('p-wallet-snippet').textContent = 'Base EVM: ' + snip;
     }
 
     if (p.totals) {
@@ -819,21 +886,25 @@ function submitToBrief(campId) {
     }
 
     if (p.submissions && p.submissions.length) {
-      var ledgerHtml = '<table class="ledger-table"><thead><tr><th>Video URL</th><th>Views</th><th>Status</th><th>Earned (USDC)</th></tr></thead><tbody>' +
+      var pendingSum = 0;
+      var ledgerHtml = '<table class="ledger-table"><thead><tr><th>Video URL</th><th>Views</th><th>Status</th><th>Earned (USDC)</th><th>BaseScan</th></tr></thead><tbody>' +
         p.submissions.map(function(s) {
           var isPaid = s.state === 'settled';
           var isRefused = s.state === 'refused';
           var badgeClass = isPaid ? 'badge-settled' : (isRefused ? 'badge-refused' : 'badge-waiting');
           var badgeText = isPaid ? '✓ Paid' : (isRefused ? ('Refused: ' + s.refusalReason) : '⏳ 24h Hold');
+          if (!isPaid && !isRefused) pendingSum += Number(s.earnedUsdc || 0);
 
           return '<tr>'
             + '<td><b style="color:var(--text);">' + s.url + '</b></td>'
             + '<td>' + Number(s.confirmedViews || 0).toLocaleString() + ' views</td>'
             + '<td><span class="badge-status ' + badgeClass + '">' + badgeText + '</span></td>'
             + '<td><b style="color:var(--ok);">$' + (s.earnedUsdc || '0.00') + ' USDC</b></td>'
+            + '<td><a href="https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0" target="_blank" style="color:var(--pop);font-weight:600;">View Tx ↗</a></td>'
             + '</tr>';
         }).join('') + '</tbody></table>';
       document.getElementById('ledger-list').innerHTML = ledgerHtml;
+      document.getElementById('t-pending').textContent = '$' + pendingSum.toFixed(2);
     }
   }
 
@@ -886,7 +957,7 @@ function submitToBrief(campId) {
         said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--bad-wash);color:var(--bad);font-size:13.5px;">Network error submitting clip. Please check your connection.</div>';
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Clip & Lock Rate';
+        submitBtn.textContent = 'Submit Clip &amp; Lock Rate';
       }
     });
   }

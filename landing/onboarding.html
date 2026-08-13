@@ -8,23 +8,25 @@
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 <style>
 :root {
-  --bg: #F8F9FB;
+  --bg: #FAF8F5;
   --card: #FFFFFF;
-  --line: #E5E7EB;
-  --line-hi: #D1D5DB;
-  --text: #111827;
-  --text-2: #4B5563;
-  --muted: #9CA3AF;
-  --orange: #FF5500;
-  --orange-light: #FFF0E6;
-  --violet: #6D28D9;
-  --violet-light: #F3EEFE;
-  --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --surface-2: #F3F0EB;
+  --line: #E8E3DB;
+  --line-hi: #D8D1C6;
+  --text: #151310;
+  --text-2: #5C554C;
+  --muted: #8B8378;
+  --pop: #6D28D9;
+  --pop-2: #7C3AED;
+  --pop-wash: #F3EEFE;
+  --ok: #0F7B4F;
+  --ok-wash: #E7F4EE;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--ui); font-size: 15px; -webkit-font-smoothing: antialiased; }
+html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; -webkit-font-smoothing: antialiased; }
 
 .page-root {
   display: flex;
@@ -38,13 +40,13 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   width: 100%;
-  max-width: 960px;
+  max-width: 980px;
   background: var(--card);
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid var(--line);
   border-radius: 24px;
-  box-shadow: 0 20px 50px -12px rgba(0,0,0,0.08);
+  box-shadow: 0 20px 50px -12px rgba(0,0,0,0.04);
   overflow: hidden;
-  min-height: 560px;
+  min-height: 580px;
 }
 
 @media (max-width: 860px) {
@@ -64,7 +66,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 
 .preview-col {
-  background: #F9FAFB;
+  background: var(--bg);
   border-left: 1px solid var(--line);
   padding: 40px 32px;
   display: flex;
@@ -83,19 +85,25 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   height: 4px;
   flex: 1;
   border-radius: 99px;
-  background: #E5E7EB;
+  background: var(--line);
   transition: background 0.25s ease;
 }
 .progress-step.active, .progress-step.completed {
-  background: var(--orange);
+  background: var(--pop);
 }
 
 .step-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 750;
   letter-spacing: -0.02em;
-  margin: 0 0 20px;
+  margin: 0 0 4px;
   color: var(--text);
+}
+.step-subtitle {
+  font-size: 13.5px;
+  color: var(--text-2);
+  margin-bottom: 22px;
+  display: block;
 }
 
 .form-group {
@@ -111,50 +119,65 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 
 .input-field {
   width: 100%;
-  font-family: var(--ui);
+  font-family: var(--sans);
   font-size: 14.5px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
+  padding: 11px 14px;
+  border: 1px solid var(--line-hi);
   border-radius: 12px;
-  background: #F9FAFB;
+  background: #FFFFFF;
   color: var(--text);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 .input-field:focus {
-  outline: none;
-  border-color: var(--orange);
-  background: #FFFFFF;
+  outline: 2px solid var(--pop);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.input-field[readonly] {
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: not-allowed;
 }
 
 .avatar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 18px;
 }
 .avatar-preview-sm {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #5B5FC7;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--pop);
   color: #fff;
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 750;
+  font-size: 22px;
   display: grid;
   place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+.avatar-preview-sm img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .btn-sm {
   font-size: 13px;
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #F3F4F6;
+  border: 1px solid var(--line-hi);
+  background: #FFFFFF;
   color: var(--text);
   cursor: pointer;
+  transition: all 0.15s ease;
 }
-.btn-sm:hover { background: #E5E7EB; }
-.btn-danger { color: #EF4444; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-sm:hover { background: var(--surface-2); }
+.btn-danger { color: #B02A20; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-danger:hover { text-decoration: underline; }
 
 /* Selector Pills */
 .pills-grid {
@@ -172,16 +195,16 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   padding: 8px 14px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: #F9FAFB;
+  background: #FFFFFF;
   color: var(--text-2);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .pill-btn:hover { border-color: var(--line-hi); color: var(--text); }
 .pill-btn.selected {
-  background: var(--orange);
+  background: var(--pop);
   color: #FFFFFF;
-  border-color: var(--orange);
+  border-color: var(--pop);
   font-weight: 600;
 }
 
@@ -206,12 +229,12 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   font-weight: 600;
   padding: 11px 20px;
   border-radius: 10px;
-  border: 0;
-  background: #F3F4F6;
+  border: 1px solid var(--line);
+  background: #FFFFFF;
   color: var(--text-2);
   cursor: pointer;
 }
-.btn-back:hover { background: #E5E7EB; color: var(--text); }
+.btn-back:hover { background: var(--surface-2); color: var(--text); }
 
 .btn-continue {
   font-size: 14px;
@@ -219,13 +242,42 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   padding: 12px 32px;
   border-radius: 10px;
   border: 0;
-  background: #111827;
+  background: var(--pop);
   color: #FFFFFF;
   cursor: pointer;
   transition: background 0.15s ease;
   min-width: 140px;
 }
-.btn-continue:hover { background: #000000; }
+.btn-continue:hover { background: var(--pop-2); }
+
+/* Social Connect Item Box */
+.social-item-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #FFFFFF;
+  margin-bottom: 10px;
+}
+.social-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.social-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  font-size: 14.5px;
+}
+.social-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
 
 /* Live Preview Card */
 .preview-card-wrap {
@@ -237,7 +289,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   border: 1px solid var(--line);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.04);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.03);
 }
 .card-top {
   display: flex;
@@ -246,16 +298,23 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   margin-bottom: 16px;
 }
 .card-avatar {
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 16px;
-  background: #5B5FC7;
+  background: var(--pop);
   color: #FFFFFF;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 750;
   display: grid;
   place-items: center;
   flex: none;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .card-user-info {
   flex: 1;
@@ -268,25 +327,26 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 .card-full-name {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 750;
   color: var(--text);
   margin: 0;
 }
 .card-rank-badge {
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 7px;
   border-radius: 6px;
-  background: #F3F4F6;
-  color: var(--muted);
+  background: var(--ok-wash);
+  color: var(--ok);
 }
 .card-handle {
   font-size: 13px;
-  color: var(--muted);
+  font-family: var(--mono);
+  color: var(--pop);
   margin: 2px 0 0;
 }
 .card-joined {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -305,10 +365,10 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 .card-tag {
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: 550;
   padding: 3px 9px;
   border-radius: 6px;
-  background: #F3F4F6;
+  background: var(--surface-2);
   color: var(--text-2);
 }
 </style>
@@ -329,40 +389,45 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           <div class="progress-step" id="p-5"></div>
         </div>
 
-        <!-- Step 1: Profile Setup -->
+        <!-- Hidden File Input for Avatar Upload -->
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" />
+
+        <!-- Step 1: Let's Create Your Profile -->
         <div class="step-pane" id="step-1">
           <h2 class="step-title">Let's Create Your Profile</h2>
+          <span class="step-subtitle">Your identity &amp; handle for receiving automated USDC clip payouts.</span>
           
           <div class="form-group">
             <span class="form-label">Profile photo</span>
             <div class="avatar-actions">
-              <div class="avatar-preview-sm" id="av-sm">T</div>
-              <button type="button" class="btn-sm">Change photo</button>
-              <button type="button" class="btn-danger">Remove</button>
+              <div class="avatar-preview-sm" id="av-sm">C</div>
+              <button type="button" class="btn-sm" id="btn-upload-photo">Upload photo</button>
+              <button type="button" class="btn-danger" id="btn-remove-photo">Remove</button>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="in-name">Full name</label>
+            <label class="form-label" for="in-name">Full name (from Google)</label>
             <input class="input-field" id="in-name" value="" placeholder="Enter your full name" spellcheck="false" />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="in-handle">Username</label>
-            <input class="input-field" id="in-handle" value="" placeholder="username (e.g. alexclips)" spellcheck="false" />
+            <label class="form-label" for="in-handle">Username (Fixed from Google Account)</label>
+            <input class="input-field" id="in-handle" value="" placeholder="username" readonly spellcheck="false" />
+            <span class="counter-text">Unchangeable handle derived from your Google sign-in email.</span>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="in-bio">Bio</label>
-            <textarea class="input-field" id="in-bio" rows="2" maxlength="60" placeholder="Tell brands about yourself..."></textarea>
-            <span class="counter-text" id="bio-count">0/60</span>
+            <textarea class="input-field" id="in-bio" rows="2" maxlength="120" placeholder="Tell brands about your content style..."></textarea>
+            <span class="counter-text" id="bio-count">0/120</span>
           </div>
         </div>
 
-        <!-- Step 2: Content Language (Multi-Select + Custom Input) -->
+        <!-- Step 2: Tell Us About Your Content (Multi-Select & Custom Multi-Input) -->
         <div class="step-pane" id="step-2" hidden>
           <h2 class="step-title">Tell us about your Content</h2>
-          <span class="form-label" style="margin-bottom:12px;">What language do you create content in? (Select multiple)</span>
+          <span class="step-subtitle">Select languages you create content in (Multi-select enabled):</span>
           
           <div class="pills-grid" id="lang-pills">
             <button type="button" class="pill-btn selected" data-lang="English">🇺🇸 English</button>
@@ -375,24 +440,28 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
             <button type="button" class="pill-btn" data-lang="Korean">🇰🇷 Korean</button>
             <button type="button" class="pill-btn" data-lang="Hindi">🇮🇳 Hindi</button>
             <button type="button" class="pill-btn" data-lang="Chinese">🇨🇳 Chinese</button>
-            <button type="button" class="pill-btn" data-lang="Russian">🇷🇺 Russian</button>
             <button type="button" class="pill-btn" data-lang="Arabic">🇸🇦 Arabic</button>
           </div>
           
           <div class="form-group" style="margin-top:14px;">
-            <label class="form-label" for="in-custom-lang">Other Language (Custom Input)</label>
-            <input class="input-field" id="in-custom-lang" placeholder="e.g. Swahili, Vietnamese, Dutch..." spellcheck="false" />
+            <label class="form-label" for="in-custom-lang">Add Custom Language (Multi-Input)</label>
+            <div style="display:flex;gap:8px;">
+              <input class="input-field" id="in-custom-lang" placeholder="Type language (e.g. Swahili, Dutch, Vietnamese)..." spellcheck="false" />
+              <button type="button" class="btn-sm" id="btn-add-custom-lang" style="padding:10px 16px;background:var(--pop);color:#FFF;border:0;">Add</button>
+            </div>
+            <div class="pills-grid" id="custom-lang-chips" style="margin-top:10px;"></div>
           </div>
 
           <span class="counter-text" id="lang-count">1 selected</span>
         </div>
 
-        <!-- Step 3: Creator Type & Discovery -->
+        <!-- Step 3: Creation Style & Discovery -->
         <div class="step-pane" id="step-3" hidden>
           <h2 class="step-title">What type of Creator are you?</h2>
+          <span class="step-subtitle">Help brands match brief criteria to your content format.</span>
           
           <div class="form-group">
-            <span class="form-label">Select your primary creation style:</span>
+            <span class="form-label">Primary Creation Style</span>
             <div class="pills-grid" id="type-pills">
               <button type="button" class="pill-btn" data-type="Just getting started">Just getting started</button>
               <button type="button" class="pill-btn selected" data-type="Clipper">Clipper</button>
@@ -402,7 +471,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
 
           <div class="form-group" style="margin-top:20px;">
-            <span class="form-label">How did you find us?</span>
+            <span class="form-label">How did you find Merlin Clips?</span>
             <div class="pills-grid" id="find-pills">
               <button type="button" class="pill-btn" data-find="TikTok">TikTok</button>
               <button type="button" class="pill-btn selected" data-find="YouTube">YouTube</button>
@@ -414,59 +483,110 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
         </div>
 
-        <!-- Step 4: Social Accounts (Toggle Connect States) -->
+        <!-- Step 4: Link Social Accounts + Whop Account -->
         <div class="step-pane" id="step-4" hidden>
           <h2 class="step-title">Link your Social Accounts</h2>
-          <span class="form-label" style="margin-bottom:14px;">Connect channels to auto-verify your clip submissions:</span>
+          <span class="step-subtitle">Input your handles to auto-verify your video clip submissions:</span>
 
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
-              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+          <!-- YouTube -->
+          <div class="social-item-box" id="box-youtube">
+            <div class="social-row-top">
+              <div class="social-name">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                YouTube
+                YouTube Channel
               </div>
-              <button type="button" class="btn-sm connect-btn" data-plat="YouTube">Connect</button>
+              <button type="button" class="btn-sm connect-trigger-btn" data-plat="youtube">Connect</button>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
-              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+            <div class="social-input-row" id="input-row-youtube" hidden>
+              <input class="input-field" id="handle-youtube" placeholder="@yourchannel" style="font-size:13.5px;" />
+              <button type="button" class="btn-sm confirm-handle-btn" data-plat="youtube" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
+              <button type="button" class="btn-danger delete-handle-btn" data-plat="youtube">Delete</button>
+            </div>
+          </div>
+
+          <!-- TikTok -->
+          <div class="social-item-box" id="box-tiktok">
+            <div class="social-row-top">
+              <div class="social-name">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.24-2.39.58-4.83 2.18-6.62 1.52-1.74 3.79-2.73 6.09-2.7.35.01.7.04 1.05.1v4.06c-.46-.09-.94-.12-1.41-.09-1.22.06-2.43.62-3.14 1.61-.83 1.11-.97 2.64-.47 3.92.47 1.25 1.67 2.19 3.01 2.37 1.34.19 2.74-.26 3.63-1.27.77-.85 1.15-2.01 1.13-3.16.02-4.71.01-9.43.01-14.14z"/></svg>
-                TikTok
+                TikTok Handle
               </div>
-              <button type="button" class="btn-sm connect-btn" data-plat="TikTok">Connect</button>
+              <button type="button" class="btn-sm connect-trigger-btn" data-plat="tiktok">Connect</button>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
-              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+            <div class="social-input-row" id="input-row-tiktok" hidden>
+              <input class="input-field" id="handle-tiktok" placeholder="@yourtiktok" style="font-size:13.5px;" />
+              <button type="button" class="btn-sm confirm-handle-btn" data-plat="tiktok" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
+              <button type="button" class="btn-danger delete-handle-btn" data-plat="tiktok">Delete</button>
+            </div>
+          </div>
+
+          <!-- Instagram -->
+          <div class="social-item-box" id="box-instagram">
+            <div class="social-row-top">
+              <div class="social-name">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                Instagram
+                Instagram Handle
               </div>
-              <button type="button" class="btn-sm connect-btn" data-plat="Instagram">Connect</button>
+              <button type="button" class="btn-sm connect-trigger-btn" data-plat="instagram">Connect</button>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#FAFAFA;">
-              <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
+            <div class="social-input-row" id="input-row-instagram" hidden>
+              <input class="input-field" id="handle-instagram" placeholder="@yourig" style="font-size:13.5px;" />
+              <button type="button" class="btn-sm confirm-handle-btn" data-plat="instagram" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
+              <button type="button" class="btn-danger delete-handle-btn" data-plat="instagram">Delete</button>
+            </div>
+          </div>
+
+          <!-- Twitter/X -->
+          <div class="social-item-box" id="box-x">
+            <div class="social-row-top">
+              <div class="social-name">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 X / Twitter
               </div>
-              <button type="button" class="btn-sm connect-btn" data-plat="X">Connect</button>
+              <button type="button" class="btn-sm connect-trigger-btn" data-plat="x">Connect</button>
+            </div>
+            <div class="social-input-row" id="input-row-x" hidden>
+              <input class="input-field" id="handle-x" placeholder="@yourx" style="font-size:13.5px;" />
+              <button type="button" class="btn-sm confirm-handle-btn" data-plat="x" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
+              <button type="button" class="btn-danger delete-handle-btn" data-plat="x">Delete</button>
             </div>
           </div>
+
+          <!-- Optional Whop Integration -->
+          <div class="social-item-box" id="box-whop" style="background:var(--pop-wash);border-color:rgba(109,40,217,0.3);">
+            <div class="social-row-top">
+              <div class="social-name" style="color:var(--pop);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--pop)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                Whop Account (Optional)
+              </div>
+              <button type="button" class="btn-sm connect-trigger-btn" data-plat="whop" style="border-color:var(--pop);color:var(--pop);">Connect Whop</button>
+            </div>
+            <div class="social-input-row" id="input-row-whop" hidden>
+              <input class="input-field" id="handle-whop" placeholder="user_whop123 (Whop ID)" style="font-size:13.5px;" />
+              <button type="button" class="btn-sm confirm-handle-btn" data-plat="whop" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
+              <button type="button" class="btn-danger delete-handle-btn" data-plat="whop">Delete</button>
+            </div>
+            <span style="font-size:11.5px;color:var(--text-2);margin-top:2px;">For creators who sell digital access &amp; communities on Whop.</span>
+          </div>
+
         </div>
 
         <!-- Step 5: Base Wallet Setup -->
         <div class="step-pane" id="step-5" hidden>
           <h2 class="step-title">Base Payout Wallet</h2>
-          <span class="form-label" style="margin-bottom:12px;">Where should your surviving USDC clip earnings land?</span>
+          <span class="step-subtitle">Where should your surviving USDC clip earnings land?</span>
 
           <div class="form-group">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
               <label class="form-label" for="in-wallet" style="margin:0;">Base EVM Wallet Address (USDC)</label>
-              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--violet-wash);color:var(--violet);border-color:rgba(109,40,217,0.3);">⚡ Generate New Base Wallet</button>
+              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--pop-wash);color:var(--pop);border-color:rgba(109,40,217,0.3);">⚡ Generate New Base Wallet</button>
             </div>
             <input class="input-field" id="in-wallet" value="" placeholder="0x... (or click generate button above)" spellcheck="false" />
             <span class="counter-text" id="gen-wallet-status">Instant USDC payouts on Base Mainnet. Zero platform withdrawal fees.</span>
           </div>
 
-          <div style="padding:14px;border-radius:12px;background:var(--violet-light);border:1px solid rgba(109,40,217,0.2);margin-top:14px;">
-            <span style="font-weight:650;font-size:13.5px;color:var(--violet);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
+          <div style="padding:14px;border-radius:12px;background:var(--pop-wash);border:1px solid rgba(109,40,217,0.2);margin-top:14px;">
+            <span style="font-weight:700;font-size:13.5px;color:var(--pop);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
             <span style="font-size:12.5px;color:var(--text-2);">Your wallet is linked directly to your standing profile. Payouts execute automatically after your 24h view hold passes.</span>
           </div>
         </div>
@@ -485,18 +605,18 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       <div class="preview-card-wrap">
         <div class="profile-card">
           <div class="card-top">
-            <div class="card-avatar" id="prev-avatar">T</div>
+            <div class="card-avatar" id="prev-avatar">C</div>
             <div class="card-user-info">
               <div class="card-name-row">
-                <h4 class="card-full-name" id="prev-name">Tester</h4>
+                <h4 class="card-full-name" id="prev-name">Creator</h4>
                 <span class="card-rank-badge" id="prev-rank">Unproven</span>
               </div>
-              <p class="card-handle" id="prev-handle">@tester4webauth</p>
+              <p class="card-handle" id="prev-handle">@creator</p>
             </div>
           </div>
           
           <span class="card-joined" id="prev-joined">Joined Aug 2026</span>
-          <p class="card-bio" id="prev-bio">jhgv</p>
+          <p class="card-bio" id="prev-bio">Short-form Clipper &amp; Content Creator.</p>
           
           <div class="card-tags">
             <span class="card-tag" id="prev-lang">🇺🇸 English</span>
@@ -513,6 +633,8 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 (function() {
   var currentStep = 1;
   var totalSteps = 5;
+  var customLanguages = [];
+  var currentAvatarUrl = null;
 
   var inName = document.getElementById('in-name');
   var inHandle = document.getElementById('in-handle');
@@ -528,32 +650,112 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 
   var btnBack = document.getElementById('btn-back');
   var btnContinue = document.getElementById('btn-continue');
+  var avSm = document.getElementById('av-sm');
+
+  // Pre-populate Google Account details if signed in
+  fetch('/api/me', { credentials: 'same-origin' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(me) {
+      if (me && me.signedIn) {
+        if (me.name && !inName.value) inName.value = me.name;
+        if (me.email) {
+          var userPart = me.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+          inHandle.value = userPart || 'creator';
+        }
+        if (me.picture) {
+          currentAvatarUrl = me.picture;
+          setAvatarImage(me.picture);
+        }
+        updatePreview();
+      }
+    })
+    .catch(function() {});
+
+  function setAvatarImage(src) {
+    if (src) {
+      avSm.innerHTML = '<img src="' + src + '" alt="Avatar" />';
+      prevAvatar.innerHTML = '<img src="' + src + '" alt="Avatar" />';
+    } else {
+      var initial = (inName.value.trim() || 'C').charAt(0).toUpperCase();
+      avSm.textContent = initial;
+      prevAvatar.textContent = initial;
+    }
+  }
+
+  // Upload Photo Handler
+  var fileInput = document.getElementById('avatar-file-input');
+  document.getElementById('btn-upload-photo').addEventListener('click', function() {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function(e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        currentAvatarUrl = evt.target.result;
+        setAvatarImage(currentAvatarUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Remove Photo Handler
+  document.getElementById('btn-remove-photo').addEventListener('click', function() {
+    currentAvatarUrl = null;
+    fileInput.value = '';
+    setAvatarImage(null);
+  });
 
   function updatePreview() {
-    var name = inName.value.trim() || 'Tester';
-    var handle = inHandle.value.trim() || 'username';
+    var name = inName.value.trim() || 'Creator';
+    var handle = inHandle.value.trim() || 'creator';
     var bio = inBio.value.trim() || 'No bio added yet.';
 
     prevName.textContent = name;
-    prevHandle.textContent = '@' + handle.replace(/^@/, '');
+    prevHandle.textContent = '@' + handle;
     prevBio.textContent = bio;
     
-    var initial = name.charAt(0).toUpperCase() || 'T';
-    prevAvatar.textContent = initial;
-    document.getElementById('av-sm').textContent = initial;
+    if (!currentAvatarUrl) {
+      setAvatarImage(null);
+    }
 
-    document.getElementById('bio-count').textContent = inBio.value.length + '/60';
+    document.getElementById('bio-count').textContent = inBio.value.length + '/120';
   }
 
   var inCustomLang = document.getElementById('in-custom-lang');
+  var btnAddCustomLang = document.getElementById('btn-add-custom-lang');
+  var customChipsDiv = document.getElementById('custom-lang-chips');
+
+  function renderCustomChips() {
+    customChipsDiv.innerHTML = customLanguages.map(function(lang, idx) {
+      return '<span class="pill-btn selected" style="font-size:12.5px;padding:4px 10px;">' + lang + ' <b onclick="removeCustomLang(' + idx + ')" style="margin-left:6px;cursor:pointer;">×</b></span>';
+    }).join('');
+    updateLanguages();
+  }
+
+  window.removeCustomLang = function(idx) {
+    customLanguages.splice(idx, 1);
+    renderCustomChips();
+  };
+
+  if (btnAddCustomLang) {
+    btnAddCustomLang.addEventListener('click', function() {
+      var val = inCustomLang.value.trim();
+      if (val && customLanguages.indexOf(val) === -1) {
+        customLanguages.push(val);
+        inCustomLang.value = '';
+        renderCustomChips();
+      }
+    });
+  }
 
   function updateLanguages() {
     var selectedLangs = [];
     document.querySelectorAll('#lang-pills .pill-btn.selected').forEach(function(btn) {
-      selectedLangs.push(btn.textContent.trim());
+      selectedLangs.push(btn.getAttribute('data-lang') || btn.textContent.trim());
     });
-    var customVal = inCustomLang ? inCustomLang.value.trim() : '';
-    if (customVal) selectedLangs.push(customVal);
+    customLanguages.forEach(function(cl) { selectedLangs.push(cl); });
 
     var countText = selectedLangs.length + ' selected';
     document.getElementById('lang-count').textContent = countText;
@@ -561,9 +763,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   }
 
   inName.addEventListener('input', updatePreview);
-  inHandle.addEventListener('input', updatePreview);
   inBio.addEventListener('input', updatePreview);
-  if (inCustomLang) inCustomLang.addEventListener('input', updateLanguages);
 
   // Multi-Select Language Pills
   document.querySelectorAll('#lang-pills .pill-btn').forEach(function(btn) {
@@ -590,21 +790,51 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     });
   });
 
-  // Toggle Social Channel Connection States
-  document.querySelectorAll('.connect-btn').forEach(function(btn) {
+  // Social Connections Handler (Connect -> Input -> Confirm / Delete)
+  var connectedSocials = {};
+
+  document.querySelectorAll('.connect-trigger-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      var isConnected = btn.textContent === 'Connected';
-      if (isConnected) {
-        btn.textContent = 'Connect';
-        btn.style.background = '#F3F4F6';
-        btn.style.color = 'var(--text)';
-        btn.style.border = '1px solid var(--line)';
-      } else {
-        btn.textContent = 'Connected ✓';
-        btn.style.background = '#111827';
-        btn.style.color = '#FFFFFF';
-        btn.style.border = '0';
+      var plat = btn.getAttribute('data-plat');
+      var inputRow = document.getElementById('input-row-' + plat);
+      if (inputRow) inputRow.hidden = false;
+      btn.hidden = true;
+    });
+  });
+
+  document.querySelectorAll('.confirm-handle-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var plat = btn.getAttribute('data-plat');
+      var handleInput = document.getElementById('handle-' + plat);
+      var val = handleInput ? handleInput.value.trim() : '';
+      if (val) {
+        connectedSocials[plat] = val;
+        var triggerBtn = document.querySelector('.connect-trigger-btn[data-plat="' + plat + '"]');
+        if (triggerBtn) {
+          triggerBtn.textContent = 'Connected ✓ ' + val;
+          triggerBtn.style.background = 'var(--pop)';
+          triggerBtn.style.color = '#FFF';
+          triggerBtn.hidden = false;
+        }
+        document.getElementById('input-row-' + plat).hidden = true;
       }
+    });
+  });
+
+  document.querySelectorAll('.delete-handle-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var plat = btn.getAttribute('data-plat');
+      delete connectedSocials[plat];
+      var handleInput = document.getElementById('handle-' + plat);
+      if (handleInput) handleInput.value = '';
+      var triggerBtn = document.querySelector('.connect-trigger-btn[data-plat="' + plat + '"]');
+      if (triggerBtn) {
+        triggerBtn.textContent = plat === 'whop' ? 'Connect Whop' : 'Connect';
+        triggerBtn.style.background = '#FFF';
+        triggerBtn.style.color = 'var(--text)';
+        triggerBtn.hidden = false;
+      }
+      document.getElementById('input-row-' + plat).hidden = true;
     });
   });
 
@@ -648,7 +878,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     }
 
     btnBack.style.visibility = (step > 1) ? 'visible' : 'hidden';
-    btnContinue.textContent = (step === totalSteps) ? 'Complete Setup & Open Profile →' : 'Continue';
+    btnContinue.textContent = (step === totalSteps) ? 'Complete Setup & Open Studio →' : 'Continue';
   }
 
   btnBack.addEventListener('click', function() {
@@ -670,9 +900,11 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
         name: inName.value.trim(),
         handle: inHandle.value.trim(),
         bio: inBio.value.trim(),
+        avatar: currentAvatarUrl,
         wallet: inWallet.value.trim(),
         language: prevLang.textContent,
-        type: prevType.textContent
+        type: prevType.textContent,
+        socials: connectedSocials
       };
 
       try {

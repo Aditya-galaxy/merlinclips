@@ -192,9 +192,31 @@ export async function exchangeCode(
     // in some error shapes, and this string ends up in logs.
     throw new Error(`token exchange failed: ${res.status}`);
   }
-  const body = (await res.json()) as { id_token?: string };
+  const body = (await res.json()) as { id_token?: string; access_token?: string };
   if (!body.id_token) throw new Error('token response carried no id_token');
-  return verifyIdToken(body.id_token, cfg, nonce, now, fetchImpl);
+  const identity = await verifyIdToken(body.id_token, cfg, nonce, now, fetchImpl);
+
+  // Fetch full user profile from OpenID Connect UserInfo endpoint if name or picture missing
+  if (body.access_token && (!identity.name || !identity.picture)) {
+    try {
+      const uRes = await fetchImpl('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: { Authorization: `Bearer ${body.access_token}` },
+      });
+      if (uRes.ok) {
+        const uInfo = (await uRes.json()) as { name?: string; picture?: string; email?: string };
+        return {
+          ...identity,
+          email: identity.email || uInfo.email,
+          name: identity.name || uInfo.name,
+          picture: identity.picture || uInfo.picture,
+        };
+      }
+    } catch {
+      // Fall back gracefully to id_token identity if userinfo fails
+    }
+  }
+
+  return identity;
 }
 
 /**

@@ -633,11 +633,19 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   var btnContinue = document.getElementById('btn-continue');
   var avSm = document.getElementById('av-sm');
 
+  // Purge any stale mock data from previous sessions
+  try {
+    var rawLoc = localStorage.getItem('mc_creator_profile');
+    if (rawLoc && (rawLoc.indexOf('Tester') !== -1 || rawLoc.indexOf('tester4webauth') !== -1 || rawLoc.indexOf('jhgv') !== -1)) {
+      localStorage.removeItem('mc_creator_profile');
+    }
+  } catch(e) {}
+
   // Pre-populate Google Account details if signed in
   fetch('/api/me', { credentials: 'same-origin' })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(me) {
-      if (me && me.signedIn) {
+      if (me) {
         if (me.name) inName.value = me.name;
         if (me.username) inHandle.value = me.username;
         else if (me.email) {

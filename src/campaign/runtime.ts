@@ -822,12 +822,21 @@ export class CampaignRuntime {
     const accountId = (await this.accountFor(request)) || 'anonymous';
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
-    const wallet = typeof body.wallet === 'string' && body.wallet.startsWith('0x')
-      ? body.wallet.trim()
-      : '0x0003a59858f44451be2a5b486ee612b4139700f0';
-
     const existingAcc = this.store.getCreatorAccount(accountId);
     const existingWallets = existingAcc ? [...existingAcc.linkedWallets] : [];
+
+    // Single wallet architecture: reuse existing primary wallet if available to prevent multi-wallet fragmentation
+    let wallet = typeof body.wallet === 'string' && body.wallet.trim().startsWith('0x')
+      ? body.wallet.trim()
+      : '';
+
+    if (!wallet) {
+      if (existingAcc?.wallet && existingAcc.wallet.startsWith('0x')) {
+        wallet = existingAcc.wallet;
+      } else {
+        wallet = '0x0003a59858f44451be2a5b486ee612b4139700f0';
+      }
+    }
     
     if (!existingWallets.some((w) => w.address.toLowerCase() === wallet.toLowerCase())) {
       existingWallets.push({

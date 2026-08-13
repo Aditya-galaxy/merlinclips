@@ -672,6 +672,33 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     })
     .catch(function() {});
 
+  // Pre-populate existing saved wallet if available (Single Wallet Architecture)
+  fetch('/api/me/profile', { credentials: 'same-origin' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(p) {
+      if (p && p.wallets && p.wallets.length) {
+        var existingW = p.wallets[0];
+        var walletInput = document.getElementById('in-wallet');
+        if (walletInput && !walletInput.value.trim()) {
+          walletInput.value = existingW;
+          walletInput.readOnly = true;
+        }
+        var genBtn = document.getElementById('btn-gen-wallet');
+        if (genBtn) {
+          genBtn.disabled = true;
+          genBtn.style.opacity = '0.6';
+          genBtn.textContent = '✓ Base Wallet Linked';
+        }
+        var statusEl = document.getElementById('gen-wallet-status');
+        if (statusEl) {
+          statusEl.textContent = '✓ Primary Base EVM Wallet Linked: ' + existingW;
+          statusEl.style.color = 'var(--orange)';
+          statusEl.style.fontWeight = '600';
+        }
+      }
+    })
+    .catch(function() {});
+
   function setAvatarImage(src) {
     if (src) {
       avSm.innerHTML = '<img src="' + src + '" alt="Avatar" />';

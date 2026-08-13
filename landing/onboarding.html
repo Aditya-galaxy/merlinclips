@@ -8,20 +8,17 @@
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 <style>
 :root {
-  --bg: #FAF8F5;
+  --bg: #F9FAFB;
   --card: #FFFFFF;
-  --surface-2: #F3F0EB;
-  --line: #E8E3DB;
-  --line-hi: #D8D1C6;
-  --text: #151310;
-  --text-2: #5C554C;
-  --muted: #8B8378;
-  --pop: #6D28D9;
-  --pop-2: #7C3AED;
-  --pop-wash: #F3EEFE;
-  --ok: #0F7B4F;
-  --ok-wash: #E7F4EE;
-  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --line: #E5E7EB;
+  --line-hi: #D1D5DB;
+  --text: #111827;
+  --text-2: #4B5563;
+  --muted: #9CA3AF;
+  --orange: #FF5000;
+  --orange-wash: #FFF2EC;
+  --violet: #5B5FC7;
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, monospace;
 }
 
@@ -50,12 +47,8 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 
 @media (max-width: 860px) {
-  .onboarding-card {
-    grid-template-columns: 1fr;
-  }
-  .preview-col {
-    display: none;
-  }
+  .onboarding-card { grid-template-columns: 1fr; }
+  .preview-col { display: none; }
 }
 
 .wizard-col {
@@ -75,35 +68,29 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   position: relative;
 }
 
-/* Progress bar */
+/* Progress bar (Matching Orange Screenshots) */
 .progress-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 .progress-step {
-  height: 4px;
+  height: 6px;
   flex: 1;
   border-radius: 99px;
-  background: var(--line);
+  background: #E5E7EB;
   transition: background 0.25s ease;
 }
 .progress-step.active, .progress-step.completed {
-  background: var(--pop);
+  background: var(--orange);
 }
 
 .step-title {
   font-size: 24px;
-  font-weight: 750;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  margin: 0 0 4px;
+  margin: 0 0 20px;
   color: var(--text);
-}
-.step-subtitle {
-  font-size: 13.5px;
-  color: var(--text-2);
-  margin-bottom: 22px;
-  display: block;
 }
 
 .form-group {
@@ -111,7 +98,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 .form-label {
   display: block;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 650;
   color: var(--text);
   margin-bottom: 8px;
@@ -121,22 +108,21 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   width: 100%;
   font-family: var(--sans);
   font-size: 14.5px;
-  padding: 11px 14px;
-  border: 1px solid var(--line-hi);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
   border-radius: 12px;
   background: #FFFFFF;
   color: var(--text);
   transition: border-color 0.15s ease;
 }
 .input-field:focus {
-  outline: 2px solid var(--pop);
+  outline: 2px solid var(--orange);
   outline-offset: -1px;
   border-color: transparent;
 }
 .input-field[readonly] {
-  background: var(--surface-2);
+  background: #F9FAFB;
   color: var(--text-2);
-  cursor: not-allowed;
 }
 
 .avatar-actions {
@@ -149,7 +135,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: var(--pop);
+  background: var(--violet);
   color: #fff;
   font-weight: 750;
   font-size: 22px;
@@ -157,27 +143,22 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   place-items: center;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid var(--line);
 }
-.avatar-preview-sm img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.avatar-preview-sm img { width: 100%; height: 100%; object-fit: cover; }
+
 .btn-sm {
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 10px;
-  border: 1px solid var(--line-hi);
+  border: 1px solid var(--line);
   background: #FFFFFF;
   color: var(--text);
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-sm:hover { background: var(--surface-2); }
-.btn-danger { color: #B02A20; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
-.btn-danger:hover { text-decoration: underline; }
+.btn-sm:hover { background: #F3F4F6; }
+.btn-danger { color: #EF4444; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; }
 
 /* Selector Pills */
 .pills-grid {
@@ -202,9 +183,9 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 .pill-btn:hover { border-color: var(--line-hi); color: var(--text); }
 .pill-btn.selected {
-  background: var(--pop);
+  background: var(--orange);
   color: #FFFFFF;
-  border-color: var(--pop);
+  border-color: var(--orange);
   font-weight: 600;
 }
 
@@ -215,71 +196,127 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   display: block;
 }
 
-/* Nav Actions */
+/* Social Connections Card Group (Matching Screenshot 1) */
+.social-group-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+.social-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  min-height: 60px;
+}
+.social-row:last-child {
+  border-bottom: 0;
+}
+.social-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text);
+  flex: 1;
+}
+.social-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.social-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.social-inline-input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  background: transparent;
+}
+
+/* Orange Checkmark Button (Matching Screenshot 1) */
+.btn-orange-check {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #FFFFFF;
+  border: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s ease;
+}
+.btn-orange-check:hover { transform: scale(1.05); }
+
+/* Whop Centered Screen (Matching Screenshot 2) */
+.whop-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+.whop-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: #F3F4F6;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+}
+
+/* Nav Actions (Matching Screenshots) */
 .wizard-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid var(--line);
 }
 .btn-back {
   font-size: 14px;
   font-weight: 600;
-  padding: 11px 20px;
+  padding: 11px 22px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #FFFFFF;
+  border: 0;
+  background: #F3F4F6;
   color: var(--text-2);
   cursor: pointer;
 }
-.btn-back:hover { background: var(--surface-2); color: var(--text); }
+.btn-back:hover { background: #E5E7EB; color: var(--text); }
 
 .btn-continue {
-  font-size: 14px;
-  font-weight: 650;
-  padding: 12px 32px;
-  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 700;
+  padding: 13px 36px;
+  border-radius: 12px;
   border: 0;
-  background: var(--pop);
+  background: #111827;
   color: #FFFFFF;
   cursor: pointer;
   transition: background 0.15s ease;
   min-width: 140px;
 }
-.btn-continue:hover { background: var(--pop-2); }
+.btn-continue:hover { background: #000000; }
 
-/* Social Connect Item Box */
-.social-item-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #FFFFFF;
-  margin-bottom: 10px;
-}
-.social-row-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.social-name {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 650;
-  font-size: 14.5px;
-}
-.social-input-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-/* Live Preview Card */
+/* Live Profile Preview Card */
 .preview-card-wrap {
   width: 100%;
   max-width: 320px;
@@ -301,7 +338,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   width: 58px;
   height: 58px;
   border-radius: 16px;
-  background: var(--pop);
+  background: var(--violet);
   color: #FFFFFF;
   font-size: 24px;
   font-weight: 750;
@@ -309,68 +346,17 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   place-items: center;
   flex: none;
   overflow: hidden;
-  border: 1px solid var(--line);
 }
-.card-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.card-user-info {
-  flex: 1;
-  min-width: 0;
-}
-.card-name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.card-full-name {
-  font-size: 17px;
-  font-weight: 750;
-  color: var(--text);
-  margin: 0;
-}
-.card-rank-badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: var(--ok-wash);
-  color: var(--ok);
-}
-.card-handle {
-  font-size: 13px;
-  font-family: var(--mono);
-  color: var(--pop);
-  margin: 2px 0 0;
-}
-.card-joined {
-  font-size: 11.5px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.card-bio {
-  font-size: 13px;
-  color: var(--text-2);
-  margin: 14px 0;
-  line-height: 1.45;
-  word-break: break-word;
-}
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 14px;
-}
-.card-tag {
-  font-size: 11.5px;
-  font-weight: 550;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  color: var(--text-2);
-}
+.card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.card-user-info { flex: 1; min-width: 0; }
+.card-name-row { display: flex; align-items: center; gap: 8px; }
+.card-full-name { font-size: 17px; font-weight: 750; color: var(--text); margin: 0; }
+.card-rank-badge { font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: #F3F4F6; color: var(--muted); }
+.card-handle { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+.card-joined { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.card-bio { font-size: 13px; color: var(--text-2); margin: 14px 0; line-height: 1.45; word-break: break-word; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.card-tag { font-size: 11.5px; font-weight: 550; padding: 3px 9px; border-radius: 6px; background: #F3F4F6; color: var(--text-2); }
 </style>
 </head>
 <body>
@@ -381,53 +367,52 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     <!-- Left Column: Wizard Steps -->
     <div class="wizard-col">
       <div>
+        <!-- Orange Progress Steps (Matching Screenshots) -->
         <div class="progress-bar">
           <div class="progress-step active" id="p-1"></div>
           <div class="progress-step" id="p-2"></div>
           <div class="progress-step" id="p-3"></div>
           <div class="progress-step" id="p-4"></div>
           <div class="progress-step" id="p-5"></div>
+          <div class="progress-step" id="p-6"></div>
         </div>
 
-        <!-- Hidden File Input for Avatar Upload -->
         <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" />
 
-        <!-- Step 1: Let's Create Your Profile -->
+        <!-- Step 1: Profile Setup -->
         <div class="step-pane" id="step-1">
           <h2 class="step-title">Let's Create Your Profile</h2>
-          <span class="step-subtitle">Your identity &amp; handle for receiving automated USDC clip payouts.</span>
           
           <div class="form-group">
             <span class="form-label">Profile photo</span>
             <div class="avatar-actions">
-              <div class="avatar-preview-sm" id="av-sm">C</div>
+              <div class="avatar-preview-sm" id="av-sm">T</div>
               <button type="button" class="btn-sm" id="btn-upload-photo">Upload photo</button>
               <button type="button" class="btn-danger" id="btn-remove-photo">Remove</button>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="in-name">Full name (from Google)</label>
+            <label class="form-label" for="in-name">Full name</label>
             <input class="input-field" id="in-name" value="" placeholder="Enter your full name" spellcheck="false" />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="in-handle">Username (Fixed from Google Account)</label>
+            <label class="form-label" for="in-handle">Username</label>
             <input class="input-field" id="in-handle" value="" placeholder="username" readonly spellcheck="false" />
-            <span class="counter-text">Unchangeable handle derived from your Google sign-in email.</span>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="in-bio">Bio</label>
-            <textarea class="input-field" id="in-bio" rows="2" maxlength="120" placeholder="Tell brands about your content style..."></textarea>
+            <textarea class="input-field" id="in-bio" rows="2" maxlength="120" placeholder="Tell brands about your content..."></textarea>
             <span class="counter-text" id="bio-count">0/120</span>
           </div>
         </div>
 
-        <!-- Step 2: Tell Us About Your Content (Multi-Select & Custom Multi-Input) -->
+        <!-- Step 2: Content Language -->
         <div class="step-pane" id="step-2" hidden>
           <h2 class="step-title">Tell us about your Content</h2>
-          <span class="step-subtitle">Select languages you create content in (Multi-select enabled):</span>
+          <span class="form-label" style="margin-bottom:12px;">What language do you create content in?</span>
           
           <div class="pills-grid" id="lang-pills">
             <button type="button" class="pill-btn selected" data-lang="English">🇺🇸 English</button>
@@ -444,10 +429,10 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
           
           <div class="form-group" style="margin-top:14px;">
-            <label class="form-label" for="in-custom-lang">Add Custom Language (Multi-Input)</label>
+            <label class="form-label" for="in-custom-lang">Other Language (Custom Input)</label>
             <div style="display:flex;gap:8px;">
-              <input class="input-field" id="in-custom-lang" placeholder="Type language (e.g. Swahili, Dutch, Vietnamese)..." spellcheck="false" />
-              <button type="button" class="btn-sm" id="btn-add-custom-lang" style="padding:10px 16px;background:var(--pop);color:#FFF;border:0;">Add</button>
+              <input class="input-field" id="in-custom-lang" placeholder="Type language..." spellcheck="false" />
+              <button type="button" class="btn-sm" id="btn-add-custom-lang" style="padding:10px 16px;background:var(--orange);color:#FFF;border:0;">Add</button>
             </div>
             <div class="pills-grid" id="custom-lang-chips" style="margin-top:10px;"></div>
           </div>
@@ -455,10 +440,9 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           <span class="counter-text" id="lang-count">1 selected</span>
         </div>
 
-        <!-- Step 3: Creation Style & Discovery -->
+        <!-- Step 3: Creator Type -->
         <div class="step-pane" id="step-3" hidden>
           <h2 class="step-title">What type of Creator are you?</h2>
-          <span class="step-subtitle">Help brands match brief criteria to your content format.</span>
           
           <div class="form-group">
             <span class="form-label">Primary Creation Style</span>
@@ -471,7 +455,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
 
           <div class="form-group" style="margin-top:20px;">
-            <span class="form-label">How did you find Merlin Clips?</span>
+            <span class="form-label">How did you find us?</span>
             <div class="pills-grid" id="find-pills">
               <button type="button" class="pill-btn" data-find="TikTok">TikTok</button>
               <button type="button" class="pill-btn selected" data-find="YouTube">YouTube</button>
@@ -483,110 +467,105 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
         </div>
 
-        <!-- Step 4: Link Social Accounts + Whop Account -->
+        <!-- Step 4: Link your Social Accounts (Matching Screenshot 1) -->
         <div class="step-pane" id="step-4" hidden>
           <h2 class="step-title">Link your Social Accounts</h2>
-          <span class="step-subtitle">Input your handles to auto-verify your video clip submissions:</span>
-
-          <!-- YouTube -->
-          <div class="social-item-box" id="box-youtube">
-            <div class="social-row-top">
-              <div class="social-name">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                YouTube Channel
+          
+          <div class="social-group-card">
+            <!-- YouTube (Expanded / Active State in Screenshot 1) -->
+            <div class="social-row" id="row-youtube">
+              <div class="social-left">
+                <div class="social-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </div>
+                <div class="social-input-wrap">
+                  <span style="color:var(--muted);font-weight:500;">@</span>
+                  <input class="social-inline-input" id="in-soc-youtube" placeholder="username" spellcheck="false" />
+                </div>
               </div>
-              <button type="button" class="btn-sm connect-trigger-btn" data-plat="youtube">Connect</button>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:14px;color:var(--muted);" title="Verify handle">🔑</span>
+                <button type="button" class="btn-orange-check" id="btn-save-youtube" title="Confirm Handle">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+              </div>
             </div>
-            <div class="social-input-row" id="input-row-youtube" hidden>
-              <input class="input-field" id="handle-youtube" placeholder="@yourchannel" style="font-size:13.5px;" />
-              <button type="button" class="btn-sm confirm-handle-btn" data-plat="youtube" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
-              <button type="button" class="btn-danger delete-handle-btn" data-plat="youtube">Delete</button>
+
+            <!-- TikTok -->
+            <div class="social-row" id="row-tiktok">
+              <div class="social-left">
+                <div class="social-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.24-2.39.58-4.83 2.18-6.62 1.52-1.74 3.79-2.73 6.09-2.7.35.01.7.04 1.05.1v4.06c-.46-.09-.94-.12-1.41-.09-1.22.06-2.43.62-3.14 1.61-.83 1.11-.97 2.64-.47 3.92.47 1.25 1.67 2.19 3.01 2.37 1.34.19 2.74-.26 3.63-1.27.77-.85 1.15-2.01 1.13-3.16.02-4.71.01-9.43.01-14.14z"/></svg>
+                </div>
+                <span>TikTok</span>
+              </div>
+              <button type="button" class="btn-sm connect-row-btn" data-plat="tiktok">Connect</button>
+            </div>
+
+            <!-- Instagram -->
+            <div class="social-row" id="row-instagram">
+              <div class="social-left">
+                <div class="social-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                </div>
+                <span>Instagram</span>
+              </div>
+              <button type="button" class="btn-sm connect-row-btn" data-plat="instagram">Connect</button>
+            </div>
+
+            <!-- X -->
+            <div class="social-row" id="row-x">
+              <div class="social-left">
+                <div class="social-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </div>
+                <span>X</span>
+              </div>
+              <button type="button" class="btn-sm connect-row-btn" data-plat="x">Connect</button>
+            </div>
+
+            <!-- Facebook -->
+            <div class="social-row" id="row-facebook">
+              <div class="social-left">
+                <div class="social-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </div>
+                <span>Facebook</span>
+              </div>
+              <button type="button" class="btn-sm connect-row-btn" data-plat="facebook">Connect</button>
             </div>
           </div>
-
-          <!-- TikTok -->
-          <div class="social-item-box" id="box-tiktok">
-            <div class="social-row-top">
-              <div class="social-name">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.24-2.39.58-4.83 2.18-6.62 1.52-1.74 3.79-2.73 6.09-2.7.35.01.7.04 1.05.1v4.06c-.46-.09-.94-.12-1.41-.09-1.22.06-2.43.62-3.14 1.61-.83 1.11-.97 2.64-.47 3.92.47 1.25 1.67 2.19 3.01 2.37 1.34.19 2.74-.26 3.63-1.27.77-.85 1.15-2.01 1.13-3.16.02-4.71.01-9.43.01-14.14z"/></svg>
-                TikTok Handle
-              </div>
-              <button type="button" class="btn-sm connect-trigger-btn" data-plat="tiktok">Connect</button>
-            </div>
-            <div class="social-input-row" id="input-row-tiktok" hidden>
-              <input class="input-field" id="handle-tiktok" placeholder="@yourtiktok" style="font-size:13.5px;" />
-              <button type="button" class="btn-sm confirm-handle-btn" data-plat="tiktok" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
-              <button type="button" class="btn-danger delete-handle-btn" data-plat="tiktok">Delete</button>
-            </div>
-          </div>
-
-          <!-- Instagram -->
-          <div class="social-item-box" id="box-instagram">
-            <div class="social-row-top">
-              <div class="social-name">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                Instagram Handle
-              </div>
-              <button type="button" class="btn-sm connect-trigger-btn" data-plat="instagram">Connect</button>
-            </div>
-            <div class="social-input-row" id="input-row-instagram" hidden>
-              <input class="input-field" id="handle-instagram" placeholder="@yourig" style="font-size:13.5px;" />
-              <button type="button" class="btn-sm confirm-handle-btn" data-plat="instagram" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
-              <button type="button" class="btn-danger delete-handle-btn" data-plat="instagram">Delete</button>
-            </div>
-          </div>
-
-          <!-- Twitter/X -->
-          <div class="social-item-box" id="box-x">
-            <div class="social-row-top">
-              <div class="social-name">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                X / Twitter
-              </div>
-              <button type="button" class="btn-sm connect-trigger-btn" data-plat="x">Connect</button>
-            </div>
-            <div class="social-input-row" id="input-row-x" hidden>
-              <input class="input-field" id="handle-x" placeholder="@yourx" style="font-size:13.5px;" />
-              <button type="button" class="btn-sm confirm-handle-btn" data-plat="x" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
-              <button type="button" class="btn-danger delete-handle-btn" data-plat="x">Delete</button>
-            </div>
-          </div>
-
-          <!-- Optional Whop Integration -->
-          <div class="social-item-box" id="box-whop" style="background:var(--pop-wash);border-color:rgba(109,40,217,0.3);">
-            <div class="social-row-top">
-              <div class="social-name" style="color:var(--pop);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--pop)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                Whop Account (Optional)
-              </div>
-              <button type="button" class="btn-sm connect-trigger-btn" data-plat="whop" style="border-color:var(--pop);color:var(--pop);">Connect Whop</button>
-            </div>
-            <div class="social-input-row" id="input-row-whop" hidden>
-              <input class="input-field" id="handle-whop" placeholder="user_whop123 (Whop ID)" style="font-size:13.5px;" />
-              <button type="button" class="btn-sm confirm-handle-btn" data-plat="whop" style="background:var(--pop);color:#FFF;border:0;">Confirm</button>
-              <button type="button" class="btn-danger delete-handle-btn" data-plat="whop">Delete</button>
-            </div>
-            <span style="font-size:11.5px;color:var(--text-2);margin-top:2px;">For creators who sell digital access &amp; communities on Whop.</span>
-          </div>
-
         </div>
 
-        <!-- Step 5: Base Wallet Setup -->
+        <!-- Step 5: Connect your Whop account (Matching Screenshot 2) -->
         <div class="step-pane" id="step-5" hidden>
+          <div class="whop-screen">
+            <div class="whop-icon-badge">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="#111827"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <h2 class="step-title" style="margin-bottom:8px;">Connect your Whop account</h2>
+            <p style="font-size:14px;color:var(--text-2);margin:0 0 32px;max-width:320px;">Link your Whop account to finish setting up your profile.</p>
+
+            <button type="button" class="btn-continue" id="btn-connect-whop" style="width:100%;max-width:360px;padding:14px;">Connect Whop</button>
+          </div>
+        </div>
+
+        <!-- Step 6: Base Payout Wallet -->
+        <div class="step-pane" id="step-6" hidden>
           <h2 class="step-title">Base Payout Wallet</h2>
-          <span class="step-subtitle">Where should your surviving USDC clip earnings land?</span>
+          <span class="form-label" style="margin-bottom:12px;">Where should your surviving USDC clip earnings land?</span>
 
           <div class="form-group">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
               <label class="form-label" for="in-wallet" style="margin:0;">Base EVM Wallet Address (USDC)</label>
-              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--pop-wash);color:var(--pop);border-color:rgba(109,40,217,0.3);">⚡ Generate New Base Wallet</button>
+              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:4px 10px;background:var(--orange-wash);color:var(--orange);border-color:rgba(255,80,0,0.3);">⚡ Generate New Base Wallet</button>
             </div>
             <input class="input-field" id="in-wallet" value="" placeholder="0x... (or click generate button above)" spellcheck="false" />
             <span class="counter-text" id="gen-wallet-status">Instant USDC payouts on Base Mainnet. Zero platform withdrawal fees.</span>
           </div>
 
-          <div style="padding:14px;border-radius:12px;background:var(--pop-wash);border:1px solid rgba(109,40,217,0.2);margin-top:14px;">
-            <span style="font-weight:700;font-size:13.5px;color:var(--pop);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
+          <div style="padding:14px;border-radius:12px;background:var(--orange-wash);border:1px solid rgba(255,80,0,0.2);margin-top:14px;">
+            <span style="font-weight:700;font-size:13.5px;color:var(--orange);display:block;margin-bottom:2px;">⚡ Automated 24h Dwell Hold Settlement</span>
             <span style="font-size:12.5px;color:var(--text-2);">Your wallet is linked directly to your standing profile. Payouts execute automatically after your 24h view hold passes.</span>
           </div>
         </div>
@@ -600,23 +579,23 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       </div>
     </div>
 
-    <!-- Right Column: Live Profile Preview Card -->
+    <!-- Right Column: Live Profile Preview Card (Matching Screenshots 1 & 2) -->
     <div class="preview-col">
       <div class="preview-card-wrap">
         <div class="profile-card">
           <div class="card-top">
-            <div class="card-avatar" id="prev-avatar">C</div>
+            <div class="card-avatar" id="prev-avatar">T</div>
             <div class="card-user-info">
               <div class="card-name-row">
-                <h4 class="card-full-name" id="prev-name">Creator</h4>
-                <span class="card-rank-badge" id="prev-rank">Unproven</span>
+                <h4 class="card-full-name" id="prev-name">Tester</h4>
+                <span class="card-rank-badge" id="prev-rank">Unranked</span>
               </div>
-              <p class="card-handle" id="prev-handle">@creator</p>
+              <p class="card-handle" id="prev-handle">@tester4webauth</p>
             </div>
           </div>
           
           <span class="card-joined" id="prev-joined">Joined Aug 2026</span>
-          <p class="card-bio" id="prev-bio">Short-form Clipper &amp; Content Creator.</p>
+          <p class="card-bio" id="prev-bio">jhgv</p>
           
           <div class="card-tags">
             <span class="card-tag" id="prev-lang">🇺🇸 English</span>
@@ -632,9 +611,10 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 <script>
 (function() {
   var currentStep = 1;
-  var totalSteps = 5;
+  var totalSteps = 6;
   var customLanguages = [];
   var currentAvatarUrl = null;
+  var connectedSocials = {};
 
   var inName = document.getElementById('in-name');
   var inHandle = document.getElementById('in-handle');
@@ -660,7 +640,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
         if (me.name && !inName.value) inName.value = me.name;
         if (me.email) {
           var userPart = me.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-          inHandle.value = userPart || 'creator';
+          inHandle.value = userPart || 'tester4webauth';
         }
         if (me.picture) {
           currentAvatarUrl = me.picture;
@@ -676,7 +656,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       avSm.innerHTML = '<img src="' + src + '" alt="Avatar" />';
       prevAvatar.innerHTML = '<img src="' + src + '" alt="Avatar" />';
     } else {
-      var initial = (inName.value.trim() || 'C').charAt(0).toUpperCase();
+      var initial = (inName.value.trim() || 'T').charAt(0).toUpperCase();
       avSm.textContent = initial;
       prevAvatar.textContent = initial;
     }
@@ -684,10 +664,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 
   // Upload Photo Handler
   var fileInput = document.getElementById('avatar-file-input');
-  document.getElementById('btn-upload-photo').addEventListener('click', function() {
-    fileInput.click();
-  });
-
+  document.getElementById('btn-upload-photo').addEventListener('click', function() { fileInput.click(); });
   fileInput.addEventListener('change', function(e) {
     var file = e.target.files && e.target.files[0];
     if (file) {
@@ -708,18 +685,15 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   });
 
   function updatePreview() {
-    var name = inName.value.trim() || 'Creator';
-    var handle = inHandle.value.trim() || 'creator';
-    var bio = inBio.value.trim() || 'No bio added yet.';
+    var name = inName.value.trim() || 'Tester';
+    var handle = inHandle.value.trim() || 'tester4webauth';
+    var bio = inBio.value.trim() || 'jhgv';
 
     prevName.textContent = name;
     prevHandle.textContent = '@' + handle;
     prevBio.textContent = bio;
     
-    if (!currentAvatarUrl) {
-      setAvatarImage(null);
-    }
-
+    if (!currentAvatarUrl) setAvatarImage(null);
     document.getElementById('bio-count').textContent = inBio.value.length + '/120';
   }
 
@@ -790,77 +764,58 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     });
   });
 
-  // Social Connections Handler (Connect -> Input -> Confirm / Delete)
-  var connectedSocials = {};
-
-  document.querySelectorAll('.connect-trigger-btn').forEach(function(btn) {
+  // Social Connect Row Actions (Matching Screenshot 1)
+  document.querySelectorAll('.connect-row-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var plat = btn.getAttribute('data-plat');
-      var inputRow = document.getElementById('input-row-' + plat);
-      if (inputRow) inputRow.hidden = false;
-      btn.hidden = true;
-    });
-  });
-
-  document.querySelectorAll('.confirm-handle-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var plat = btn.getAttribute('data-plat');
-      var handleInput = document.getElementById('handle-' + plat);
-      var val = handleInput ? handleInput.value.trim() : '';
-      if (val) {
-        connectedSocials[plat] = val;
-        var triggerBtn = document.querySelector('.connect-trigger-btn[data-plat="' + plat + '"]');
-        if (triggerBtn) {
-          triggerBtn.textContent = 'Connected ✓ ' + val;
-          triggerBtn.style.background = 'var(--pop)';
-          triggerBtn.style.color = '#FFF';
-          triggerBtn.hidden = false;
-        }
-        document.getElementById('input-row-' + plat).hidden = true;
+      var row = document.getElementById('row-' + plat);
+      if (row) {
+        row.innerHTML = '<div class="social-left"><div class="social-icon">' + row.querySelector('.social-icon').innerHTML + '</div><div class="social-input-wrap"><span style="color:var(--muted);font-weight:500;">@</span><input class="social-inline-input" id="in-soc-' + plat + '" placeholder="username" spellcheck="false" /></div></div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:14px;color:var(--muted);" title="Verify handle">🔑</span><button type="button" class="btn-orange-check" onclick="saveSocial(\'' + plat + '\')" title="Confirm Handle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></div>';
       }
     });
   });
 
-  document.querySelectorAll('.delete-handle-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var plat = btn.getAttribute('data-plat');
-      delete connectedSocials[plat];
-      var handleInput = document.getElementById('handle-' + plat);
-      if (handleInput) handleInput.value = '';
-      var triggerBtn = document.querySelector('.connect-trigger-btn[data-plat="' + plat + '"]');
-      if (triggerBtn) {
-        triggerBtn.textContent = plat === 'whop' ? 'Connect Whop' : 'Connect';
-        triggerBtn.style.background = '#FFF';
-        triggerBtn.style.color = 'var(--text)';
-        triggerBtn.hidden = false;
+  window.saveSocial = function(plat) {
+    var input = document.getElementById('in-soc-' + plat);
+    var val = input ? input.value.trim() : '';
+    if (val) {
+      connectedSocials[plat] = val;
+      var row = document.getElementById('row-' + plat);
+      if (row) {
+        row.innerHTML = '<div class="social-left"><div class="social-icon">' + row.querySelector('.social-icon').innerHTML + '</div><span style="font-weight:600;color:var(--text);">@' + val.replace(/^@/,'') + '</span></div><span style="font-size:13px;font-weight:600;color:var(--orange);">Connected ✓</span>';
       }
-      document.getElementById('input-row-' + plat).hidden = true;
-    });
-  });
+    }
+  };
 
-  // Auto-Generate Dedicated Base EVM Payout Wallet (1 Click Only)
+  // Connect Whop Handler (Matching Screenshot 2 -> Redirects to Whop OAuth)
+  var btnWhop = document.getElementById('btn-connect-whop');
+  if (btnWhop) {
+    btnWhop.addEventListener('click', function() {
+      var whopUrl = 'https://whop.com/login/?next=%2Foauth%2Fauthorize%3Fclient_id%3Dapp_QRxsQodZgK1r4D%26redirect_uri%3Dhttps%253A%252F%252Fmerlinclips.com%252Fapi%252Fauth%252Foauth2%252Fcallback%252Fwhop%26scope%3Dopenid%2Bprofile%2Bemail%26response_type%3Dcode';
+      window.location.href = whopUrl;
+    });
+  }
+
+  // Auto-Generate Base Wallet
   var genBtn = document.getElementById('btn-gen-wallet');
   if (genBtn) {
     genBtn.addEventListener('click', function() {
       if (genBtn.disabled) return;
       var chars = '0123456789abcdefABCDEF';
       var addr = '0x';
-      for (var i = 0; i < 40; i++) {
-        addr += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
+      for (var i = 0; i < 40; i++) addr += chars.charAt(Math.floor(Math.random() * chars.length));
       var walletInput = document.getElementById('in-wallet');
       walletInput.value = addr;
       walletInput.readOnly = true;
 
       genBtn.disabled = true;
       genBtn.style.opacity = '0.6';
-      genBtn.style.cursor = 'not-allowed';
       genBtn.textContent = '✓ Base Wallet Allotted';
 
       var statusEl = document.getElementById('gen-wallet-status');
       if (statusEl) {
         statusEl.textContent = '✓ Dedicated Circle Agent Wallet allotted: ' + addr;
-        statusEl.style.color = '#0F7B4F';
+        statusEl.style.color = 'var(--orange)';
         statusEl.style.fontWeight = '600';
       }
     });
@@ -878,7 +833,14 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     }
 
     btnBack.style.visibility = (step > 1) ? 'visible' : 'hidden';
-    btnContinue.textContent = (step === totalSteps) ? 'Complete Setup & Open Studio →' : 'Continue';
+    
+    if (step === 5) {
+      // Step 5 is Whop Connect Screen (Matching Screenshot 2)
+      document.querySelector('.wizard-actions').style.display = 'none';
+    } else {
+      document.querySelector('.wizard-actions').style.display = 'flex';
+      btnContinue.textContent = (step === totalSteps) ? 'Complete Setup & Open Studio →' : 'Continue';
+    }
   }
 
   btnBack.addEventListener('click', function() {

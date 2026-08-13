@@ -286,6 +286,10 @@ const server = Bun.serve({
       return new Response(null, { status: 302, headers });
     }
 
+    if (url.pathname === '/api/auth/oauth2/callback/whop' || url.pathname === '/auth/whop/callback') {
+      return Response.redirect(new URL('/onboarding?whop=connected', request.url).toString(), 302);
+    }
+
     if (url.pathname === '/auth/logout') {
       const headers = new Headers({ location: '/' });
       headers.append('set-cookie', clearCookie(SESSION_COOKIE, SECURE_COOKIES));

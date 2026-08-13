@@ -544,9 +544,10 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
               <svg width="32" height="32" viewBox="0 0 24 24" fill="#111827"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
             <h2 class="step-title" style="margin-bottom:8px;">Connect your Whop account</h2>
-            <p style="font-size:14px;color:var(--text-2);margin:0 0 32px;max-width:320px;">Link your Whop account to finish setting up your profile.</p>
+            <p style="font-size:14px;color:var(--text-2);margin:0 0 24px;max-width:320px;">Link your Whop account to finish setting up your profile.</p>
 
-            <button type="button" class="btn-continue" id="btn-connect-whop" style="width:100%;max-width:360px;padding:14px;">Connect Whop</button>
+            <button type="button" class="btn-continue" id="btn-connect-whop" style="width:100%;max-width:360px;padding:14px;margin-bottom:12px;">Connect Whop</button>
+            <button type="button" class="btn-back" id="btn-skip-whop" style="width:100%;max-width:360px;padding:12px;">Skip for now →</button>
           </div>
         </div>
 
@@ -787,12 +788,20 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     }
   };
 
-  // Connect Whop Handler (Matching Screenshot 2 -> Redirects to Whop OAuth)
+  // Connect Whop & Skip Handlers
   var btnWhop = document.getElementById('btn-connect-whop');
   if (btnWhop) {
     btnWhop.addEventListener('click', function() {
       var whopUrl = 'https://whop.com/login/?next=%2Foauth%2Fauthorize%3Fclient_id%3Dapp_QRxsQodZgK1r4D%26redirect_uri%3Dhttps%253A%252F%252Fmerlinclips.com%252Fapi%252Fauth%252Foauth2%252Fcallback%252Fwhop%26scope%3Dopenid%2Bprofile%2Bemail%26response_type%3Dcode';
       window.location.href = whopUrl;
+    });
+  }
+
+  var btnSkipWhop = document.getElementById('btn-skip-whop');
+  if (btnSkipWhop) {
+    btnSkipWhop.addEventListener('click', function() {
+      currentStep = 6;
+      showStep(6);
     });
   }
 

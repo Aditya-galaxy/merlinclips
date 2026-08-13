@@ -300,13 +300,16 @@ const server = Bun.serve({
       const session = SESSION_SECRET
         ? await verify(readCookie(request.headers.get('cookie'), SESSION_COOKIE), SESSION_SECRET)
         : undefined;
+      const email = session?.email;
+      const extractedUsername = email ? (email.split('@')[0] ?? '').toLowerCase().replace(/[^a-z0-9_.]/g, '') : undefined;
       return json({
         signedIn: !!session,
         available: !!(OAUTH && SESSION_SECRET),
         creatorId: session?.creatorId,
-        name: session?.name,
+        name: session?.name || 'Creator Account',
         email: session?.email,
         picture: session?.picture,
+        username: extractedUsername || 'creator',
       });
     }
 

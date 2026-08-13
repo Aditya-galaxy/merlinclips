@@ -585,18 +585,18 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       <div class="preview-card-wrap">
         <div class="profile-card">
           <div class="card-top">
-            <div class="card-avatar" id="prev-avatar">T</div>
+            <div class="card-avatar" id="prev-avatar">C</div>
             <div class="card-user-info">
               <div class="card-name-row">
-                <h4 class="card-full-name" id="prev-name">Tester</h4>
+                <h4 class="card-full-name" id="prev-name">Creator</h4>
                 <span class="card-rank-badge" id="prev-rank">Unranked</span>
               </div>
-              <p class="card-handle" id="prev-handle">@tester4webauth</p>
+              <p class="card-handle" id="prev-handle">@creator</p>
             </div>
           </div>
           
           <span class="card-joined" id="prev-joined">Joined Aug 2026</span>
-          <p class="card-bio" id="prev-bio">jhgv</p>
+          <p class="card-bio" id="prev-bio">Short-form Clipper &amp; Content Creator.</p>
           
           <div class="card-tags">
             <span class="card-tag" id="prev-lang">🇺🇸 English</span>
@@ -638,10 +638,11 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(me) {
       if (me && me.signedIn) {
-        if (me.name && !inName.value) inName.value = me.name;
-        if (me.email) {
-          var userPart = me.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-          inHandle.value = userPart || 'tester4webauth';
+        if (me.name) inName.value = me.name;
+        if (me.username) inHandle.value = me.username;
+        else if (me.email) {
+          var userPart = me.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_.]/g, '');
+          inHandle.value = userPart || 'creator';
         }
         if (me.picture) {
           currentAvatarUrl = me.picture;
@@ -657,7 +658,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
       avSm.innerHTML = '<img src="' + src + '" alt="Avatar" />';
       prevAvatar.innerHTML = '<img src="' + src + '" alt="Avatar" />';
     } else {
-      var initial = (inName.value.trim() || 'T').charAt(0).toUpperCase();
+      var initial = (inName.value.trim() || 'C').charAt(0).toUpperCase();
       avSm.textContent = initial;
       prevAvatar.textContent = initial;
     }
@@ -686,9 +687,9 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
   });
 
   function updatePreview() {
-    var name = inName.value.trim() || 'Tester';
-    var handle = inHandle.value.trim() || 'tester4webauth';
-    var bio = inBio.value.trim() || 'jhgv';
+    var name = inName.value.trim() || 'Creator';
+    var handle = inHandle.value.trim() || 'creator';
+    var bio = inBio.value.trim() || 'Short-form Clipper & Content Creator.';
 
     prevName.textContent = name;
     prevHandle.textContent = '@' + handle;

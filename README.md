@@ -1,6 +1,6 @@
 # Merlin Clips
 
-**Pays creators only for views that survived.**
+**Pays creators only for views that survive a 24h retention hold.**
 
 An autonomous agent runs creator marketing campaigns end to end: Gemini judges each clip against the brief, a deterministic engine holds the pool, USDC settles on Base.
 

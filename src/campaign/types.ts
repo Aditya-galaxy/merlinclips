@@ -147,6 +147,13 @@ export interface CreatorAccount {
    * on the record's own timestamp makes replay independent of that.
    */
   readonly updatedAt?: string;
+  /**
+   * Increments on every save. `updatedAt` alone was not enough: two saves in
+   * the same millisecond carry the same timestamp, and the log's tie-break is
+   * a content hash, so the older edit could win. A counter is monotonic
+   * without depending on clock resolution.
+   */
+  readonly revision?: number;
   readonly linkedWallets: readonly LinkedWallet[];
 }
 

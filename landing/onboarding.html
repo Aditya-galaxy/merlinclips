@@ -643,6 +643,27 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     }
   } catch(e) {}
 
+  /* A failed save needs somewhere to be said. Injected next to the button so
+     it appears wherever the wizard currently is, without a step needing to
+     reserve space for an error that usually never happens. */
+  function showSaveError(message) {
+    var host = document.getElementById('onboard-save-error');
+    if (!host) {
+      host = document.createElement('p');
+      host.id = 'onboard-save-error';
+      host.setAttribute('role', 'alert');
+      host.style.cssText = 'margin:12px 0 0;padding:11px 14px;border-radius:9px;'
+        + 'background:var(--bad-wash,#FBECEA);color:var(--bad,#B02A20);font-size:14px;line-height:1.5;';
+      if (btnContinue && btnContinue.parentNode) {
+        btnContinue.parentNode.insertBefore(host, btnContinue.nextSibling);
+      } else {
+        document.body.appendChild(host);
+      }
+    }
+    host.textContent = message;
+    host.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
   var googleStatusBox = document.getElementById('google-status-box');
 
   // Pre-populate Google Account details if signed in
@@ -940,14 +961,38 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
         socials: connectedSocials
       };
 
+      /* The save has to succeed before we celebrate it. This previously
+         swallowed every failure and redirected anyway: a rejected save — an
+         expired session, a wallet the server refused — looked exactly like a
+         successful one, and the creator landed on an empty profile with no
+         idea their details never arrived. */
       try {
         localStorage.setItem('mc_creator_profile', JSON.stringify(profileData));
-        await fetch('/api/me/onboarding', {
+      } catch (e) { /* private browsing: the server copy is the one that counts */ }
+
+      try {
+        var saved = await fetch('/api/me/onboarding', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(profileData)
         });
-      } catch(e) {}
+
+        if (!saved.ok) {
+          var problem = await saved.json().catch(function () { return {}; });
+          btnContinue.disabled = false;
+          btnContinue.textContent = 'Save & Continue';
+          showSaveError(saved.status === 401
+            ? 'Your sign-in expired before we could save this. Sign in again and your answers will still be here.'
+            : (problem.error || 'We could not save your profile just now. Try again in a moment.'));
+          return;
+        }
+      } catch (e) {
+        btnContinue.disabled = false;
+        btnContinue.textContent = 'Save & Continue';
+        showSaveError('No connection, so nothing was saved. Check your network and try again.');
+        return;
+      }
 
       window.location.href = '/profile';
     }

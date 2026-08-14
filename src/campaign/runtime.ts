@@ -863,7 +863,20 @@ export class CampaignRuntime {
    */
   async handleSaveOnboarding(request: Request): Promise<Response> {
     await this.ready();
-    const accountId = (await this.accountFor(request)) || 'anonymous';
+
+    // Refused rather than filed under 'anonymous'. Every signed-out save used
+    // to land on one shared account, so unrelated creators' payout wallets
+    // accumulated in a single record's linkedWallets — and nobody could reach
+    // it afterwards, because reading a profile requires the session that
+    // writing one did not.
+    const accountId = await this.accountFor(request);
+    if (!accountId) {
+      return Response.json(
+        { error: 'sign in before saving a profile — a payout address has to belong to someone' },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
     const existingAcc = this.store.getCreatorAccount(accountId);
@@ -878,8 +891,23 @@ export class CampaignRuntime {
       if (existingAcc?.wallet && existingAcc.wallet.startsWith('0x')) {
         wallet = existingAcc.wallet;
       } else {
-        wallet = '0x0003a59858f44451be2a5b486ee612b4139700f0';
+        // Previously defaulted to the platform's own agent wallet, which meant
+        // a creator who left the field blank had our treasury recorded as
+        // their payout address — their earnings would have settled to us.
+        return Response.json(
+          { error: 'a Base wallet address is required — this is where your USDC is sent',
+            field: 'wallet' },
+          { status: 400 },
+        );
       }
+    }
+
+    if (!/^0x[0-9a-fA-F]{40}$/.test(wallet)) {
+      return Response.json(
+        { error: 'that is not a valid Base address — it should be 0x followed by 40 characters',
+          field: 'wallet' },
+        { status: 400 },
+      );
     }
     
     if (!existingWallets.some((w) => w.address.toLowerCase() === wallet.toLowerCase())) {
@@ -902,6 +930,7 @@ export class CampaignRuntime {
       wallet,
       joinedAt: existingAcc?.joinedAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      revision: (existingAcc?.revision ?? 0) + 1,
       linkedWallets: existingWallets,
     };
 

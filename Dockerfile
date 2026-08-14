@@ -34,10 +34,8 @@ RUN bun install --frozen-lockfile --production 2>/dev/null || bun install --prod
 
 
 COPY src ./src
-# openapi.json is served at /openapi.json and Circle's marketplace requires it
-# so a buying agent can read our contract itself. Omitting it deployed a 404
-# over the one document whose audience is a machine.
-COPY openapi.json ./
+# openapi.json and mcp.json are served at /openapi.json and /mcp.json for agents.
+COPY openapi.json mcp.json ./
 # One service serves the marketing site, the product and the API, so there is
 # one origin, one deploy and no link that only works in local preview.
 COPY landing ./landing

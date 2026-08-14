@@ -610,6 +610,8 @@ const server = Bun.serve({
       '/styles.css': 'landing/styles.css',
       '/logo.svg': 'landing/logo.svg',
       '/favicon.ico': 'landing/logo.svg',
+      '/og.svg': 'landing/og.svg',
+      '/og.png': 'landing/og.svg',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
       '/api.html': 'landing/api.html',

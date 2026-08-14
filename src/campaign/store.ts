@@ -44,7 +44,7 @@ export class CampaignStore implements CampaignView {
     // a hash, so without this an older save could land after a newer one and
     // quietly revert someone's handle.
     const held = this.accounts.get(account.accountId);
-    if (held?.updatedAt && account.updatedAt && held.updatedAt > account.updatedAt) return;
+    if (held && (held.revision ?? 0) > (account.revision ?? 0)) return;
     this.accounts.set(account.accountId, account);
   }
 

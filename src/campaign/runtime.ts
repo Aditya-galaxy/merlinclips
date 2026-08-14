@@ -18,7 +18,7 @@
 
 import { RollingWindowBudget } from '../budget';
 import { Decimal } from '../decimal';
-import { MandateStore } from '../mandates';
+import { MandateStore, issueMandate } from '../mandates';
 import { PaymentPolicyEngine } from '../policy';
 import { PayoutGate } from './payout';
 import {
@@ -263,6 +263,10 @@ export class CampaignRuntime {
     if (this.loaded) return;
     if (this.readyPromise) return this.readyPromise;
     this.readyPromise = this.log.hydrate(this.store).then(() => {
+      // The policy engine reads this.mandates, replay fills this.store. Without
+      // this copy a cold instance boots with no spend authority and refuses
+      // every payout it was funded to make.
+      for (const mandate of this.store.exportState().mandates) this.mandates.put(mandate);
       this.loaded = true;
     }).finally(() => {
       this.readyPromise = undefined;
@@ -1286,8 +1290,41 @@ export class CampaignRuntime {
 
       await this.record({ type: 'creator_upserted', creator });
       const isNew = await this.record({ type: 'submission_accepted', submission });
-
       const terms = submission.acceptedTerms;
+
+      // Spend authority for this creator, bounded by the terms just frozen.
+      //
+      // Issued here rather than granted broadly, because this is the moment the
+      // obligation is created: an operator already approved this campaign, the
+      // chain already confirmed USDC behind its pool, and the clip has been
+      // accepted under caps the campaign itself set. The mandate encodes that
+      // and nothing wider — capped at the per-creator cap, expiring with the
+      // settlement window, naming the campaign it came from.
+      //
+      // It does not widen anything above it: the absolute per-payment ceiling,
+      // the pool, and the rolling velocity limit all still apply, and none of
+      // them can be raised by a mandate.
+      if (isNew && campaign
+        && !this.mandates.liveMandateFor(creator.payoutAddress, { agentId: '*' })) {
+        const expiresInDays = Math.max(
+          1, Math.ceil(campaign.settlementWindowMs / 86_400_000),
+        );
+        const mandate = issueMandate({
+          counterparty: creator.payoutAddress,
+          maxPerPaymentUsdc: terms.perCreatorCapUsdc,
+          issuedBy: 'campaign-acceptance',
+          reason: `clip accepted into ${submission.campaignId}, which an operator `
+            + 'approved after its pool was confirmed on-chain',
+          expiresInDays,
+        });
+        await this.record({ type: 'mandate_issued', mandate });
+        // Into the live store as well as the log. `record` applies to
+        // this.store, and the policy engine reads this.mandates — without this
+        // the authority only became usable after the next cold start, so the
+        // instance that accepted the clip still could not pay for it.
+        this.mandates.put(mandate);
+      }
+
       const status = isNew ? 201 : 200;
       telemetry.recordHttpRequest('/api/submissions', status);
 

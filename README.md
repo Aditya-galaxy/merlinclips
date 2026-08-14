@@ -12,7 +12,7 @@ Built on [Circle's Agent Stack](https://agents.circle.com/) for the **Build with
 
 | Criteria | Implementation & Proof in Merlin Clips |
 |---|---|
-| **1. Business Viability & Real Revenue** | **Real Revenue Model**: Tiered flat platform fees (**$49** Starter, **$199** Growth, **$499** Scale) + ~$0.05 settlement fee per payout.<br>• **Live On-Chain Payout Proof**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277) on Base Mainnet.<br>• **Circle Treasury Wallet**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Verified Live USDC on Base Mainnet). |
+| **1. Business Viability & Real Revenue** | **Real Revenue Model**: Tiered flat platform fees (**$49** Starter, **$199** Growth, **$499** Scale) + ~$0.05 settlement fee per payout.<br>• **On-Chain USDC, Base Mainnet**: agent wallet [`0x0003a598…`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) holds live USDC and has executed Gateway funding operations — [decoded below](#on-chain-usdc-on-base-mainnet-and-what-each-transaction-is). A creator payout has not yet settled on mainnet. |
 | **2. AI-Native Operations** | **Autonomous Production AI**: Multimodal **Gemini AI Clip Verifier** runs inside every hourly tick pass without human intervention. Judges video frames against campaign brief rules, checks text/sound requirements, and rejects non-compliant clips with human-readable rationale before any USDC moves. |
 | **3. Category Impact** | **Redefines Creator Marketing ($3B+ Market)**: Eliminates bot-view fraud (where brands lose $1,500+ per campaign on deleted bot views) by replacing raw view metrics with a 24-hour **View-Dwell Survival Engine**. |
 
@@ -131,36 +131,46 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 
 | Component | State |
 |---|---|
-| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 542 tests, typecheck clean |
+| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 537 tests passing, 10 skipped (the live-money ones), typecheck clean |
 | **Multi-Provider Executor (Circle SDK & CLI)** | **Done** — Uses Circle Developer Controlled Wallets REST API to eliminate 24d session token expiry in Cloud Run, with CLI fallback |
-| **Multi-Platform View Oracles** | **Done** — YouTube Data API (50-video batch), Circle Agent Marketplace for X (x402), Apify Adapter for Instagram Reels |
+| **View Oracle** | **YouTube only** — YouTube Data API, batched 50 videos per call. X returns *cannot tell* (`XOracleUnavailable`) rather than a number; Instagram and TikTok need platform review we do not hold. An oracle that cannot read a platform says so instead of guessing. |
 | **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
 | **Account to Wallet Linkage & Brand Ownership** | **Done** — `CreatorAccount` links multiple EVM wallets; `Campaign` owned by verified `BrandProfile` |
 | **Slack & Discord Webhook Alerts** | **Done** — `WebhookNotifier` dispatches non-blocking alerts for depleted pools, failed payouts, and lease contention |
 | **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, Custom) + ~$0.05 settlement fee |
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
-| **Real On-Chain Payout + Basescan Proof** | **Done** — Base Mainnet [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Verified Live USDC) |
+| **On-Chain USDC, Base Mainnet** | **Wallet funded and moving** — agent wallet [`0x0003a598…`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) holds live USDC and has executed Gateway funding operations on-chain. **A creator payout has not yet settled on mainnet**; the path is exercised end to end against the real CLI, wallet and chain with `--estimate`. |
 | **Cloud Run Deployment** | **Done** — Live on Base Mainnet |
 | **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
 
-### ⛓️ Real On-Chain Base Mainnet Transactions & Judging Verification Proof
+### On-chain USDC on Base Mainnet, and what each transaction is
 
-As proof of real, verifiable USDC settlement and marketplace transactions on **Base Mainnet (Chain ID 8453)** via **Circle's Agent Stack**:
+Decoded rather than described. All three are ERC-4337 UserOperations — Circle
+agent wallets are smart contract accounts, so the top-level `to` on Basescan is
+the EntryPoint (`0x5ff137d4…`) and the sender is a bundler. The USDC movement
+is in the logs, and it is stated here so nobody has to take the label on trust.
 
-- **Active Circle Agent Wallet Address**: [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) (Base Mainnet, Verified Live USDC Balance)
+**Agent wallet:** [`0x0003a59858f44451be2a5b486ee612b4139700f0`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) — live USDC balance on Base Mainnet.
 
-#### Clickable Block Explorer Verification Links (Basescan)
+| Transaction | What the logs show |
+|---|---|
+| [`0x12a6d60c…`](https://basescan.org/tx/0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431) | USDC `approve`, 0.50, spender `0x77777777…` (Circle Gateway) |
+| [`0x66e5c2fa…`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277) | USDC transfer, 0.50, agent wallet → `0x77777777…` (Gateway deposit) |
+| [`0x5b7382dd…`](https://basescan.org/tx/0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f) | USDC transfer, 0.50, agent wallet → `0xdd013075…` |
 
-1. 🏦 **Circle Gateway On-Chain USDC Deposit Transaction**:
-   - **Basescan Tx**: [`0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277`](https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277)
-   - **Details**: Real on-chain USDC deposit ($0.50 USDC) directly into Circle Gateway contract (`0x77777777dcc4d5a8b6e418fd04d8997ef11000ee`) on Base Mainnet.
-2. 🔑 **ERC-20 USDC Smart Contract Approval Transaction**:
-   - **Basescan Tx**: [`0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431`](https://basescan.org/tx/0x12a6d60c852714acb8a3bf892fac738485b23cc38115978544d895e353fa8431)
-   - **Details**: Authorized ERC-20 `approve` call on native Base USDC (`0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`).
-3. ⚡ **Polygon Gateway Eco Transfer Transaction**:
-   - **Basescan Tx**: [`0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f`](https://basescan.org/tx/0x5b7382dd6a929465706d699deb262bc8f56d9b7264a1e28c5021918553e0694f)
-   - **Details**: Fast Eco Gateway deposit to Domain 7 for Circle Marketplace micro-transactions.
+**What these are, precisely.** Gateway funding operations executed by the agent
+wallet — the deposit layer that a nanopayment is later spent *from*. They are
+real USDC moving on mainnet under Circle's Agent Stack.
+
+**What they are not.** None is a purchase from the Agent Marketplace, and none
+is a creator payout. Calling a Gateway deposit a marketplace transaction would
+be describing the funding step as the thing it funds.
+
+The payout path is exercised end to end against the real CLI, wallet and chain
+with `--estimate`, which stops one step short of broadcasting. Two flags —
+`ALLOW_MAINNET` and `BROADCAST` — both have to be set for any of it to move,
+and a settled mainnet payout is the one claim this README does not yet make.
 
 ```bash
 bun install
@@ -171,7 +181,7 @@ bun run src/server.ts     # http://localhost:8080
 ### Verifying it
 
 ```bash
-bun test          # 405 tests
+bun test          # 537 pass, 10 skipped without live credentials
 bun run sweep     # 600,000 simulated decisions, exits non-zero on a violation
 bun run mutate    # breaks each control on purpose; a survivor is a finding
 ```

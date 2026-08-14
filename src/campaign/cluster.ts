@@ -1,21 +1,59 @@
 /**
- * Hierarchical Multi-Agent Cluster & Safe Treasury Splitter.
+ * One wallet per campaign, and the rules that make that mean something.
  *
- * Implements isolated sub-wallets per campaign to eliminate EVM nonce
- * bottlenecks and limit blast radius, while routing all platform fees
- * to a multi-signature Gnosis Safe Treasury wallet.
+ * The single-wallet arrangement has three failures, and only one of them is
+ * about keys:
+ *
+ *   1. Blast radius. One key holds every campaign's pool, so one compromise
+ *      takes all of them.
+ *   2. Nonce coupling. EVM transactions from an address are ordered by nonce,
+ *      so one stuck payout on campaign A stalls payouts on every other
+ *      campaign behind the same address.
+ *   3. Coverage that lies. This is the one that pays the wrong number out.
+ *      `fundingFor` compares a wallet's balance against *one* campaign's pool.
+ *      Point three campaigns at the same wallet holding 100 USDC and each one
+ *      independently reads "fully funded" against a 100 pool — the same
+ *      hundred dollars, promised three times, published to creators as the
+ *      amount left to earn.
+ *
+ * The third is why this module refuses rather than reports. A campaign's
+ * wallet is *exclusive*: assigning an address that already backs another
+ * campaign is rejected at registration, so the arithmetic in `funding.ts`
+ * cannot be asked a question it would answer wrongly.
+ *
+ * ## What this module will not do
+ *
+ * It does not create wallets. The previous version generated twenty random
+ * bytes and called the result a sub-wallet address; nobody holds the key to a
+ * random number, so USDC sent there is destroyed, and the "refund sweep" that
+ * was documented on top of it could never have run. An address is only useful
+ * here if something can sign for it, and that provisioning happens through
+ * Circle by a person who can prove custody — `provisionCommand()` prints the
+ * step rather than pretending to have taken it.
  */
 
 import { Decimal, USDC } from '../decimal';
 
-/**
- * Gnosis Safe Multisig Treasury Address on Base Mainnet.
- * Platform revenue ($49, $199, $499 flat fees) lands here.
- */
-export const DEFAULT_SAFE_TREASURY_ADDRESS =
-  process.env['SAFE_TREASURY_ADDRESS'] ?? '0xSafeTreasury000000000000000000000000000000000000';
+/** A 0x-prefixed, 20-byte hex address. */
+const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
-/** Platform Fee Schedule per Tier */
+/**
+ * Never assignable. The zero address burns, and the string below shipped as
+ * the default treasury: 50 characters, not hex, not an address. Any transfer
+ * routed to either is an unrecoverable loss, so both are refused by name
+ * rather than left to fail somewhere further down.
+ */
+const ZERO = '0x0000000000000000000000000000000000000000';
+const PLACEHOLDER = '0xsafetreasury000000000000000000000000000000000000';
+
+/**
+ * Where platform fees settle. No default: an unset treasury means the splitter
+ * refuses, because the alternative is computing a split against a placeholder
+ * and handing someone a number that looks authoritative.
+ */
+export const SAFE_TREASURY_ADDRESS = process.env['SAFE_TREASURY_ADDRESS']?.trim();
+
+/** Platform fee per tier. */
 export const TIER_PLATFORM_FEES: Record<string, Decimal> = {
   starter: USDC('49.00'),
   growth: USDC('199.00'),
@@ -23,90 +61,168 @@ export const TIER_PLATFORM_FEES: Record<string, Decimal> = {
   custom: USDC('999.00'),
 };
 
-export interface CampaignSubWallet {
-  campaignId: string;
-  walletAddress: string;
-  createdAt: string;
-  status: 'active' | 'drained' | 'refunded';
+export interface CampaignWallet {
+  readonly campaignId: string;
+  readonly address: string;
+  readonly registeredAt: string;
+  /**
+   * How we know somebody can sign for this address. Recorded because an
+   * address with no provenance is indistinguishable from a random number,
+   * which is exactly the bug this module replaces.
+   */
+  readonly custody: 'circle-agent-wallet' | 'operator-supplied';
 }
 
 export interface DepositSplit {
-  treasuryFeeUsdc: Decimal;
-  campaignPoolUsdc: Decimal;
-  treasuryAddress: string;
-  campaignWalletAddress: string;
+  readonly treasuryFeeUsdc: Decimal;
+  readonly campaignPoolUsdc: Decimal;
+  readonly treasuryAddress: string;
+  readonly campaignWalletAddress: string;
+}
+
+export type ClusterError =
+  | { ok: false; error: string; field: 'address' | 'treasury' | 'campaignId' | 'amount' };
+
+export type Registered = { ok: true; wallet: CampaignWallet };
+
+/** The `circle` CLI step that actually creates a wallet somebody holds. */
+export function provisionCommand(campaignId: string): string {
+  return [
+    `# Provision a wallet for ${campaignId}, then register the address it prints:`,
+    'circle wallet create',
+    'circle wallet status',
+  ].join('\n');
 }
 
 export class MultiAgentClusterManager {
-  private readonly subWallets = new Map<string, CampaignSubWallet>();
-  private readonly treasuryAddress: string;
-
-  constructor(treasuryAddress: string = DEFAULT_SAFE_TREASURY_ADDRESS) {
-    this.treasuryAddress = treasuryAddress;
-  }
+  private readonly byCampaign = new Map<string, CampaignWallet>();
+  /** Reverse index, so exclusivity is a lookup rather than a scan. */
+  private readonly byAddress = new Map<string, string>();
 
   /**
-   * Provision or fetch an isolated sub-wallet for a campaign.
+   * Bind an address to a campaign, or explain why not.
+   *
+   * Exclusive on purpose. Two campaigns behind one address is the arrangement
+   * that makes coverage overstate itself, so it is refused here rather than
+   * detected later — by which point the inflated "budget left" has already
+   * been published to creators deciding whether to spend an evening.
    */
-  public getOrCreateCampaignWallet(campaignId: string, customWallet?: string): CampaignSubWallet {
-    const existing = this.subWallets.get(campaignId);
-    if (existing) return existing;
+  register(
+    campaignId: string,
+    address: string,
+    custody: CampaignWallet['custody'] = 'operator-supplied',
+    now: Date = new Date(),
+  ): Registered | ClusterError {
+    const id = campaignId?.trim();
+    if (!id) return { ok: false, error: 'campaignId is required', field: 'campaignId' };
 
-    // Use custom wallet if provided, or derive an isolated sub-wallet address
-    const walletAddress =
-      customWallet ??
-      `0x${Array.from(crypto.getRandomValues(new Uint8Array(20)))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')}`;
+    const addr = address?.trim() ?? '';
+    if (!ADDRESS.test(addr)) {
+      return {
+        ok: false,
+        field: 'address',
+        error: `"${addr}" is not a 0x-prefixed 40-character address. `
+          + 'Wallets are provisioned, never generated here — see provisionCommand().',
+      };
+    }
 
-    const subWallet: CampaignSubWallet = {
-      campaignId,
-      walletAddress,
-      createdAt: new Date().toISOString(),
-      status: 'active',
+    const lower = addr.toLowerCase();
+    if (lower === ZERO || lower === PLACEHOLDER) {
+      return { ok: false, field: 'address', error: 'that address burns funds and cannot back a campaign' };
+    }
+
+    const existing = this.byCampaign.get(id);
+    if (existing) {
+      // Idempotent for the same address; a different one is a real conflict,
+      // because the pool that was published is backed by the first.
+      if (existing.address.toLowerCase() === lower) return { ok: true, wallet: existing };
+      return {
+        ok: false,
+        field: 'address',
+        error: `${id} is already backed by ${existing.address}`,
+      };
+    }
+
+    const claimedBy = this.byAddress.get(lower);
+    if (claimedBy && claimedBy !== id) {
+      return {
+        ok: false,
+        field: 'address',
+        error: `${addr} already backs ${claimedBy}. One wallet cannot cover two pools — `
+          + 'both would report the same balance as their own funding.',
+      };
+    }
+
+    const wallet: CampaignWallet = {
+      campaignId: id,
+      address: addr,
+      registeredAt: now.toISOString(),
+      custody,
     };
+    this.byCampaign.set(id, wallet);
+    this.byAddress.set(lower, id);
+    return { ok: true, wallet };
+  }
 
-    this.subWallets.set(campaignId, subWallet);
-    return subWallet;
+  walletFor(campaignId: string): CampaignWallet | undefined {
+    return this.byCampaign.get(campaignId);
+  }
+
+  /** Which campaign an address backs, if any. Used to enforce exclusivity. */
+  campaignAt(address: string): string | undefined {
+    return this.byAddress.get(address?.trim().toLowerCase() ?? '');
   }
 
   /**
-   * Calculate deposit split between Gnosis Safe Treasury and Campaign Sub-Wallet.
+   * Split a brand's deposit between the platform fee and the campaign pool.
+   *
+   * Computes; it does not transfer. Both destinations are checked first, so
+   * this cannot return a split addressed to a placeholder — the failure mode
+   * of the version it replaces, where every fee was routed to a string that
+   * is not an address.
    */
-  public calculateDepositSplit(
-    totalDepositUsdc: Decimal,
-    campaignWalletAddress: string,
-    tier: keyof typeof TIER_PLATFORM_FEES = 'starter',
-  ): DepositSplit {
-    const treasuryFeeUsdc: Decimal = TIER_PLATFORM_FEES[tier] ?? USDC('49.00');
-    const campaignPoolUsdc = totalDepositUsdc.minus(treasuryFeeUsdc);
+  splitDeposit(campaignId: string, deposited: Decimal, feeUsdc: Decimal): DepositSplit | ClusterError {
+    const treasury = SAFE_TREASURY_ADDRESS;
+    if (!treasury || !ADDRESS.test(treasury) || treasury.toLowerCase() === ZERO) {
+      return {
+        ok: false,
+        field: 'treasury',
+        error: 'SAFE_TREASURY_ADDRESS is unset or not a valid address — refusing to split a deposit',
+      };
+    }
 
-    if (!campaignPoolUsdc.isPositive()) {
-      throw new Error(
-        `Total deposit (${totalDepositUsdc.toString()} USDC) must cover the platform fee (${treasuryFeeUsdc.toString()} USDC)`,
-      );
+    const wallet = this.byCampaign.get(campaignId);
+    if (!wallet) {
+      return { ok: false, field: 'campaignId', error: `${campaignId} has no registered wallet` };
+    }
+    if (feeUsdc.gt(deposited)) {
+      return {
+        ok: false,
+        field: 'amount',
+        error: `fee ${feeUsdc} exceeds the ${deposited} deposited`,
+      };
     }
 
     return {
-      treasuryFeeUsdc,
-      campaignPoolUsdc,
-      treasuryAddress: this.treasuryAddress,
-      campaignWalletAddress,
+      treasuryFeeUsdc: feeUsdc,
+      campaignPoolUsdc: deposited.minus(feeUsdc),
+      treasuryAddress: treasury,
+      campaignWalletAddress: wallet.address,
     };
   }
 
-  /**
-   * Return cluster topology metrics for telemetry and reporting.
-   */
-  public getClusterTopology(): {
-    safeTreasuryAddress: string;
-    activeSubWalletsCount: number;
-    subWallets: CampaignSubWallet[];
+  topology(): {
+    treasuryAddress: string | undefined;
+    campaigns: readonly CampaignWallet[];
+    /** True when no address backs more than one campaign. */
+    isolated: boolean;
   } {
+    const campaigns = [...this.byCampaign.values()];
+    const distinct = new Set(campaigns.map((w) => w.address.toLowerCase()));
     return {
-      safeTreasuryAddress: this.treasuryAddress,
-      activeSubWalletsCount: this.subWallets.size,
-      subWallets: Array.from(this.subWallets.values()),
+      treasuryAddress: SAFE_TREASURY_ADDRESS,
+      campaigns,
+      isolated: distinct.size === campaigns.length,
     };
   }
 }

@@ -1,64 +1,116 @@
+/**
+ * One wallet per campaign, and the refusals that make it true.
+ *
+ * The version this replaces asserted that two generated addresses differed and
+ * matched a hex pattern. Both hold for twenty random bytes, which is what it
+ * was generating — so the suite passed while the thing under test could not
+ * have held a cent. These tests are about custody and exclusivity instead,
+ * because those are the properties that decide whether money survives.
+ */
+
 import { describe, expect, test } from 'bun:test';
-import {
-  DEFAULT_SAFE_TREASURY_ADDRESS,
-  MultiAgentClusterManager,
-  TIER_PLATFORM_FEES,
-} from './cluster';
-import { Decimal } from '../decimal';
 
-describe('Hierarchical Multi-Agent Cluster & Safe Treasury', () => {
-  test('provisions an isolated sub-wallet per campaign', () => {
-    const cluster = new MultiAgentClusterManager();
-    const w1 = cluster.getOrCreateCampaignWallet('camp-1');
-    const w2 = cluster.getOrCreateCampaignWallet('camp-2');
+import { USDC } from '../decimal';
+import { MultiAgentClusterManager, provisionCommand } from './cluster';
 
-    expect(w1.campaignId).toBe('camp-1');
-    expect(w2.campaignId).toBe('camp-2');
-    expect(w1.walletAddress).not.toBe(w2.walletAddress);
-    expect(w1.walletAddress).toMatch(/^0x[a-f0-9]{40}$/i);
-    expect(w2.walletAddress).toMatch(/^0x[a-f0-9]{40}$/i);
+const A = '0x' + 'a'.repeat(40);
+const B = '0x' + 'b'.repeat(40);
+const ZERO = '0x' + '0'.repeat(40);
+
+const ok = <T,>(r: T | { ok: false }): T => {
+  if (r && typeof r === 'object' && 'ok' in r && r.ok === false) {
+    throw new Error(`expected success, got ${JSON.stringify(r)}`);
+  }
+  return r as T;
+};
+
+describe('an address has to be one somebody can sign for', () => {
+  test('a well-formed address registers', () => {
+    const c = new MultiAgentClusterManager();
+    const r = c.register('camp-1', A, 'circle-agent-wallet');
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.wallet.address).toBe(A);
+      expect(r.wallet.custody).toBe('circle-agent-wallet');
+    }
   });
 
-  test('returns existing sub-wallet if fetched again for same campaign', () => {
-    const cluster = new MultiAgentClusterManager();
-    const w1 = cluster.getOrCreateCampaignWallet('camp-alpha');
-    const w2 = cluster.getOrCreateCampaignWallet('camp-alpha');
-
-    expect(w1).toBe(w2);
-    expect(w1.walletAddress).toBe(w2.walletAddress);
+  test('nothing is generated — a missing wallet stays missing', () => {
+    // The previous implementation invented an address on demand. Sending USDC
+    // to twenty random bytes destroys it, so the absence must persist.
+    const c = new MultiAgentClusterManager();
+    expect(c.walletFor('camp-1')).toBeUndefined();
+    expect(provisionCommand('camp-1')).toContain('circle wallet create');
   });
 
-  test('splits deposit accurately between Gnosis Safe Treasury and Campaign Wallet', () => {
-    const cluster = new MultiAgentClusterManager('0xSafeTreasury123456789012345678901234567890123456');
-    const subWallet = cluster.getOrCreateCampaignWallet('camp-beta');
-
-    const totalDeposit = new Decimal('549.00'); // $500 pool + $49 starter fee
-    const split = cluster.calculateDepositSplit(totalDeposit, subWallet.walletAddress, 'starter');
-
-    expect(split.treasuryFeeUsdc.toString()).toBe('49');
-    expect(split.campaignPoolUsdc.toString()).toBe('500');
-    expect(split.treasuryAddress).toBe('0xSafeTreasury123456789012345678901234567890123456');
-    expect(split.campaignWalletAddress).toBe(subWallet.walletAddress);
+  test('a malformed address is refused, not coerced', () => {
+    const c = new MultiAgentClusterManager();
+    for (const bad of ['', 'not-an-address', '0x123', A + 'ff']) {
+      const r = c.register('camp-1', bad);
+      expect(r.ok).toBe(false);
+    }
   });
 
-  test('throws if deposit is less than platform fee', () => {
-    const cluster = new MultiAgentClusterManager();
-    const subWallet = cluster.getOrCreateCampaignWallet('camp-gamma');
+  test('the zero address and the old placeholder are refused by name', () => {
+    const c = new MultiAgentClusterManager();
+    expect(c.register('camp-1', ZERO).ok).toBe(false);
+    // Shipped as the default treasury: 50 characters, not hex, not an address.
+    expect(c.register('camp-2', '0xSafeTreasury000000000000000000000000000000000000').ok).toBe(false);
+  });
+});
 
-    const invalidDeposit = new Decimal('20.00'); // less than $49 fee
-    expect(() => {
-      cluster.calculateDepositSplit(invalidDeposit, subWallet.walletAddress, 'starter');
-    }).toThrow(/must cover the platform fee/);
+describe('one wallet cannot back two pools', () => {
+  test('a second campaign claiming the same address is refused', () => {
+    // The failure this prevents: both campaigns read the same balance as their
+    // own funding, and both publish it to creators as budget left.
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+
+    const second = c.register('camp-2', A);
+    expect(second.ok).toBe(false);
+    if (!second.ok) expect(second.error).toContain('camp-1');
+    expect(c.walletFor('camp-2')).toBeUndefined();
   });
 
-  test('reports active cluster topology for telemetry', () => {
-    const cluster = new MultiAgentClusterManager();
-    cluster.getOrCreateCampaignWallet('camp-100');
-    cluster.getOrCreateCampaignWallet('camp-200');
+  test('re-registering the same pair is idempotent, not a conflict', () => {
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    expect(c.register('camp-1', A).ok).toBe(true);
+  });
 
-    const topology = cluster.getClusterTopology();
-    expect(topology.activeSubWalletsCount).toBe(2);
-    expect(topology.safeTreasuryAddress).toBe(DEFAULT_SAFE_TREASURY_ADDRESS);
-    expect(topology.subWallets.length).toBe(2);
+  test('moving a funded campaign to a different address is refused', () => {
+    // The published pool is backed by the first address; silently repointing
+    // it would leave that promise behind.
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    expect(c.register('camp-1', B).ok).toBe(false);
+  });
+
+  test('topology reports whether isolation actually holds', () => {
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    ok(c.register('camp-2', B));
+    const t = c.topology();
+    expect(t.campaigns).toHaveLength(2);
+    expect(t.isolated).toBe(true);
+  });
+});
+
+describe('splitting a deposit', () => {
+  test('refuses when no treasury is configured', () => {
+    // SAFE_TREASURY_ADDRESS is unset under test. Computing a split against a
+    // placeholder is how every fee got routed to a string that is not an
+    // address, so the refusal is the point.
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    const r = c.splitDeposit('camp-1', USDC('549.00'), USDC('49.00'));
+    expect('ok' in r && r.ok === false).toBe(true);
+    if ('field' in r) expect(r.field).toBe('treasury');
+  });
+
+  test('refuses for a campaign with no registered wallet', () => {
+    const c = new MultiAgentClusterManager();
+    const r = c.splitDeposit('camp-unknown', USDC('549.00'), USDC('49.00'));
+    expect('ok' in r && r.ok === false).toBe(true);
   });
 });

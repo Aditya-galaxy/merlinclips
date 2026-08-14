@@ -46,6 +46,7 @@ import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
 import { isLaunched } from './types';
+import type { Campaign } from './types';
 import type { CreatorAccount } from './types';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
@@ -152,7 +153,15 @@ export class CampaignRuntime {
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
   public readonly locks = new CampaignLockManager();
-  /** Hierarchical multi-agent cluster manager & Safe Treasury splitter. */
+  /**
+   * The campaign-to-wallet registry.
+   *
+   * Nothing in the settlement path reads it yet — payouts still leave the
+   * configured campaign wallet, so nonce isolation is a precondition that is
+   * in place rather than a benefit already realised. The exclusivity rule it
+   * enforces is live though, and `otherClaimsOn()` below is the arithmetic
+   * that stops one balance backing two pools in the meantime.
+   */
   public readonly cluster = new MultiAgentClusterManager();
   /** Token bucket rate limiter for public API doors. */
   public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
@@ -473,7 +482,7 @@ export class CampaignRuntime {
           // What actually backs the budget. A creator decides whether to spend
           // an evening on this number, so it is checked rather than asserted.
           funding: this.balances
-            ? await fundingFor(c, spent, this.balances)
+            ? await fundingFor(c, spent, this.balances, this.otherClaimsOn(c))
             : {
                 campaignId: c.campaignId,
                 fundedUsdc: null,
@@ -1031,7 +1040,7 @@ export class CampaignRuntime {
       totalCommittedMicro += committedMicro;
 
       const funding = this.balances
-        ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances)
+        ? await fundingFor(c, new Decimal(Number(spentMicro) / 1_000_000), this.balances, this.otherClaimsOn(c))
         : undefined;
 
       const perCreatorSpend = Array.from(perCreatorMap.values()).map((pc) => ({
@@ -1355,6 +1364,35 @@ export class CampaignRuntime {
     return null;
   }
 
+  /**
+   * What other campaigns behind the same wallet still expect it to pay.
+   *
+   * A wallet backing two live pools cannot honour both, but `fundingFor`
+   * compares its balance against one pool at a time — so each would read
+   * "fully funded" against the same dollars. Netting the other outstanding
+   * pools off first makes coverage mean "backing available to this campaign".
+   *
+   * Only launched campaigns count. A draft sitting behind the same address has
+   * promised nothing to anyone yet, and treating it as a claim would understate
+   * a wallet that is genuinely funded.
+   */
+  private otherClaimsOn(campaign: Campaign): Decimal {
+    const wallet = campaign.fundingWallet?.toLowerCase();
+    if (!wallet) return new Decimal(0n);
+
+    let micro = 0n;
+    for (const other of this.store.exportState().campaigns) {
+      if (other.campaignId === campaign.campaignId) continue;
+      if (other.fundingWallet?.toLowerCase() !== wallet) continue;
+      if (!isLaunched(other.status)) continue;
+      // What it still owes, not what it started with: money already paid out
+      // has left the wallet and is reflected in the balance we just read.
+      const remaining = other.poolUsdc.micro - this.store.spentOnCampaign(other.campaignId).micro;
+      if (remaining > 0n) micro += remaining;
+    }
+    return new Decimal(micro);
+  }
+
   /** Route handler for on-demand funding balance check for a campaign. */
   async handleCheckFunding(campaignId: string): Promise<Response> {
     await this.ready();
@@ -1364,7 +1402,7 @@ export class CampaignRuntime {
     }
     const spent = this.store.spentOnCampaign(campaignId);
     const funding = this.balances
-      ? await fundingFor(campaign, spent, this.balances)
+      ? await fundingFor(campaign, spent, this.balances, this.otherClaimsOn(campaign))
       : {
           campaignId: campaign.campaignId,
           fundedUsdc: null,
@@ -1457,7 +1495,7 @@ export class CampaignRuntime {
     }
 
     const spent = this.store.spentOnCampaign(campaignId);
-    const funding = await fundingFor(campaign, spent, this.balances);
+    const funding = await fundingFor(campaign, spent, this.balances, this.otherClaimsOn(campaign));
     if (funding.coverage !== 'covered') {
       return Response.json(
         {

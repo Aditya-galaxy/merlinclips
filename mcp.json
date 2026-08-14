@@ -1,0 +1,69 @@
+{
+  "name": "merlinclips-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) Server and ElizaOS Plugin for Merlin Clips autonomous creator payout campaigns on Base.",
+  "homepage": "https://merlinclips.com",
+  "mcpVersion": "1.0.0",
+  "tools": [
+    {
+      "name": "merlinclips_create_campaign",
+      "description": "Create a new short-form video clip bounty campaign with locked CPM rate and 24h retention hold.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "campaignId": { "type": "string", "description": "Unique campaign ID (e.g. camp-eliza01)" },
+          "title": { "type": "string", "description": "Campaign title" },
+          "brief": { "type": "string", "description": "Clip requirements and brief rules for Gemini AI verifier" },
+          "budgetUsdc": { "type": "number", "description": "Total campaign pool budget in USDC" },
+          "cpmRateUsdc": { "type": "number", "description": "USDC payout rate per 1,000 verified views" },
+          "standingFloor": { "type": "string", "enum": ["UNPROVEN", "RELIABLE", "EXCEPTIONAL"] }
+        },
+        "required": ["campaignId", "title", "brief", "budgetUsdc", "cpmRateUsdc"]
+      }
+    },
+    {
+      "name": "merlinclips_submit_clip",
+      "description": "Register a submitted short-form video URL (YouTube Shorts, TikTok, IG Reels, X) for retention tracking.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "campaignId": { "type": "string" },
+          "url": { "type": "string", "description": "Video URL" },
+          "payoutAddress": { "type": "string", "description": "Creator's Base EVM wallet address" }
+        },
+        "required": ["campaignId", "url", "payoutAddress"]
+      }
+    },
+    {
+      "name": "merlinclips_verify_retention",
+      "description": "Query Gemini AI brief compliance and 24h view survival rate for a submission.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "Video URL or submission ID" }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "merlinclips_get_ledger",
+      "description": "Retrieve the public, immutable on-chain USDC settlement ledger and BaseScan transaction hashes.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "merlinclips://ledger",
+      "name": "Live Payout Ledger",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "merlinclips://campaigns",
+      "name": "Active Campaign Briefs",
+      "mimeType": "application/json"
+    }
+  ]
+}

@@ -388,6 +388,13 @@ const server = Bun.serve({
         : json({ error: 'spec not found' }, 404);
     }
 
+    if (url.pathname === '/mcp.json') {
+      const mcp = Bun.file('mcp.json');
+      return (await mcp.exists())
+        ? new Response(mcp, { headers: { 'content-type': 'application/json; charset=utf-8' } })
+        : json({ error: 'mcp spec not found' }, 404);
+    }
+
     if (url.pathname === '/metrics') {
       return new Response(telemetry.toPrometheusFormat(), {
         headers: { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' },
@@ -605,7 +612,12 @@ const server = Bun.serve({
       '/profile.html': 'landing/profile.html',
       '/profile': 'landing/profile.html',
       '/creator': 'landing/profile.html',
-      '/creator/dashboard': 'landing/profile.html',
+      '/ledger.html': 'landing/ledger.html',
+      '/ledger': 'landing/ledger.html',
+      '/audit.html': 'landing/ledger.html',
+      '/audit': 'landing/ledger.html',
+      '/explorer.html': 'landing/ledger.html',
+      '/explorer': 'landing/ledger.html',
       '/terms.html': 'landing/terms.html',
       '/compliance.html': 'landing/compliance.html',
       '/security.html': 'landing/security.html',

@@ -196,6 +196,24 @@
           <a class="btn quiet sm" href="https://faucet.circle.com" target="_blank" rel="noopener">Circle Faucet</a>
         </div>
       </div>
+
+      <!-- Appears only once the chain says the pool is covered. Opening a
+           campaign to creators is an operator's decision, so it asks for the
+           operator secret rather than riding on the brand's session. -->
+      <div class="fund-option-card" id="launch-card" hidden>
+        <div class="fund-option-header">
+          <span class="option-num">✓</span>
+          <h4>Open this campaign to creators</h4>
+        </div>
+        <p class="fine">The pool is covered on-chain. We check it once more at this moment —
+          a campaign whose money has moved will not open.</p>
+        <div class="ff" style="margin:14px 0;">
+          <label for="launch-secret">Operator secret</label>
+          <input id="launch-secret" type="password" autocomplete="off" />
+        </div>
+        <button type="button" class="btn pop" id="launch-btn">Open to creators</button>
+        <p id="launch-status" class="web3-status-text" hidden></p>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -295,6 +313,15 @@
   };
   var COVER = { covered: 'Funded', partial: 'Part funded', empty: 'Unfunded',
                 unknown: 'Not checked', no_wallet: 'No wallet named' };
+  /* A brand should read where their campaign stands, not our enum. */
+  var STATE = {
+    pending_funding: 'Waiting on your deposit — creators cannot see it yet',
+    awaiting_operator_approval: 'Funded. Queued for review before it goes out to creators',
+    active: 'Live — creators can submit',
+    paused: 'Paused — no new clips accepted',
+    ended: 'Ended',
+    draft: 'Draft'
+  };
   var show = function (id, html) {
     var host = document.getElementById(id);
     if (!host) return;
@@ -334,8 +361,20 @@
     }
     var web3Status = document.getElementById('web3-status');
     if (web3Status) { web3Status.hidden = true; web3Status.textContent = ''; }
+    showLaunch(coverage);
     if (modal) modal.hidden = false;
   };
+
+  /* The launch step exists only when the money does. */
+  function showLaunch(coverage) {
+    var card = document.getElementById('launch-card');
+    if (!card) return;
+    card.hidden = coverage !== 'covered';
+    var say = document.getElementById('launch-status');
+    if (say) { say.hidden = true; say.textContent = ''; }
+    var secret = document.getElementById('launch-secret');
+    if (secret) secret.value = '';
+  }
 
   /* Copy Address */
   var copyBtn = document.getElementById('copy-wallet-btn');
@@ -363,16 +402,58 @@
           if (res.ok && res.funding) {
             document.getElementById('fund-coverage-badge').textContent = COVER[res.funding.coverage] || res.funding.coverage;
             var say = res.funding.summary || 'Balance updated.';
+            /* The deposit landing is the moment the campaign moves, so say so
+               here rather than leaving the brand to reload and guess. */
+            if (res.advanced) {
+              say += ' Your campaign is now queued for review — we open it to creators from there.';
+            }
             var statusEl = document.getElementById('web3-status');
             if (statusEl) {
               statusEl.textContent = say;
               statusEl.hidden = false;
             }
+            activeCampaign.coverage = res.funding.coverage;
+            showLaunch(res.funding.coverage);
           }
         })
         .finally(function () {
           refreshBtn.disabled = false;
           refreshBtn.textContent = '🔄 Refresh On-Chain Balance';
+        });
+    };
+  }
+
+  /* Open to creators. Two calls: read the chain, then ask to open. The second
+     refuses on its own if the money moved between them, so this cannot become
+     a button that launches an empty campaign. */
+  var launchBtn = document.getElementById('launch-btn');
+  if (launchBtn) {
+    launchBtn.onclick = function () {
+      if (!activeCampaign || !activeCampaign.campaignId) return;
+      var say = document.getElementById('launch-status');
+      var tell = function (msg) { if (say) { say.textContent = msg; say.hidden = false; } };
+      var secret = (document.getElementById('launch-secret') || {}).value || '';
+      if (!secret.trim()) { tell('Enter the operator secret to open this campaign.'); return; }
+
+      launchBtn.disabled = true;
+      launchBtn.textContent = 'Opening…';
+      fetch('/api/campaigns/' + encodeURIComponent(activeCampaign.campaignId) + '/approve', {
+        method: 'POST',
+        headers: { 'x-operator-secret': secret.trim() }
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) {
+            tell(res.d.summary || res.d.error || 'Could not open this campaign.');
+            return;
+          }
+          tell('Live. Creators can see this campaign and submit clips against it.');
+          document.getElementById('launch-secret').value = '';
+        })
+        .catch(function () { tell('Network error. Try again shortly.'); })
+        .finally(function () {
+          launchBtn.disabled = false;
+          launchBtn.textContent = 'Open to creators';
         });
     };
   }
@@ -473,7 +554,7 @@
           : '';
 
         return row(c.brief.slice(0, 90), [
-          ['Status', c.status],
+          ['Status', STATE[c.status] || c.status],
           ['Pool', money(c.poolUsdc)],
           ['Rate', money(c.cpmUsdc) + ' per 1k views'],
           ['Rate band', c.rateBand ? money(c.rateBand.minUsdc) + ' – ' + money(c.rateBand.maxUsdc) : ''],

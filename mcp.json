@@ -7,18 +7,46 @@
   "tools": [
     {
       "name": "merlinclips_create_campaign",
-      "description": "Create a new short-form video clip bounty campaign with locked CPM rate and 24h retention hold.",
+      "description": "Open a new short-form video clip bounty campaign with a locked CPM rate and 24h retention hold. The campaign opens unfunded: it is invisible to creators and accepts no clips until USDC is on-chain behind its pool and an operator approves it.",
       "parameters": {
         "type": "object",
         "properties": {
-          "campaignId": { "type": "string", "description": "Unique campaign ID (e.g. camp-eliza01)" },
-          "title": { "type": "string", "description": "Campaign title" },
-          "brief": { "type": "string", "description": "Clip requirements and brief rules for Gemini AI verifier" },
-          "budgetUsdc": { "type": "number", "description": "Total campaign pool budget in USDC" },
-          "cpmRateUsdc": { "type": "number", "description": "USDC payout rate per 1,000 verified views" },
-          "standingFloor": { "type": "string", "enum": ["UNPROVEN", "RELIABLE", "EXCEPTIONAL"] }
+          "campaignId": {
+            "type": "string",
+            "description": "Unique campaign ID (e.g. camp-eliza01)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Campaign title"
+          },
+          "brief": {
+            "type": "string",
+            "description": "Clip requirements and brief rules for Gemini AI verifier"
+          },
+          "budgetUsdc": {
+            "type": "number",
+            "description": "Total campaign pool budget in USDC"
+          },
+          "cpmRateUsdc": {
+            "type": "number",
+            "description": "USDC payout rate per 1,000 verified views"
+          },
+          "standingFloor": {
+            "type": "string",
+            "enum": [
+              "UNPROVEN",
+              "RELIABLE",
+              "EXCEPTIONAL"
+            ]
+          }
         },
-        "required": ["campaignId", "title", "brief", "budgetUsdc", "cpmRateUsdc"]
+        "required": [
+          "campaignId",
+          "title",
+          "brief",
+          "budgetUsdc",
+          "cpmRateUsdc"
+        ]
       }
     },
     {
@@ -27,11 +55,23 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "campaignId": { "type": "string" },
-          "url": { "type": "string", "description": "Video URL" },
-          "payoutAddress": { "type": "string", "description": "Creator's Base EVM wallet address" }
+          "campaignId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "Video URL"
+          },
+          "payoutAddress": {
+            "type": "string",
+            "description": "Creator's Base EVM wallet address"
+          }
         },
-        "required": ["campaignId", "url", "payoutAddress"]
+        "required": [
+          "campaignId",
+          "url",
+          "payoutAddress"
+        ]
       }
     },
     {
@@ -40,9 +80,14 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string", "description": "Video URL or submission ID" }
+          "url": {
+            "type": "string",
+            "description": "Video URL or submission ID"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     },
     {
@@ -51,6 +96,22 @@
       "parameters": {
         "type": "object",
         "properties": {}
+      }
+    },
+    {
+      "name": "merlinclips_check_campaign_funding",
+      "description": "Read what is actually on-chain behind a campaign pool, as covered, partial, empty, unknown or no_wallet. A campaign waiting on funding whose pool reads covered moves into the operator approval queue.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "description": "Campaign ID to check"
+          }
+        },
+        "required": [
+          "campaignId"
+        ]
       }
     }
   ],

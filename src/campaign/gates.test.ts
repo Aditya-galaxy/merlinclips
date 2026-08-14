@@ -13,6 +13,7 @@
 
 import { describe, expect, test } from 'bun:test';
 
+import { Decimal } from '../decimal';
 import { MemoryBlobStore } from './persistence';
 import { CampaignRuntime } from './runtime';
 
@@ -124,8 +125,21 @@ describe('the tick is gated by its own secret', () => {
 describe('submitting stays public, because that is the point', () => {
   test('a creator needs no secret to be paid', async () => {
     const rt = runtime({ OPERATOR_SECRET: OPERATOR });
-    const opened = await rt.handleOpenCampaign(post(campaign, { 'x-operator-secret': OPERATOR }));
+    // A funded chain, so the campaign can be carried the whole way from opened
+    // to live — which is what a creator has to be able to submit against.
+    rt.balances = { async usdcBalance() { return new Decimal('100'); } };
+    const opened = await rt.handleOpenCampaign(
+      post({ ...campaign, fundingWallet: '0x' + '1'.repeat(40) }, { 'x-operator-secret': OPERATOR }),
+    );
     const { campaignId } = (await opened.json()) as { campaignId: string };
+    await rt.handleCheckFunding(campaignId);
+    await rt.handleApproveCampaign(
+      new Request('http://localhost/api/campaigns/' + campaignId + '/approve', {
+        method: 'POST',
+        headers: { 'x-operator-secret': OPERATOR },
+      }),
+      campaignId,
+    );
 
     const submit = new Request('http://localhost/api/submissions', {
       method: 'POST',

@@ -393,10 +393,11 @@ footer{border-top:1px solid var(--line);margin-top:36px;padding:26px 0 60px;colo
             <p class="hint">Ensures money is only committed by authorized brand owners &amp; platform operators.</p>
           </div>
 
-          <button type="submit" class="go" id="btn-deploy-campaign" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;margin-top:10px;">🚀 Deploy &amp; Fund Campaign on Base</button>
+          <button type="submit" class="go" id="btn-deploy-campaign" style="width:100%;text-align:center;padding:13px 20px;font-size:15px;border-radius:99px;margin-top:10px;">Create Campaign</button>
           <div id="c-deploy-status" style="margin-top:12px;"></div>
         </form>
       </div>
+
     </section>
   </div>
 
@@ -493,17 +494,21 @@ if (deployForm) {
       if (!r.ok) {
         status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;"><b>Campaign Creation Refused:</b> ' + (data.error || 'Invalid operator secret key or invalid payload.') + '</div>';
       } else {
-        status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--settled-wash);color:var(--settled);font-size:13.5px;"><b>🚀 Campaign Activated on Base!</b> Campaign ID <code>' + data.campaignId + '</code> published. Pool funded with $' + Number(data.poolUsdc).toFixed(2) + ' USDC.</div>';
+        /* Created, not live. Nothing reaches creators until USDC is on-chain
+           behind the pool and someone approves it — saying "activated" here
+           would promise a budget that does not exist yet. */
+        status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--settled-wash);color:var(--settled);font-size:13.5px;"><b>Campaign created — waiting on funding.</b> Campaign ID <code>' + data.campaignId + '</code>. Send $' + Number(data.poolUsdc).toFixed(2) + ' USDC to <code>' + (data.fundingWallet || 'the campaign wallet') + '</code>, then take it live below. Creators cannot see it until then.</div>';
         deployForm.reset();
       }
     } catch (err) {
       status.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--refused-wash);color:var(--refused);font-size:13.5px;">Network error deploying campaign. Check your connection.</div>';
     } finally {
       btn.disabled = false;
-      btn.textContent = '🚀 Deploy & Fund Campaign on Base';
+      btn.textContent = 'Create Campaign';
     }
   });
 }
+
 </script>
 </body>
 </html>

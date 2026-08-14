@@ -43,6 +43,7 @@ import { proposeRateFor } from './agent';
 import { applyRate } from './rate';
 import { campaignTelemetry, viewVelocity } from './telemetry';
 import type { CampaignStore } from './store';
+import { isLaunched } from './types';
 import type { Campaign, Creator, Submission } from './types';
 
 /** Retrieves a view count from the platform. Never from the creator. */
@@ -129,9 +130,9 @@ export async function runTick(
   // Not `status === 'active'`. A paused or ended campaign still owes on clips
   // it already accepted, and skipping it here would honour the terms in the
   // gate while never asking the gate — the guarantee would hold in a unit test
-  // and quietly fail in production. Only a draft has nothing to settle, and
+  // and quietly fail in production. Only a campaign that never went live has nothing to settle, and
   // `terms_expired` is what actually ends the obligation.
-  const campaigns = store.exportState().campaigns.filter((c) => c.status !== 'draft');
+  const campaigns = store.exportState().campaigns.filter((c) => isLaunched(c.status));
   const submissions = store.exportState().submissions;
 
   for (const campaign of campaigns) {

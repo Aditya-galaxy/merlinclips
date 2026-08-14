@@ -24,3 +24,6 @@ RUNBOOK.md
 
 # Local-only credential scratch files
 check-*.local.ts
+
+# Internal AI Agent Handoff Manual
+MERLINCLIPS_AGENT_HANDOFF.md

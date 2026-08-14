@@ -37,6 +37,7 @@
   --ok-wash: #E7F4EE;
   --warn: #8A5A00;
   --warn-wash: #FBF1DF;
+  --bad: #B02A20;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -195,6 +196,29 @@ td {
 }
 tr:last-child td { border-bottom: 0; }
 
+/* An empty table here is a result, not a failure, so it gets room to say what
+   it means rather than being a blank strip. */
+.empty-cell {
+  padding: 26px 16px; text-align: center; color: var(--muted);
+  font-size: 13.5px; line-height: 1.5;
+}
+.notice {
+  margin: 0 0 18px; padding: 12px 15px; border-radius: 10px;
+  background: var(--warn-wash); color: var(--warn);
+  font-size: 13.5px; line-height: 1.5; font-weight: 600;
+}
+.cover {
+  font-size: 11.5px; padding: 3px 8px; border-radius: 4px; font-weight: 600;
+  background: var(--surface-2);
+}
+.cover-ok { color: var(--ok); }
+.cover-warn { color: var(--warn); }
+.cover-bad { color: var(--bad); }
+.cover-muted { color: var(--muted); }
+.fineprint {
+  margin: 26px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6;
+}
+
 .status-tag {
   display: inline-flex;
   align-items: center;
@@ -243,29 +267,36 @@ tr:last-child td { border-bottom: 0; }
     </div>
   </div>
 
+  <!-- Every figure below is read from /api/campaign at load. Nothing on this
+       page is typed in by hand: this is the page that asks creators to trust
+       our arithmetic, so it is the last place that should carry a number
+       nobody can check. -->
+
+  <p id="notice" class="notice" hidden></p>
+
   <!-- Key Metrics Summary -->
   <div class="grid-3">
     <div class="card">
       <span class="card-title">Total Settled USDC</span>
-      <span class="card-num" style="color:var(--ok);">$142.50</span>
-      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;">✓ Verified Base Mainnet Payouts</span>
+      <span class="card-num" style="color:var(--ok);" id="m-settled">—</span>
+      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;" id="m-settled-sub">Paid on Base, verifiable below</span>
     </div>
     <div class="card">
-      <span class="card-title">Active 24h Dwell Pipeline</span>
-      <span class="card-num" style="color:var(--warn);">$35.00</span>
-      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;">⏳ Maturing 24h Retention Holds</span>
+      <span class="card-title">Surviving Views Paid For</span>
+      <span class="card-num" id="m-views">—</span>
+      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;">Views that held for the full 24h</span>
     </div>
     <div class="card">
-      <span class="card-title">Bot View Rejection Rate</span>
-      <span class="card-num" style="color:var(--pop);">98.4%</span>
-      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;">Surviving View Retention Rate</span>
+      <span class="card-title">Open Campaigns</span>
+      <span class="card-num" style="color:var(--pop);" id="m-campaigns">—</span>
+      <span style="font-size:12.5px;color:var(--text-2);display:block;margin-top:4px;" id="m-campaigns-sub">Accepting clips now</span>
     </div>
   </div>
 
   <!-- Active Campaign Pools -->
   <div class="section-title">
-    <span>Active Campaign Pools</span>
-    <span style="font-size:13px;font-weight:600;color:var(--muted);">Updated Live</span>
+    <span>Open Campaign Pools</span>
+    <span style="font-size:13px;font-weight:600;color:var(--muted);">Read live from the engine</span>
   </div>
 
   <div class="table-wrap">
@@ -276,35 +307,20 @@ tr:last-child td { border-bottom: 0; }
           <th>Campaign Brief</th>
           <th>CPM Rate</th>
           <th>Remaining Pool</th>
-          <th>Standing Floor</th>
+          <th>Backed On-Chain</th>
           <th>Status</th>
         </tr>
       </thead>
       <tbody id="tbl-campaigns">
-        <tr>
-          <td><code style="font-family:var(--mono);">camp-bb2bd198</code></td>
-          <td><b>Showcase Merlin Clips</b><br><span style="font-size:12px;color:var(--muted);">Short-form video clip bounty for Merlin Clips</span></td>
-          <td><b>$1.00 USDC</b> / 1k views</td>
-          <td><b style="color:var(--ok);">$42.50 USDC</b></td>
-          <td><span style="font-size:11.5px;padding:3px 8px;border-radius:4px;background:var(--surface-2);font-weight:600;">UNPROVEN FLOOR</span></td>
-          <td><span class="status-tag settled">● Active</span></td>
-        </tr>
-        <tr>
-          <td><code style="font-family:var(--mono);">camp-x402base</code></td>
-          <td><b>Base Agentic Payments Spotlight</b><br><span style="font-size:12px;color:var(--muted);">Circle Agent Wallets on Base L2</span></td>
-          <td><b>$1.50 USDC</b> / 1k views</td>
-          <td><b style="color:var(--ok);">$100.00 USDC</b></td>
-          <td><span style="font-size:11.5px;padding:3px 8px;border-radius:4px;background:var(--surface-2);font-weight:600;">RELIABLE FLOOR</span></td>
-          <td><span class="status-tag settled">● Active</span></td>
-        </tr>
+        <tr><td colspan="6" class="empty-cell">Loading…</td></tr>
       </tbody>
     </table>
   </div>
 
   <!-- Live On-Chain Payout Ledger -->
   <div class="section-title">
-    <span>Verified Base Mainnet Settlement Ledger</span>
-    <span style="font-size:13px;font-weight:600;color:var(--muted);">Immutable Audit Trail</span>
+    <span>Base Mainnet Settlement Ledger</span>
+    <span style="font-size:13px;font-weight:600;color:var(--muted);">Every payout, or none</span>
   </div>
 
   <div class="table-wrap">
@@ -314,31 +330,148 @@ tr:last-child td { border-bottom: 0; }
           <th>Timestamp</th>
           <th>Campaign</th>
           <th>Surviving Views</th>
-          <th>Retention Status</th>
           <th>Earned USDC</th>
           <th>BaseScan Transaction</th>
         </tr>
       </thead>
       <tbody id="tbl-ledger">
-        <tr>
-          <td style="font-family:var(--mono);font-size:12.5px;">2026-08-13 14:22 UTC</td>
-          <td><code style="font-family:var(--mono);">camp-bb2bd198</code></td>
-          <td><b>142,500 views</b></td>
-          <td><span class="status-tag settled">✓ 24h Dwell Passed</span></td>
-          <td><b style="color:var(--ok);">$142.50 USDC</b></td>
-          <td><a href="https://basescan.org/tx/0x66e5c2faf60ba47853852f4d2cc27cd27bce1b014e12181f59d496d287b16277" target="_blank" rel="noopener" class="tx-link">0x66e5c2fa...b16277 ↗</a></td>
-        </tr>
-        <tr>
-          <td style="font-family:var(--mono);font-size:12.5px;">2026-08-13 18:10 UTC</td>
-          <td><code style="font-family:var(--mono);">camp-x402base</code></td>
-          <td><b>35,000 views</b></td>
-          <td><span class="status-tag holding">⏳ 24h Dwell Active</span></td>
-          <td><b style="color:var(--warn);">$35.00 Pending</b></td>
-          <td><span style="font-size:12px;color:var(--muted);">Pending 24h Hold</span></td>
-        </tr>
+        <tr><td colspan="5" class="empty-cell">Loading…</td></tr>
       </tbody>
     </table>
   </div>
+
+  <p class="fineprint">
+    Recompute any of this yourself: campaign state comes from
+    <a href="/api/campaign"><code>/api/campaign</code></a>. A settled row carries the
+    Base transaction that moved the USDC, so the amount here and the amount on-chain
+    are the same number or this page is wrong.
+  </p>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var money = function (v) {
+    var n = Number(v || 0);
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var whole = function (v) { return Number(v || 0).toLocaleString('en-US'); };
+  var when = function (iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+    } catch (e) { return iso; }
+  };
+
+  /* Coverage in the words a creator needs: is there money behind this or not. */
+  var COVER = {
+    covered: ['Fully funded', 'ok'],
+    partial: ['Part funded', 'warn'],
+    empty: ['Nothing funded', 'bad'],
+    unknown: ['Could not check', 'muted'],
+    no_wallet: ['No wallet named', 'bad']
+  };
+
+  var row = function (cells) { return '<tr>' + cells.join('') + '</tr>'; };
+  var empty = function (span, msg) {
+    return '<tr><td colspan="' + span + '" class="empty-cell">' + msg + '</td></tr>';
+  };
+
+  fetch('/api/campaign', { headers: { accept: 'application/json' } })
+    .then(function (r) {
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    })
+    .then(function (d) {
+      var campaigns = d.campaigns || [];
+      var payouts = d.payouts || [];
+
+      /* Summary. Settled is the sum of what actually moved, not a target. */
+      var settled = payouts.reduce(function (t, p) { return t + Number(p.amountUsdc || 0); }, 0);
+
+      /* `viewsPaidTo` is a high-water mark per submission, not an increment, so
+         a clip paid twice must not be counted twice. Take the largest mark each
+         submission reached, then add those up. Derived from the same rows the
+         table below renders, so the headline and the detail cannot disagree. */
+      var high = {};
+      payouts.forEach(function (p) {
+        var v = Number(p.viewsPaidTo || 0);
+        if (!(p.submissionId in high) || v > high[p.submissionId]) high[p.submissionId] = v;
+      });
+      var views = Object.keys(high).reduce(function (t, k) { return t + high[k]; }, 0);
+      $('m-settled').textContent = money(settled);
+      $('m-views').textContent = whole(views);
+      $('m-campaigns').textContent = String(campaigns.length);
+
+      if (!payouts.length) {
+        /* Said plainly rather than shown as $0.00 with a confident tick. */
+        $('m-settled-sub').textContent = 'No creator payout has settled yet';
+      }
+      if (!campaigns.length) {
+        $('m-campaigns-sub').textContent = 'None are open to creators right now';
+      }
+
+      /* A campaign nobody can verify views for cannot pay, and saying so here
+         is cheaper than a creator finding out after editing all evening. */
+      var warn = [];
+      if (d.viewOracle && d.viewOracle.indexOf('not configured') === 0) {
+        warn.push('The view oracle is not configured on this deployment, so no view can be confirmed and nothing can settle.');
+      }
+      if (d.ephemeral) {
+        warn.push('This deployment is using ephemeral storage — campaign state does not survive a restart.');
+      }
+      if (warn.length) {
+        $('notice').textContent = warn.join(' ');
+        $('notice').hidden = false;
+      }
+
+      $('tbl-campaigns').innerHTML = campaigns.length
+        ? campaigns.map(function (c) {
+            var cov = (c.funding && c.funding.coverage) || 'unknown';
+            var label = COVER[cov] || [cov, 'muted'];
+            var backed = c.funding && c.funding.fundedUsdc != null
+              ? ' <span style="color:var(--muted);font-size:12px;">(' + money(c.funding.fundedUsdc) + ')</span>'
+              : '';
+            return row([
+              '<td><code style="font-family:var(--mono);">' + esc(c.campaignId) + '</code></td>',
+              '<td><b>' + esc(String(c.brief || '').slice(0, 90)) + '</b></td>',
+              '<td><b>' + money(c.cpmUsdc) + ' USDC</b> / 1k views</td>',
+              '<td><b style="color:var(--ok);">' + money(c.remainingUsdc) + ' USDC</b></td>',
+              '<td><span class="cover cover-' + esc(label[1]) + '">' + esc(label[0]) + '</span>' + backed + '</td>',
+              '<td><span class="status-tag settled">● ' + esc(c.status) + '</span></td>'
+            ]);
+          }).join('')
+        : empty(6, 'No campaigns are open to creators right now.');
+
+      $('tbl-ledger').innerHTML = payouts.length
+        ? payouts.map(function (p) {
+            var tx = p.txHash
+              ? '<a href="' + esc(p.explorerUrl || ('https://basescan.org/tx/' + p.txHash)) + '" target="_blank" rel="noopener" class="tx-link">'
+                  + esc(p.txHash.slice(0, 10)) + '…' + esc(p.txHash.slice(-6)) + ' ↗</a>'
+              : '<span style="font-size:12px;color:var(--muted);">Recorded, not broadcast</span>';
+            return row([
+              '<td style="font-family:var(--mono);font-size:12.5px;">' + esc(when(p.at)) + '</td>',
+              '<td><code style="font-family:var(--mono);">' + esc(p.campaignId) + '</code></td>',
+              '<td><b>' + whole(p.viewsPaidTo) + ' views</b></td>',
+              '<td><b style="color:var(--ok);">' + money(p.amountUsdc) + ' USDC</b></td>',
+              '<td>' + tx + '</td>'
+            ]);
+          }).join('')
+        : empty(5, 'No creator payout has settled on Base yet. When one does it appears here, with the transaction that moved it.');
+    })
+    .catch(function () {
+      $('tbl-campaigns').innerHTML = empty(6, 'Could not load campaign state just now.');
+      $('tbl-ledger').innerHTML = empty(5, 'Could not load the settlement ledger just now.');
+      $('m-settled').textContent = '—';
+      $('m-views').textContent = '—';
+      $('m-campaigns').textContent = '—';
+    });
+})();
+</script>
 
 </div>
 

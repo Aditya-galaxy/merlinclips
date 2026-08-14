@@ -205,7 +205,34 @@ Two flags govern real money, and **both** are required for any of it to move on 
 | `ALLOW_MAINNET` | *Which network is this deployment on?* Selects the wallet and stops the policy engine refusing mainnet chains. |
 | `BROADCAST` | *Should a decision actually move money?* Without it the CLI runs `--estimate` — real wallet, real chain, no broadcast. |
 
-They are deliberately separate. Conflated, the only way to settle a real *testnet* payout was to set the flag that also unlocked *mainnet*. The wallet is chosen **by** the network rather than configured beside it, so arming mainnet while still pointed at the testnet wallet is not an expressible configuration — the runtime refuses to start. `deploy.sh` never forwards either flag: a deploy lands estimate-only, and arming real money is a decision someone makes rather than one inherited from a shell.
+## 🔒 Security Architecture: Operator Gate & MCP Integrations
+
+### 1. Operator Gate vs. Brand Role Boundary
+
+Declaring a campaign pool is a **financial liability commitment** on Base Mainnet. To prevent unfunded pools, unauthorized briefs, or treasury drain attacks, Merlin Clips enforces a strict two-tier role boundary:
+
+```
+[Brand / Agent Form] ➔ [USDC Deposit to Base Wallet] ➔ [RPC Deposit Check] ➔ [1-Click Operator Launch] ➔ [Live Payout Pool]
+```
+
+- **The Brand / Client (Unauthenticated Intake)**: External brands, protocols, or AI agents submit campaign proposals via `POST /api/brand-enquiry` or `/launch.html`. Proposals are saved as `pending_funding` with on-chain deposit instructions (`0x0003a59858f44451be2a5b486ee612b4139700f0`).
+- **On-Chain Deposit Verification**: The backend continuously checks Base Mainnet RPC balance to verify that the required USDC deposit has landed in the agent wallet.
+- **The Operator (Merlin Clips Team)**: The Merlin Clips team holds the `OPERATOR_SECRET` (deliberately separate from `TICK_SECRET`). Only after on-chain deposit is confirmed does the operator have 1-click **[Approve & Launch 🚀]** or **[Deny & Refund ❌]** control to activate the pool live on `/ledger`.
+
+---
+
+### 🤖 2. Model Context Protocol (MCP) & ElizaOS Integration (`/mcp.json`)
+
+Merlin Clips natively exports an **MCP Server Specification** ([`https://merlinclips.com/mcp.json`](https://merlinclips.com/mcp.json)) allowing autonomous AI agents (ElizaOS, Claude, Cursor) to manage campaigns programmatically:
+
+| MCP Tool Name | Function & Purpose |
+|---|---|
+| `merlinclips_create_campaign` | Declare a new clip bounty campaign (requires agent's operator token). |
+| `merlinclips_submit_clip` | Register a submitted short-form video URL (Shorts, TikTok, Reels, X). |
+| `merlinclips_verify_retention` | Query Gemini AI compliance verdict and 24h view survival rate. |
+| `merlinclips_get_ledger` | Fetch the public, immutable on-chain USDC settlement ledger & BaseScan hashes. |
+
+---
 
 **Scope, stated plainly.** YouTube and X only — Instagram, Facebook and TikTok need Meta/TikTok app review, which runs 2–6 weeks. We do not claim to detect bots better than anyone; we bound the damage and make every decision auditable. Payouts at scale are regulated, and this operates at demo scale.
 

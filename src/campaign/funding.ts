@@ -52,6 +52,20 @@ export async function fundingFor(
   campaign: Campaign & { fundingWallet?: string },
   committed: Decimal,
   reader: BalanceReader,
+  /**
+   * What other campaigns behind this same wallet still expect it to pay.
+   *
+   * Without this the balance is compared against one pool at a time, so three
+   * campaigns sharing a wallet holding 100 USDC each read "fully funded"
+   * against a 100 pool — the same hundred dollars promised three times, and
+   * published to creators as the amount left to earn. Subtracting the other
+   * claims first makes the number mean "backing available to *this* campaign".
+   *
+   * `cluster.ts` refuses to register a shared wallet, so this should normally
+   * be zero; it is honoured here because campaigns predating that rule exist,
+   * and the safe direction is to understate rather than overstate.
+   */
+  otherClaimsUsdc: Decimal = new Decimal(0n),
 ): Promise<FundingStatus> {
   const pool = campaign.poolUsdc;
   const base = {
@@ -89,11 +103,29 @@ export async function fundingFor(
   }
 
   const funded = balance.toString();
-  if (balance.micro === 0n) {
-    return { ...base, fundedUsdc: funded, coverage: 'empty',
-      summary: 'Nothing is funded yet. Do not start on this one.' };
+
+  // What is left for this campaign once the other pools behind this wallet
+  // have been honoured. Clamped at zero: a wallet oversubscribed past its
+  // balance backs nothing here, and a negative "available" would read as a
+  // credit.
+  const availableMicro = balance.micro - otherClaimsUsdc.micro;
+  const available = new Decimal(availableMicro > 0n ? availableMicro : 0n);
+  const shared = otherClaimsUsdc.micro > 0n;
+  const alsoBacking = shared
+    ? ` ${funded} USDC sits here but ${otherClaimsUsdc} of it is already promised to other campaigns.`
+    : '';
+
+  if (available.micro === 0n) {
+    return {
+      ...base,
+      fundedUsdc: funded,
+      coverage: 'empty',
+      summary: shared
+        ? `Nothing is left for this campaign.${alsoBacking} Do not start on this one.`
+        : 'Nothing is funded yet. Do not start on this one.',
+    };
   }
-  if (balance.micro >= pool.micro) {
+  if (available.micro >= pool.micro) {
     return { ...base, fundedUsdc: funded, coverage: 'covered',
       summary: `Fully funded. ${funded} USDC is on-chain behind a ${pool} budget.` };
   }
@@ -102,7 +134,7 @@ export async function fundingFor(
     fundedUsdc: funded,
     coverage: 'partial',
     summary:
-      `Partly funded — ${funded} USDC on-chain against a ${pool} budget. ` +
+      `Partly funded — ${available} USDC backs a ${pool} budget.${alsoBacking} ` +
       'Only what is funded can be paid.',
   };
 }

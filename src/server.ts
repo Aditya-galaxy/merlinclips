@@ -383,6 +383,14 @@ const server = Bun.serve({
       return campaigns.handleCheckFunding(checkFundingMatch[1]!);
     }
 
+    // An operator takes a funded campaign live. Deliberately separate from the
+    // funding check above: money arriving is a fact, publishing a brief to
+    // creators is a decision.
+    const approveMatch = url.pathname.match(/^\/api\/campaigns\/([A-Za-z0-9._-]+)\/approve$/);
+    if (approveMatch && request.method === 'POST') {
+      return campaigns.handleApproveCampaign(request, approveMatch[1]!);
+    }
+
     // The machine-readable contract. Circle's marketplace requires a published
     // OpenAPI spec so a buying agent can read the inputs and outputs itself
     // rather than being told about them by a human.

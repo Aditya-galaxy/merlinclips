@@ -222,7 +222,12 @@ export function openCampaign(
       ownerId: typeof input.ownerId === 'string' ? input.ownerId.trim() : undefined,
       minStanding: minStanding as Campaign['minStanding'],
       reservedForUnproven: reserved,
-      status: 'active',
+      // Not live. A pool is a number until a deposit lands behind it, and the
+      // complaint this product exists to answer is a creator editing all
+      // evening against a budget nobody had checked. So a new campaign opens
+      // `pending_funding`, a balance read moves it to the approval queue, and
+      // an operator takes it live from there.
+      status: 'pending_funding',
       startsAt: now.toISOString(),
       endsAt: new Date(endsAtMs).toISOString(),
     },

@@ -19,7 +19,35 @@ import type { Standing } from './standing';
 /** Where a clip was posted. Only these two can be verified without app review. */
 export type Platform = 'youtube' | 'x';
 
-export type CampaignStatus = 'draft' | 'active' | 'paused' | 'ended';
+export type CampaignStatus =
+  /** Written down, nothing behind it yet. */
+  | 'draft'
+  /** A brand has asked for it; we are watching the chain for their deposit. */
+  | 'pending_funding'
+  /** The deposit landed. A person decides whether it goes live. */
+  | 'awaiting_operator_approval'
+  | 'active'
+  | 'paused'
+  | 'ended';
+
+/**
+ * Statuses that have not gone live, and therefore owe nobody anything.
+ *
+ * A set rather than a comparison at each call site. The payout gate used to
+ * check `status === 'draft'`, so adding a status without finding every such
+ * line would have let a campaign that had not been funded or approved through
+ * the gate and out the other side as a payment. Membership here is the
+ * question — "is this live" — and new statuses join the safe side by being
+ * added to this list rather than by everyone remembering to exclude them.
+ */
+export const PRE_LAUNCH: ReadonlySet<CampaignStatus> = new Set([
+  'draft', 'pending_funding', 'awaiting_operator_approval',
+]);
+
+/** True once a campaign has gone live, whatever happened to it since. */
+export function isLaunched(status: CampaignStatus): boolean {
+  return !PRE_LAUNCH.has(status);
+}
 
 export interface Campaign {
   readonly campaignId: string;

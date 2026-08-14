@@ -1,10 +1,10 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Merlin Clips — clip verification",
+    "title": "Merlin Clips \u2014 clip verification",
     "version": "1.0.0",
     "summary": "Does this clip meet the brief, and how many of its views survived?",
-    "description": "A paid API for agents running creator marketing campaigns.\n\nGiven a post URL and a campaign brief, returns (a) whether the clip satisfies the brief, judged by a multimodal model, and (b) how many of its views have **persisted** rather than merely appeared.\n\nThe second number is the point. Inflated view counts are typically scrubbed by the platform after the fact, which is why campaigns pay for views that later turn out not to exist — one documented case paid $1,500 for ~845,000 views that were 99.999% bots. This service reports the count that survived a dwell window instead of the count that was claimed.\n\n**The first call on a given post starts the clock.** A post seen for the first time has no history to compare against, so `views.confirmed` is `null` and `views.pending` explains why. Call again after the dwell window and the surviving figure is returned. Fields that cannot be answered are always `null` with a stated reason — never a plausible-looking zero.\n\nPayment is x402: an unpaid request returns `402 Payment Required` with the payment requirements. No account and no API key.\n\n**Three tiers.** `/api/verify/preview` is free and answers whether we can handle a link, whether it is already tracked, and when a surviving figure will exist — it deliberately omits the numbers. `/api/views` returns the counts without a verdict, an order of magnitude cheaper because no model runs. `/api/verify` adds the brief judgment.",
+    "description": "A paid API for agents running creator marketing campaigns.\n\nGiven a post URL and a campaign brief, returns (a) whether the clip satisfies the brief, judged by a multimodal model, and (b) how many of its views have **persisted** rather than merely appeared.\n\nThe second number is the point. Inflated view counts are typically scrubbed by the platform after the fact, which is why campaigns pay for views that later turn out not to exist \u2014 one documented case paid $1,500 for ~845,000 views that were 99.999% bots. This service reports the count that survived a dwell window instead of the count that was claimed.\n\n**The first call on a given post starts the clock.** A post seen for the first time has no history to compare against, so `views.confirmed` is `null` and `views.pending` explains why. Call again after the dwell window and the surviving figure is returned. Fields that cannot be answered are always `null` with a stated reason \u2014 never a plausible-looking zero.\n\nPayment is x402: an unpaid request returns `402 Payment Required` with the payment requirements. No account and no API key.\n\n**Three tiers.** `/api/verify/preview` is free and answers whether we can handle a link, whether it is already tracked, and when a surviving figure will exist \u2014 it deliberately omits the numbers. `/api/views` returns the counts without a verdict, an order of magnitude cheaper because no model runs. `/api/verify` adds the brief judgment.",
     "contact": {
       "url": "https://github.com/Aditya-galaxy/merlinclips"
     },
@@ -69,7 +69,7 @@
       "post": {
         "operationId": "clipViews",
         "summary": "Latest and surviving view counts. No verdict.",
-        "description": "Price: 0.005 USDC per call — a tenth of `/api/verify`, because no model runs. A `brief` sent here is not judged; the response says so rather than dropping it silently.",
+        "description": "Price: 0.005 USDC per call \u2014 a tenth of `/api/verify`, because no model runs. A `brief` sent here is not judged; the response says so rather than dropping it silently.",
         "requestBody": {
           "required": true,
           "content": {
@@ -91,7 +91,7 @@
         },
         "responses": {
           "200": {
-            "description": "Verification result. Check `errors` — a 200 may still carry null fields.",
+            "description": "Verification result. Check `errors` \u2014 a 200 may still carry null fields.",
             "content": {
               "application/json": {
                 "schema": {
@@ -161,7 +161,7 @@
         },
         "responses": {
           "200": {
-            "description": "Verification result. Check `errors` — a 200 may still carry null fields.",
+            "description": "Verification result. Check `errors` \u2014 a 200 may still carry null fields.",
             "content": {
               "application/json": {
                 "schema": {
@@ -215,11 +215,11 @@
       "post": {
         "operationId": "openCampaign",
         "summary": "Open a new creator marketing campaign (Operator-gated)",
-        "description": "Requires `x-operator-secret` header matching `OPERATOR_SECRET`.",
+        "description": "Requires `x-operator-secret` header matching `OPERATOR_SECRET`. A new campaign opens `pending_funding` \u2014 it is not visible to creators and accepts no clips until USDC is on-chain behind its pool and an operator approves it.",
         "security": [],
         "responses": {
           "201": {
-            "description": "Campaign created successfully."
+            "description": "Campaign created, waiting on funding. Not yet open to creators."
           },
           "401": {
             "description": "Unauthorised."
@@ -305,6 +305,47 @@
           }
         }
       }
+    },
+    "/api/campaigns/{id}/check-funding": {
+      "post": {
+        "operationId": "checkCampaignFunding",
+        "summary": "Read what is actually on-chain behind a campaign pool",
+        "description": "Public. Reports coverage as covered | partial | empty | unknown | no_wallet. A campaign in `pending_funding` whose pool reads `covered` moves to `awaiting_operator_approval`; nothing else changes state. A failed lookup is reported as `unknown` rather than being read as zero.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Coverage, plus `advanced: true` if the campaign moved into the approval queue."
+          },
+          "404": {
+            "description": "Unknown campaign."
+          }
+        }
+      }
+    },
+    "/api/campaigns/{id}/approve": {
+      "post": {
+        "operationId": "approveCampaign",
+        "summary": "Open a funded campaign to creators (Operator-gated)",
+        "description": "Requires `x-operator-secret`. Refuses unless the pool reads `covered` at the moment of approval, so a campaign whose money left after the deposit was first seen cannot be opened. Deliberately separate from the funding check: coverage is a fact about the chain, publishing a brief to creators is a decision.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Campaign is live and visible to creators."
+          },
+          "401": {
+            "description": "Unauthorised."
+          },
+          "404": {
+            "description": "Unknown campaign."
+          },
+          "409": {
+            "description": "Not awaiting approval, or the pool is not covered on-chain."
+          },
+          "503": {
+            "description": "`OPERATOR_SECRET` not configured, or no balance reader to verify the pool."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -335,7 +376,7 @@
           },
           "brief": {
             "type": "string",
-            "description": "The campaign brief in plain language. Omit to get view data only, with no verdict. Passed to the model verbatim and never sanitised — hiding injected instructions would hide the failure mode a caller needs to know about.",
+            "description": "The campaign brief in plain language. Omit to get view data only, with no verdict. Passed to the model verbatim and never sanitised \u2014 hiding injected instructions would hide the failure mode a caller needs to know about.",
             "examples": [
               "Clip must show the product on screen and say the brand name aloud."
             ]
@@ -384,7 +425,7 @@
               "boolean",
               "null"
             ],
-            "description": "Whether the clip meets the brief. **Null means not judged** — no brief supplied, or the verifier was unavailable. Never defaults to true."
+            "description": "Whether the clip meets the brief. **Null means not judged** \u2014 no brief supplied, or the verifier was unavailable. Never defaults to true."
           },
           "reasons": {
             "type": "array",
@@ -439,7 +480,7 @@
               "string",
               "null"
             ],
-            "description": "Current count from the platform API, as a string to avoid precision loss. Null if the platform did not answer — never substituted with zero."
+            "description": "Current count from the platform API, as a string to avoid precision loss. Null if the platform did not answer \u2014 never substituted with zero."
           },
           "confirmed": {
             "type": [
@@ -554,7 +595,7 @@
           },
           "confirmedAvailable": {
             "type": "boolean",
-            "description": "Whether a surviving-view figure exists yet. **Not the figure** — that is the paid answer."
+            "description": "Whether a surviving-view figure exists yet. **Not the figure** \u2014 that is the paid answer."
           },
           "readyAt": {
             "type": [

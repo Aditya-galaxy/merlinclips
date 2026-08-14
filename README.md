@@ -131,7 +131,7 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 
 | Component | State |
 |---|---|
-| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 537 tests passing, 10 skipped (the live-money ones), typecheck clean |
+| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 555 tests passing, 10 skipped (the live-money ones), typecheck clean |
 | **Multi-Provider Executor (Circle SDK & CLI)** | **Done** — Uses Circle Developer Controlled Wallets REST API to eliminate 24d session token expiry in Cloud Run, with CLI fallback |
 | **View Oracle** | **YouTube only** — YouTube Data API, batched 50 videos per call. X returns *cannot tell* (`XOracleUnavailable`) rather than a number; Instagram and TikTok need platform review we do not hold. An oracle that cannot read a platform says so instead of guessing. |
 | **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
@@ -181,7 +181,7 @@ bun run src/server.ts     # http://localhost:8080
 ### Verifying it
 
 ```bash
-bun test          # 537 pass, 10 skipped without live credentials
+bun test          # 555 pass, 10 skipped without live credentials
 bun run sweep     # 600,000 simulated decisions, exits non-zero on a violation
 bun run mutate    # breaks each control on purpose; a survivor is a finding
 ```
@@ -226,8 +226,9 @@ Declaring a campaign pool is a **financial liability commitment** on Base Mainne
 ```
 
 - **The Brand / Client (Unauthenticated Intake)**: External brands, protocols, or AI agents submit campaign proposals via `POST /api/brand-enquiry` or `/launch.html`. Proposals are saved as `pending_funding` with on-chain deposit instructions (`0x0003a59858f44451be2a5b486ee612b4139700f0`).
-- **On-Chain Deposit Verification**: The backend continuously checks Base Mainnet RPC balance to verify that the required USDC deposit has landed in the agent wallet.
-- **The Operator (Merlin Clips Team)**: The Merlin Clips team holds the `OPERATOR_SECRET` (deliberately separate from `TICK_SECRET`). Only after on-chain deposit is confirmed does the operator have 1-click **[Approve & Launch 🚀]** or **[Deny & Refund ❌]** control to activate the pool live on `/ledger`.
+- **The Campaign Lifecycle**: `POST /api/campaigns` opens a campaign as `pending_funding`. It is withheld from `/api/campaign`, so no creator is shown a pool nobody has funded, and `/api/submissions` refuses clips against it.
+- **On-Chain Deposit Verification**: `POST /api/campaigns/:id/check-funding` reads the USDC balance behind the pool over Base RPC. Coverage comes back as `covered | partial | empty | unknown | no_wallet`; a failed lookup reports `unknown` rather than being read as zero. A `pending_funding` campaign that reads `covered` moves to `awaiting_operator_approval`.
+- **The Operator (Merlin Clips Team)**: The Merlin Clips team holds the `OPERATOR_SECRET` (deliberately separate from `TICK_SECRET`). `POST /api/campaigns/:id/approve` takes a queued campaign live from `/brand.html`. It re-reads the chain at that moment, so a campaign whose money left after the deposit was first seen will not open, and a deployment that cannot read balances refuses rather than opening blind.
 
 ---
 

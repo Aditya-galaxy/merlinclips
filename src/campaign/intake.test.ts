@@ -41,10 +41,17 @@ const valid = () => ({
 
 const open = (over: Record<string, unknown> = {}) => openCampaign({ ...valid(), ...over }, NOW);
 
+/**
+ * A campaign as it exists once it is live.
+ *
+ * `openCampaign` returns `pending_funding` — nothing is published to creators
+ * until a deposit lands and an operator approves it. The submission tests
+ * below are about what happens after that, so the fixture launches it.
+ */
 const campaignOr = (over: Record<string, unknown> = {}): Campaign => {
   const r = open(over);
   if (!r.ok) throw new Error(`fixture invalid: ${r.error}`);
-  return r.value;
+  return { ...r.value, status: 'active' };
 };
 
 describe('the baseline is genuinely valid', () => {

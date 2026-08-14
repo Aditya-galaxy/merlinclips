@@ -57,6 +57,7 @@ import type { PaymentPolicyEngine } from '../policy';
 import type { PaymentDecision, PaymentIntent, PolicyControl } from '../schemas';
 import type { CampaignView } from './store';
 import { termsExpired } from './terms';
+import { isLaunched } from './types';
 import { confirmedViews, earningsFor, hasDwelled, payableViews } from './views';
 
 export type PayoutControl =
@@ -158,14 +159,16 @@ export class PayoutGate {
       };
     }
 
-    if (campaign.status === 'draft') {
-      // Should be unreachable: acceptance refuses a draft campaign. Defensive,
-      // because the failure mode is paying out of an unfunded pool.
+    if (!isLaunched(campaign.status)) {
+      // Should be unreachable: acceptance refuses a campaign that is not
+      // live. Defensive, because the failure mode is paying out of a pool
+      // nobody has funded or approved.
       return {
         ...base,
         disposition: 'blocked',
         control: 'campaign_inactive',
-        reason: `campaign ${campaign.campaignId} is still a draft`,
+        reason: `campaign ${campaign.campaignId} has not gone live ({status})`
+          .replace('{status}', campaign.status),
       };
     }
 

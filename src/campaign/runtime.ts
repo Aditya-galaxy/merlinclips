@@ -45,6 +45,7 @@ import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
+import { isLaunched } from './types';
 import type { CreatorAccount } from './types';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
@@ -438,7 +439,11 @@ export class CampaignRuntime {
       // clip on `no_verdict`, and one with no oracle never confirms a view.
       verifier: this.verifier ? 'gemini' : 'not configured (set GOOGLE_GENAI_USE_VERTEXAI + GOOGLE_CLOUD_PROJECT, or GOOGLE_API_KEY)',
       viewOracle: this.counts ? 'youtube' : 'not configured (YOUTUBE_API_KEY)',
-      campaigns: await Promise.all(state.campaigns.map(async (c) => {
+      // Pre-launch campaigns are withheld, not merely labelled. Listing an
+      // unfunded pool next to a rate is the exact thing this system is meant to
+      // stop: the number a creator uses to decide whether the evening is worth
+      // it, published before anyone checked it.
+      campaigns: await Promise.all(state.campaigns.filter((c) => isLaunched(c.status)).map(async (c) => {
         // What a creator wants before committing an evening: is anyone else
         // here, is this campaign actually paying, and how much is left. All
         // three are already in the store; publishing them is what turns a
@@ -481,6 +486,26 @@ export class CampaignRuntime {
               },
         };
       })),
+      // Every settlement, newest first, so the public ledger renders from the
+      // same rows the payout engine wrote rather than from anything typed into
+      // a page by hand. `txHash` is the whole point: it is what lets a creator
+      // check our arithmetic against Base instead of believing it.
+      //
+      // `creatorId` is deliberately withheld. The audit claim is "this amount
+      // settled for these views, here is the transaction" — publishing a named
+      // person's full earnings history is not needed to support it.
+      payouts: [...state.payouts]
+        .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
+        .map((p) => ({
+          payoutId: p.payoutId,
+          campaignId: p.campaignId,
+          submissionId: p.submissionId,
+          viewsPaidTo: p.viewsPaidTo.toString(),
+          amountUsdc: p.amountUsdc.toString(),
+          at: p.at,
+          txHash: p.txHash,
+          explorerUrl: p.explorerUrl,
+        })),
       // This instance's own pass if it ran one, otherwise whichever instance
       // last did. Without the fallback a cold instance reports null and the
       // console says nothing has ever run.
@@ -666,14 +691,21 @@ export class CampaignRuntime {
     const mine = state.submissions.filter((x) => ids.has(x.creatorId));
 
     let earnedMicro = 0n;
-    let viewsPaid = 0n;
     const payouts = [];
     const lastPaidAtMap = new Map<string, string>();
+
+    // `viewsPaidTo` is a high-water mark per submission, not an increment. A
+    // clip paid twice as it kept accruing — 8,000 views, then 12,400 — carries
+    // both marks, and adding them reports 20,400 views for a clip that reached
+    // 12,400. Amounts *are* increments and do sum; views are the mark reached,
+    // so take the largest per submission and add those.
+    const highWater = new Map<string, bigint>();
 
     for (const p of state.payouts) {
       if (!ids.has(p.creatorId)) continue;
       earnedMicro += p.amountUsdc.micro;
-      viewsPaid += p.viewsPaidTo;
+      const seen = highWater.get(p.submissionId) ?? 0n;
+      if (p.viewsPaidTo > seen) highWater.set(p.submissionId, p.viewsPaidTo);
       payouts.push({
         submissionId: p.submissionId,
         campaignId: p.campaignId,
@@ -684,6 +716,9 @@ export class CampaignRuntime {
       });
       lastPaidAtMap.set(p.creatorId.toLowerCase(), p.at);
     }
+
+    let viewsPaid = 0n;
+    for (const mark of highWater.values()) viewsPaid += mark;
 
     const linkedWallets = walletAddrs.map((w) => ({
       address: w,
@@ -1149,6 +1184,13 @@ export class CampaignRuntime {
         platforms: c.platforms,
         chain: c.chain,
         endsAt: c.endsAt,
+        // Both of these exist so the caller cannot mistake creation for launch.
+        // The campaign is not visible to creators yet, and this is where the
+        // money has to land before it can be.
+        status: c.status,
+        fundingWallet: c.fundingWallet,
+        next: 'Fund the wallet, then POST /api/campaigns/:id/check-funding and '
+          + '/api/campaigns/:id/approve. Creators cannot see this campaign until it is live.',
         submitTo: `/api/submissions`,
       },
       { status: 201 },
@@ -1334,7 +1376,104 @@ export class CampaignRuntime {
             : 'This campaign has not named a wallet, so nothing backs its budget yet.',
         };
 
-    return Response.json({ ok: true, funding });
+    // The deposit landing is what advances the campaign, and it advances it to
+    // a queue rather than to live. Coverage is a fact about the chain; going
+    // live is a decision, and this is the seam between them.
+    //
+    // Only from pending_funding. A campaign an operator already approved, or
+    // paused, is not dragged back into the queue by a later balance read.
+    let advanced = false;
+    if (campaign.status === 'pending_funding' && funding.coverage === 'covered') {
+      await this.record({
+        type: 'campaign_upserted',
+        campaign: { ...campaign, status: 'awaiting_operator_approval' },
+      });
+      advanced = true;
+    }
+
+    return Response.json({
+      ok: true,
+      funding,
+      status: advanced ? 'awaiting_operator_approval' : campaign.status,
+      advanced,
+    });
+  }
+
+  /**
+   * Take a funded campaign live. Operator-gated, deliberately.
+   *
+   * Two things have to be true and they are different in kind: the money is
+   * there, which the chain answers, and somebody is willing to publish this
+   * brief to creators, which only a person answers. Auto-activating on a
+   * confirmed deposit would collapse the second into the first and make the
+   * approval step decorative.
+   *
+   * Refuses unless coverage is `covered` at the moment of approval, so an
+   * operator cannot approve a campaign whose money left after the deposit
+   * was first seen.
+   */
+  async handleApproveCampaign(request: Request, campaignId: string): Promise<Response> {
+    const guard = this.requireOperator(request);
+    if (guard) return guard;
+    await this.ready();
+
+    const campaign = this.store.campaign(campaignId);
+    if (!campaign) return Response.json({ error: 'unknown campaign' }, { status: 404 });
+
+    if (campaign.status === 'active') {
+      return Response.json({ ok: true, status: 'active', note: 'already live' });
+    }
+    if (campaign.status !== 'awaiting_operator_approval') {
+      // Said in words, because this reaches a person in a modal. `campaign is
+      // pending_funding` tells them the enum, not what to do about it.
+      const WHY: Record<string, string> = {
+        pending_funding:
+          'This campaign is still waiting on its deposit. Fund the wallet, check the balance, then open it.',
+        paused: 'This campaign is paused. Resume it rather than opening it again.',
+        ended: 'This campaign has ended.',
+        draft: 'This campaign is still a draft.',
+      };
+      return Response.json(
+        {
+          error: WHY[campaign.status] ?? `This campaign is ${campaign.status} and cannot be opened.`,
+          status: campaign.status,
+        },
+        { status: 409 },
+      );
+    }
+
+    // Fails closed, like the tick and the operator gate. A deployment with the
+    // balance reader switched off cannot tell a funded pool from an empty one,
+    // and "we could not check" must not be spent as if it were "the money is
+    // here" — that is the whole failure this gate exists to prevent.
+    if (!this.balances) {
+      return Response.json(
+        {
+          error: 'no balance reader configured — refusing to open a campaign we cannot verify',
+          fix: 'unset CAMPAIGN_BALANCE_READER=off so the pool can be checked on-chain',
+        },
+        { status: 503 },
+      );
+    }
+
+    const spent = this.store.spentOnCampaign(campaignId);
+    const funding = await fundingFor(campaign, spent, this.balances);
+    if (funding.coverage !== 'covered') {
+      return Response.json(
+        {
+          error: 'The pool is not covered on-chain, so this campaign will not open.',
+          coverage: funding.coverage,
+          summary: funding.summary,
+        },
+        { status: 409 },
+      );
+    }
+
+    await this.record({
+      type: 'campaign_upserted',
+      campaign: { ...campaign, status: 'active' },
+    });
+    return Response.json({ ok: true, status: 'active', campaignId });
   }
 
   /** Expose latest tick execution status for asynchronous polling. */

@@ -76,6 +76,7 @@ export class EventLog {
     store.hydrate({
       campaigns: [],
       creators: [],
+      accounts: [],
       submissions: [],
       verdicts: [],
       snapshots: [],
@@ -117,6 +118,9 @@ export function apply(store: CampaignStore, event: CampaignEvent): void {
       return;
     case 'payout_settled':
       store.recordPayout(event.payout);
+      return;
+    case 'account_upserted':
+      store.putCreatorAccount(event.account);
       return;
   }
   const exhaustive: never = event;

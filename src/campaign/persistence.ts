@@ -25,7 +25,9 @@
  */
 
 import { Decimal } from '../decimal';
-import type { Campaign, Creator, Payout, Snapshot, Submission, Verdict } from './types';
+import type {
+  Campaign, Creator, CreatorAccount, Payout, Snapshot, Submission, Verdict,
+} from './types';
 import type { CampaignStore } from './store';
 
 export const STATE_VERSION = 1;
@@ -102,6 +104,8 @@ export function decodeState(raw: string): State {
   const rows = <T>(key: string): T[] => (Array.isArray(parsed[key]) ? (parsed[key] as T[]) : []);
 
   return {
+    // A plain record with no Decimal or bigint fields, so it round-trips as-is.
+    accounts: rows<CreatorAccount>('accounts'),
     campaigns: rows<Record<string, unknown>>('campaigns').map((c) => {
       const band = (c.rateBand ?? {}) as Record<string, string>;
       return {

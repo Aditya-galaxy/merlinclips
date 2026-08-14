@@ -39,6 +39,12 @@ export class CampaignStore implements CampaignView {
   private readonly payouts: Payout[] = [];
 
   putCreatorAccount(account: CreatorAccount): void {
+    // Last edit wins by the record's own timestamp, not by arrival order. A
+    // replay walks a content-addressed log whose same-millisecond tie-break is
+    // a hash, so without this an older save could land after a newer one and
+    // quietly revert someone's handle.
+    const held = this.accounts.get(account.accountId);
+    if (held?.updatedAt && account.updatedAt && held.updatedAt > account.updatedAt) return;
     this.accounts.set(account.accountId, account);
   }
 
@@ -182,6 +188,7 @@ export class CampaignStore implements CampaignView {
     verdicts: Verdict[];
     snapshots: Snapshot[];
     payouts: Payout[];
+    accounts: CreatorAccount[];
   } {
     return {
       campaigns: [...this.campaigns.values()],
@@ -190,6 +197,7 @@ export class CampaignStore implements CampaignView {
       verdicts: [...this.verdicts.values()].flat(),
       snapshots: [...this.snaps.values()].flat(),
       payouts: [...this.payouts],
+      accounts: [...this.accounts.values()],
     };
   }
 
@@ -201,6 +209,7 @@ export class CampaignStore implements CampaignView {
     this.verdicts.clear();
     this.snaps.clear();
     this.payouts.length = 0;
+    this.accounts.clear();
 
     for (const campaign of state.campaigns) this.putCampaign(campaign);
     for (const creator of state.creators) this.putCreator(creator);
@@ -208,6 +217,7 @@ export class CampaignStore implements CampaignView {
     for (const verdict of state.verdicts) this.addVerdict(verdict);
     for (const snapshot of state.snapshots) this.addSnapshot(snapshot);
     for (const payout of state.payouts) this.recordPayout(payout);
+    for (const account of state.accounts ?? []) this.putCreatorAccount(account);
   }
 
   /** Pool minus settled spend. The number FR-T1 publishes to creators. */

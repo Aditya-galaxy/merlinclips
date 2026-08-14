@@ -138,6 +138,15 @@ export interface CreatorAccount {
   readonly creatorType?: string;
   readonly wallet?: string;
   readonly joinedAt: string;
+  /**
+   * When this version of the account was written.
+   *
+   * Replay resolves accounts by this rather than by log order. Event ids are
+   * content-addressed, so two saves in the same millisecond tie-break on a
+   * hash — which is stable but unrelated to which edit came second. Ordering
+   * on the record's own timestamp makes replay independent of that.
+   */
+  readonly updatedAt?: string;
   readonly linkedWallets: readonly LinkedWallet[];
 }
 

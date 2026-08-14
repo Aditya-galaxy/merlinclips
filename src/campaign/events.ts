@@ -52,7 +52,9 @@
 import { createHash } from 'node:crypto';
 
 import { Decimal } from '../decimal';
-import type { Campaign, Creator, Payout, Snapshot, Submission, Verdict } from './types';
+import type {
+  Campaign, Creator, CreatorAccount, Payout, Snapshot, Submission, Verdict,
+} from './types';
 
 export const EVENT_VERSION = 1;
 
@@ -63,7 +65,13 @@ export type CampaignEvent =
   | { readonly type: 'submission_accepted'; readonly submission: Submission }
   | { readonly type: 'verdict_recorded'; readonly verdict: Verdict }
   | { readonly type: 'snapshot_taken'; readonly snapshot: Snapshot }
-  | { readonly type: 'payout_settled'; readonly payout: Payout };
+  | { readonly type: 'payout_settled'; readonly payout: Payout }
+  // A creator's Google account and the wallets linked to it. Held only in
+  // memory before this: a creator completed onboarding, linked a payout
+  // wallet, and lost all of it the moment the instance recycled — which on a
+  // scale-to-zero deployment is minutes of no traffic. Brands are not here
+  // because `approveBrand` already writes them under their own blob key.
+  | { readonly type: 'account_upserted'; readonly account: CreatorAccount };
 
 export interface EventEnvelope {
   readonly version: number;
@@ -103,6 +111,12 @@ export function eventIdFor(event: CampaignEvent, at: string): string {
       return `cre-${event.creator.creatorId}-${fingerprint(event.creator)}`;
     case 'campaign_upserted':
       return `cmp-${event.campaign.campaignId}-${fingerprint(encCampaign(event.campaign))}`;
+
+    // Same reasoning: an account changes when someone edits a handle or links
+    // a second wallet, so content-addressing keeps the edit and drops the
+    // no-op re-save that every page load would otherwise write.
+    case 'account_upserted':
+      return `acct-${event.account.accountId}-${fingerprint(event.account)}`;
   }
 }
 
@@ -180,6 +194,18 @@ export function encodeEvent(envelope: EventEnvelope): string {
         },
       };
       break;
+    case 'account_upserted':
+      payload = e;
+      break;
+    default: {
+      // `apply()` in eventlog.ts has carried this guard from the start; this
+      // switch did not, so adding an event type compiled cleanly and wrote
+      // `"event": undefined` to the log. The write succeeded, and replay threw
+      // on the way back — a fact recorded and then unreadable, which is the
+      // worst of both. Now a missing case fails the build instead.
+      const exhaustive: never = e;
+      throw new Error(`unencodable event: ${JSON.stringify(exhaustive)}`);
+    }
   }
   return JSON.stringify(
     { version: envelope.version, eventId: envelope.eventId, at: envelope.at, event: payload },
@@ -250,6 +276,9 @@ export function decodeEvent(raw: string): EventEnvelope {
     event = { type, creator: e.creator as Creator };
   } else if (type === 'verdict_recorded') {
     event = { type, verdict: e.verdict as Verdict };
+  } else if (type === 'account_upserted') {
+    // No Decimal or bigint fields, so it round-trips as plain JSON.
+    event = { type, account: e.account as CreatorAccount };
   } else {
     throw new RangeError(`unknown event type: ${type}`);
   }

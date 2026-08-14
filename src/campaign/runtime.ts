@@ -901,10 +901,16 @@ export class CampaignRuntime {
       creatorType: typeof body.type === 'string' ? body.type : existingAcc?.creatorType || 'Clipper',
       wallet,
       joinedAt: existingAcc?.joinedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       linkedWallets: existingWallets,
     };
 
+    // Through the log, not only into the store. Writing to the store alone
+    // meant a creator's Google account, handle and linked payout wallet lived
+    // in one instance's memory: they completed onboarding, and lost all of it
+    // the moment that instance recycled.
     this.store.putCreatorAccount(updatedAccount);
+    await this.record({ type: 'account_upserted', account: updatedAccount });
     await this.record({
       type: 'creator_upserted',
       creator: {

@@ -103,12 +103,20 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest" \
-  --set-env-vars "NODE_ENV=production,ALLOW_MAINNET=true,BROADCAST=true,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
 # land in; arming real money is a decision someone makes explicitly, not one
 # inherited from whatever happened to be in a laptop's shell.
+#
+# This comment described the intent; the command above did the opposite,
+# passing ALLOW_MAINNET=true and BROADCAST=true on every deploy. Any redeploy
+# therefore armed live USDC broadcasting on Base Mainnet as a side effect of
+# shipping a CSS change. Arming it is now a separate, deliberate act:
+#
+#   gcloud run services update merlinclips --region us-central1 \
+#     --update-env-vars ALLOW_MAINNET=true,BROADCAST=true
 
 URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format='value(status.url)')"
 echo

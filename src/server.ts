@@ -279,7 +279,12 @@ const server = Bun.serve({
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
       }, SESSION_SECRET);
 
-      const headers = new Headers({ location: '/onboarding?signin=ok' });
+      // Smart Redirect: If creator is already registered, go straight to /profile
+      await campaigns.ready();
+      const existingAcc = campaigns.store.getCreatorAccount(creatorId);
+      const targetLocation = (existingAcc && existingAcc.wallet) ? '/profile' : '/onboarding?signin=ok';
+
+      const headers = new Headers({ location: targetLocation });
       headers.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
       headers.append('set-cookie',
         cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));
@@ -582,6 +587,13 @@ const server = Bun.serve({
                 'cache-control': 'private, no-store',
               },
             });
+          }
+        } else if (url.searchParams.get('edit') !== '1') {
+          // If user is already registered, skip onboarding and go straight to /profile
+          await campaigns.ready();
+          const existingAcc = campaigns.store.getCreatorAccount(session.creatorId);
+          if (existingAcc && existingAcc.wallet) {
+            return Response.redirect(new URL('/profile', request.url).toString(), 302);
           }
         }
       }

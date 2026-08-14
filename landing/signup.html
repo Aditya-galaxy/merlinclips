@@ -62,6 +62,15 @@
 
 <script>
 (function () {
+  fetch('/api/me', { credentials: 'same-origin' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (d && d.signedIn) {
+        window.location.href = '/profile';
+      }
+    })
+    .catch(function() {});
+
   var nav = document.querySelector('nav');
   if (!nav) return;
   var sync = function () { nav.dataset.stuck = String(window.scrollY > 24); };

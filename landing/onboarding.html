@@ -673,9 +673,14 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     .catch(function() {});
 
   // Pre-populate existing saved wallet if available (Single Wallet Architecture)
+  // Smart Redirect: If already registered and not explicitly editing, jump directly to /profile
   fetch('/api/me/profile', { credentials: 'same-origin' })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(p) {
+      if (p && p.wallets && p.wallets.length && window.location.search.indexOf('edit=1') === -1) {
+        window.location.href = '/profile';
+        return;
+      }
       if (p && p.wallets && p.wallets.length) {
         var existingW = p.wallets[0];
         var walletInput = document.getElementById('in-wallet');

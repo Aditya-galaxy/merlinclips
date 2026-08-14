@@ -52,6 +52,7 @@
 import { createHash } from 'node:crypto';
 
 import { Decimal } from '../decimal';
+import type { Mandate } from '../mandates';
 import type {
   Campaign, Creator, CreatorAccount, Payout, Snapshot, Submission, Verdict,
 } from './types';
@@ -71,7 +72,12 @@ export type CampaignEvent =
   // wallet, and lost all of it the moment the instance recycled — which on a
   // scale-to-zero deployment is minutes of no traffic. Brands are not here
   // because `approveBrand` already writes them under their own blob key.
-  | { readonly type: 'account_upserted'; readonly account: CreatorAccount };
+  | { readonly type: 'account_upserted'; readonly account: CreatorAccount }
+  // Spend authority for one creator, under one campaign's terms. Held only in
+  // memory before this, which meant every cold instance started with none —
+  // and the policy engine refuses without one, so the hourly tick sent every
+  // eligible payout to `requires_approval` and nobody was ever paid.
+  | { readonly type: 'mandate_issued'; readonly mandate: Mandate };
 
 export interface EventEnvelope {
   readonly version: number;
@@ -117,6 +123,11 @@ export function eventIdFor(event: CampaignEvent, at: string): string {
     // no-op re-save that every page load would otherwise write.
     case 'account_upserted':
       return `acct-${event.account.accountId}-${fingerprint(event.account)}`;
+    // The id alone: a mandate is issued once and its authority does not change
+    // afterwards. useCount and lastUsedAt are evidence of use, not authority,
+    // and re-recording on every payout would write history that is just noise.
+    case 'mandate_issued':
+      return `mnd-${event.mandate.mandateId}`;
   }
 }
 
@@ -197,6 +208,12 @@ export function encodeEvent(envelope: EventEnvelope): string {
     case 'account_upserted':
       payload = e;
       break;
+    case 'mandate_issued':
+      payload = {
+        type: e.type,
+        mandate: { ...e.mandate, maxPerPaymentUsdc: e.mandate.maxPerPaymentUsdc.toString() },
+      };
+      break;
     default: {
       // `apply()` in eventlog.ts has carried this guard from the start; this
       // switch did not, so adding an event type compiled cleanly and wrote
@@ -276,6 +293,15 @@ export function decodeEvent(raw: string): EventEnvelope {
     event = { type, creator: e.creator as Creator };
   } else if (type === 'verdict_recorded') {
     event = { type, verdict: e.verdict as Verdict };
+  } else if (type === 'mandate_issued') {
+    const m = e.mandate as Record<string, unknown>;
+    event = {
+      type,
+      mandate: {
+        ...(m as unknown as Mandate),
+        maxPerPaymentUsdc: new Decimal(String(m.maxPerPaymentUsdc)),
+      },
+    };
   } else if (type === 'account_upserted') {
     // No Decimal or bigint fields, so it round-trips as plain JSON.
     event = { type, account: e.account as CreatorAccount };

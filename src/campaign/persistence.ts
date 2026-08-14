@@ -25,6 +25,7 @@
  */
 
 import { Decimal } from '../decimal';
+import type { Mandate } from '../mandates';
 import type {
   Campaign, Creator, CreatorAccount, Payout, Snapshot, Submission, Verdict,
 } from './types';
@@ -106,6 +107,10 @@ export function decodeState(raw: string): State {
   return {
     // A plain record with no Decimal or bigint fields, so it round-trips as-is.
     accounts: rows<CreatorAccount>('accounts'),
+    mandates: rows<Record<string, unknown>>('mandates').map((m) => ({
+      ...(m as unknown as Mandate),
+      maxPerPaymentUsdc: new Decimal(String(m.maxPerPaymentUsdc)),
+    })),
     campaigns: rows<Record<string, unknown>>('campaigns').map((c) => {
       const band = (c.rateBand ?? {}) as Record<string, string>;
       return {

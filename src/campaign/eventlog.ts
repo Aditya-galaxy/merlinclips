@@ -77,6 +77,7 @@ export class EventLog {
       campaigns: [],
       creators: [],
       accounts: [],
+      mandates: [],
       submissions: [],
       verdicts: [],
       snapshots: [],
@@ -121,6 +122,9 @@ export function apply(store: CampaignStore, event: CampaignEvent): void {
       return;
     case 'account_upserted':
       store.putCreatorAccount(event.account);
+      return;
+    case 'mandate_issued':
+      store.putMandate(event.mandate);
       return;
   }
   const exhaustive: never = event;

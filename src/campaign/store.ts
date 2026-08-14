@@ -12,6 +12,7 @@
  */
 
 import { Decimal } from '../decimal';
+import type { Mandate } from '../mandates';
 import type { Campaign, Creator, CreatorAccount, BrandProfile, LinkedWallet, Payout, Snapshot, Submission, Verdict } from './types';
 
 /** The narrow, read-only surface the gate depends on. */
@@ -33,10 +34,16 @@ export class CampaignStore implements CampaignView {
   private readonly submissions = new Map<string, Submission>();
   private readonly creators = new Map<string, Creator>();
   private readonly accounts = new Map<string, CreatorAccount>();
+  /** Replay lands mandates here; the runtime copies them into its MandateStore. */
+  private readonly mandates = new Map<string, Mandate>();
   private readonly brands = new Map<string, BrandProfile>();
   private readonly verdicts = new Map<string, Verdict[]>();
   private readonly snaps = new Map<string, Snapshot[]>();
   private readonly payouts: Payout[] = [];
+
+  putMandate(mandate: Mandate): void {
+    this.mandates.set(mandate.mandateId, mandate);
+  }
 
   putCreatorAccount(account: CreatorAccount): void {
     // Last edit wins by the record's own timestamp, not by arrival order. A
@@ -189,6 +196,7 @@ export class CampaignStore implements CampaignView {
     snapshots: Snapshot[];
     payouts: Payout[];
     accounts: CreatorAccount[];
+    mandates: Mandate[];
   } {
     return {
       campaigns: [...this.campaigns.values()],
@@ -198,6 +206,7 @@ export class CampaignStore implements CampaignView {
       snapshots: [...this.snaps.values()].flat(),
       payouts: [...this.payouts],
       accounts: [...this.accounts.values()],
+      mandates: [...this.mandates.values()],
     };
   }
 
@@ -210,6 +219,7 @@ export class CampaignStore implements CampaignView {
     this.snaps.clear();
     this.payouts.length = 0;
     this.accounts.clear();
+    this.mandates.clear();
 
     for (const campaign of state.campaigns) this.putCampaign(campaign);
     for (const creator of state.creators) this.putCreator(creator);
@@ -218,6 +228,7 @@ export class CampaignStore implements CampaignView {
     for (const snapshot of state.snapshots) this.addSnapshot(snapshot);
     for (const payout of state.payouts) this.recordPayout(payout);
     for (const account of state.accounts ?? []) this.putCreatorAccount(account);
+    for (const mandate of state.mandates ?? []) this.putMandate(mandate);
   }
 
   /** Pool minus settled spend. The number FR-T1 publishes to creators. */

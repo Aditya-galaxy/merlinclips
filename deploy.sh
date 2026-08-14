@@ -77,6 +77,33 @@ MISSINGSA
   exit 1
 fi
 
+# The oracle key is a secret, not configuration. Held in Secret Manager beside
+# the OAuth and session secrets rather than passed as a plain env var: an env
+# var is readable by anyone with Cloud Run viewer on the project and lands in
+# shell history and deploy logs on the way there.
+#
+# Checked before deploying because the failure is quiet in the worst way. With
+# no key the service comes up healthy, reports `viewOracle: not configured`,
+# and holds every submission forever — no view can satisfy the dwell window,
+# so nobody is ever paid and nothing errors.
+if ! gcloud secrets describe youtube-api-key --project "$PROJECT" >/dev/null 2>&1; then
+  cat >&2 <<MISSINGKEY
+Secret youtube-api-key not found in project ${PROJECT}.
+
+Without it the view oracle is unconfigured: the service looks healthy, and
+holds every submission forever because no view can ever be confirmed. Create
+it, grant the runtime account access, then re-run:
+
+  printf '%s' "\$YOUTUBE_API_KEY" | gcloud secrets create youtube-api-key \\
+    --project ${PROJECT} --replication-policy=automatic --data-file=-
+
+  gcloud secrets add-iam-policy-binding youtube-api-key --project ${PROJECT} \\
+    --member "serviceAccount:${RUNTIME_SA}" --role roles/secretmanager.secretAccessor
+
+MISSINGKEY
+  exit 1
+fi
+
 # Active Circle Funded Agent Wallet (Base Mainnet / Testnet)
 DEFAULT_WALLET="0x0003a59858f44451be2a5b486ee612b4139700f0"
 CAMPAIGN_WALLET="${CAMPAIGN_WALLET:-$DEFAULT_WALLET}"
@@ -102,8 +129,8 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 4 \
   --timeout 60s \
-  --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should

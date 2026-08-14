@@ -620,7 +620,7 @@ body {
       <div class="kpi-card">
         <span class="kpi-label">Surviving Views Paid</span>
         <span class="kpi-num" id="t-views">0</span>
-        <span class="kpi-sub">98.4% retention hold rate</span>
+        <span class="kpi-sub">Views that held for the full 24h</span>
       </div>
 
       <div class="kpi-card">
@@ -641,8 +641,7 @@ body {
           <div class="form-group">
             <label for="camp">Campaign Brief</label>
             <select id="camp" class="form-control">
-              <option value="camp-bb2bd198">camp-bb2bd198 — Showcase Merlin Clips ($1.00 USDC / 1k views)</option>
-              <option value="camp-x402base">camp-x402base — Base Agentic Payments Spotlight ($1.50 USDC / 1k views)</option>
+              <option value="">Loading campaigns…</option>
             </select>
           </div>
 
@@ -696,56 +695,12 @@ body {
           </div>
         </div>
 
-        <div class="campaign-card-grid">
-          <!-- Campaign Card 1 -->
-          <div class="camp-box">
-            <div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <span class="camp-badge-active">● LIVE &amp; PAYING</span>
-                <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">camp-bb2bd198</span>
-              </div>
-              <h4 style="margin:0 0 6px;font-size:17px;font-weight:750;color:var(--text);">Showcase Merlin Clips</h4>
-              <p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.45;">Create YouTube Shorts, TikToks or IG Reels showcasing Merlin Clips autonomous view payouts on Base.</p>
-              
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:var(--surface-2);border-radius:10px;margin-bottom:14px;">
-                <div>
-                  <span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">CPM Rate</span>
-                  <b style="font-family:var(--mono);font-size:15px;color:var(--ok);">$1.00 USDC / 1k views</b>
-                </div>
-                <div>
-                  <span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">Hold Period</span>
-                  <b style="font-size:13.5px;color:var(--text);">24 Hours</b>
-                </div>
-              </div>
-            </div>
-            
-            <button type="button" class="btn btn-primary" onclick="submitToBrief('camp-bb2bd198')" style="width:100%;font-size:13.5px;padding:9px;">Submit Clip to Brief →</button>
-          </div>
-
-          <!-- Campaign Card 2 -->
-          <div class="camp-box">
-            <div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <span class="camp-badge-active">● LIVE &amp; PAYING</span>
-                <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">camp-x402base</span>
-              </div>
-              <h4 style="margin:0 0 6px;font-size:17px;font-weight:750;color:var(--text);">Base Agentic Payments Spotlight</h4>
-              <p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.45;">Highlight Circle Agent Wallets and instant USDC retention settlement on Base Mainnet.</p>
-              
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:var(--surface-2);border-radius:10px;margin-bottom:14px;">
-                <div>
-                  <span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">CPM Rate</span>
-                  <b style="font-family:var(--mono);font-size:15px;color:var(--ok);">$1.50 USDC / 1k views</b>
-                </div>
-                <div>
-                  <span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">Hold Period</span>
-                  <b style="font-size:13.5px;color:var(--text);">24 Hours</b>
-                </div>
-              </div>
-            </div>
-            
-            <button type="button" class="btn btn-primary" onclick="submitToBrief('camp-x402base')" style="width:100%;font-size:13.5px;padding:9px;">Submit Clip to Brief →</button>
-          </div>
+        <!-- Rendered from /api/campaign. A creator deciding where to spend an
+             evening must not be shown a brief that does not exist, or a pool
+             nobody funded. -->
+        <div class="campaign-card-grid" id="brief-grid">
+          <p class="panel-sub" style="grid-column:1/-1;">Loading campaigns…</p>
+        </div>
         </div>
       </div>
     </div>
@@ -753,30 +708,11 @@ body {
     <!-- Pane 3: Analytics -->
     <div id="pane-analytics" hidden>
       <div class="panel">
-        <h3>View Retention Analytics</h3>
-        <p class="panel-sub">Track your 24h view survival rates and daily earnings performance.</p>
-
-        <div style="height:180px;display:flex;align-items:flex-end;gap:16px;padding-top:20px;">
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-            <div style="width:100%;max-width:32px;height:35%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
-            <span style="font-size:11px;color:var(--muted);font-weight:600;">Mon</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-            <div style="width:100%;max-width:32px;height:60%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
-            <span style="font-size:11px;color:var(--muted);font-weight:600;">Tue</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-            <div style="width:100%;max-width:32px;height:45%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
-            <span style="font-size:11px;color:var(--muted);font-weight:600;">Wed</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-            <div style="width:100%;max-width:32px;height:85%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
-            <span style="font-size:11px;color:var(--muted);font-weight:600;">Thu</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-            <div style="width:100%;max-width:32px;height:70%;background:var(--pop);border-radius:6px 6px 0 0;"></div>
-            <span style="font-size:11px;color:var(--muted);font-weight:600;">Fri</span>
-          </div>
+        <h3>Daily Earnings</h3>
+        <p class="panel-sub">USDC that has actually settled to you, by day. Built from your own
+          payout rows &mdash; a clip still inside its hold window is not counted here yet.</p>
+        <div id="earn-chart" style="height:200px;display:flex;align-items:flex-end;gap:16px;padding-top:20px;">
+          <p class="panel-sub" style="margin:auto;">Loading&hellip;</p>
         </div>
       </div>
     </div>
@@ -849,6 +785,13 @@ function submitToBrief(campId) {
     });
   };
 
+  /* Writing to an element this page does not have is not worth an exception:
+     the cost of a missing tile is a missing tile, not a blank dashboard. */
+  function setText(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
   function applyProfileData(p) {
     if (!p) return;
     if (p.account) {
@@ -871,9 +814,9 @@ function submitToBrief(campId) {
     if (p.standing) {
       var tier = (p.standing.level || 'UNPROVEN').toUpperCase();
       var nextTier = (tier === 'UNPROVEN') ? 'RELIABLE TIER' : (tier === 'RELIABLE' ? 'EXCEPTIONAL TIER' : 'MAX RANK');
-      document.getElementById('p-rank').textContent = tier + ' TIER';
-      document.getElementById('t-standing').textContent = (p.standing.level || 'Unproven');
-      document.getElementById('tier-name-label').textContent = tier + ' TIER';
+      setText('p-rank', tier + ' TIER');
+      setText('t-standing', (p.standing.level || 'Unproven'));
+      setText('tier-name-label', tier + ' TIER');
       var nextEl = document.getElementById('tier-next-label');
       if (nextEl) nextEl.textContent = 'Progress to ' + nextTier;
     }
@@ -896,10 +839,22 @@ function submitToBrief(campId) {
     }
 
     if (p.totals) {
-      document.getElementById('t-earned').textContent = '$' + Number(p.totals.earnedUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      document.getElementById('t-views').textContent = Number(p.totals.viewsPaid || 0).toLocaleString('en-US');
-      document.getElementById('t-subs').textContent = p.totals.submissions || 0;
+      /* Through setText, not getElementById directly. `t-subs` has no tile on
+         this page, and writing to it threw here — which aborted the rest of
+         this function, so a signed-in creator's submissions and payout ledger
+         never rendered at all. The data was fine; one missing element was
+         swallowing the whole view. */
+      setText('t-earned', '$' + Number(p.totals.earnedUsdc || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setText('t-views', Number(p.totals.viewsPaid || 0).toLocaleString('en-US'));
+      setText('t-subs', p.totals.submissions || 0);
     }
+
+    /* A row's BaseScan link must be that payout's transaction. Pointing every
+       row at the agent wallet made an unsettled clip look settled. */
+    var txFor = {};
+    (p.payouts || []).forEach(function (x) { if (x.txHash) txFor[x.submissionId] = x.txHash; });
+
+    renderEarnings(p.payouts || []);
 
     if (p.submissions && p.submissions.length) {
       var pendingSum = 0;
@@ -913,14 +868,19 @@ function submitToBrief(campId) {
 
           return '<tr>'
             + '<td><b style="color:var(--text);">' + s.url + '</b></td>'
-            + '<td>' + Number(s.confirmedViews || 0).toLocaleString() + ' views</td>'
+            /* A settled clip shows the views it was actually paid for. Showing
+               the live confirmed count made a paid row read "0 views" next to
+               the amount it earned. */
+            + '<td>' + Number((isPaid ? s.paidForViews : s.confirmedViews) || 0).toLocaleString() + ' views</td>'
             + '<td><span class="badge-status ' + badgeClass + '">' + badgeText + '</span></td>'
             + '<td><b style="color:var(--ok);">$' + (s.earnedUsdc || '0.00') + ' USDC</b></td>'
-            + '<td><a href="https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0" target="_blank" style="color:var(--pop);font-weight:600;">View Tx ↗</a></td>'
+            + '<td>' + (txFor[s.submissionId]
+                ? '<a href="https://basescan.org/tx/' + txFor[s.submissionId] + '" target="_blank" rel="noopener" style="color:var(--pop);font-weight:600;">' + txFor[s.submissionId].slice(0, 10) + '\u2026 \u2197</a>'
+                : '<span style="color:var(--muted);font-size:12.5px;">Not settled yet</span>') + '</td>'
             + '</tr>';
         }).join('') + '</tbody></table>';
       document.getElementById('ledger-list').innerHTML = ledgerHtml;
-      document.getElementById('t-pending').textContent = '$' + pendingSum.toFixed(2);
+      setText('t-pending', '$' + pendingSum.toFixed(2));
     }
   }
 
@@ -933,10 +893,55 @@ function submitToBrief(campId) {
   // Live database profile
   fetch('/api/me/profile', { credentials: 'same-origin' })
     .then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(p) { applyProfileData(p); })
-    .catch(function() {});
+    .then(function(p) {
+      applyProfileData(p);
+      // Signed out, or the call failed. The chart has to stop saying "Loading"
+      // rather than sit on a spinner that will never resolve.
+      if (!p) renderEarnings([]);
+    })
+    .catch(function() { renderEarnings([]); });
 
   // Handle Clip Form Submission
+  /* Seven days of what actually settled. No axis is invented: if nothing has
+     settled the panel says so rather than drawing an empty grid that looks
+     like a bad week. */
+  function renderEarnings(payouts) {
+    var host = document.getElementById('earn-chart');
+    if (!host) return;
+
+    var days = [];
+    for (var i = 6; i >= 0; i -= 1) {
+      var d = new Date(Date.now() - i * 86400000);
+      days.push({ key: d.toISOString().slice(0, 10),
+                  label: d.toLocaleDateString('en-GB', { weekday: 'short' }), total: 0 });
+    }
+    var byKey = {};
+    days.forEach(function (d) { byKey[d.key] = d; });
+
+    var any = false;
+    payouts.forEach(function (x) {
+      var k = String(x.settledAt || '').slice(0, 10);
+      if (byKey[k]) { byKey[k].total += Number(x.amountUsdc || 0); any = true; }
+    });
+
+    if (!any) {
+      host.innerHTML = '<p class="panel-sub" style="margin:auto;text-align:center;">' +
+        'Nothing has settled to you in the last seven days. Paid clips appear here with the day they were paid.</p>';
+      return;
+    }
+
+    var peak = days.reduce(function (m, d) { return d.total > m ? d.total : m; }, 0) || 1;
+    host.innerHTML = days.map(function (d) {
+      var pct = Math.round((d.total / peak) * 100);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">' +
+        '<span style="font-size:11px;color:var(--text-2);font-weight:700;">$' + d.total.toFixed(2) + '</span>' +
+        '<div title="$' + d.total.toFixed(2) + ' on ' + d.key + '" style="width:100%;max-width:32px;height:' +
+          Math.max(pct, d.total > 0 ? 4 : 0) + '%;background:var(--pop);border-radius:6px 6px 0 0;"></div>' +
+        '<span style="font-size:11px;color:var(--muted);font-weight:600;">' + d.label + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
   var submitBtn = document.getElementById('go');
   if (submitBtn) {
     submitBtn.addEventListener('click', async function() {
@@ -957,7 +962,7 @@ function submitToBrief(campId) {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            campaignId: document.getElementById('camp').value || 'camp-bb2bd198',
+            campaignId: document.getElementById('camp').value,
             url: urlInput,
             payoutAddress: addrInput
           })
@@ -966,7 +971,9 @@ function submitToBrief(campId) {
         if (!r.ok) {
           said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--bad-wash);color:var(--bad);font-size:13.5px;"><b>Submission Refused:</b> ' + (d.error || 'Could not verify clip.') + '</div>';
         } else {
-          said.innerHTML = '<div style="padding:10px 14px;border-radius:9px;background:var(--ok-wash);color:var(--ok);font-size:13.5px;"><b>Clip Accepted &amp; CPM Locked!</b> Your CPM rate is locked at $' + (d.agreedTerms ? d.agreedTerms.cpmUsdc : '1.00') + ' per 1k views on a 24h hold.</div>';
+          said.innerHTML = d.agreedTerms
+            ? '<div style="padding:10px 14px;border-radius:9px;background:var(--ok-wash);color:var(--ok);font-size:13.5px;"><b>Clip accepted, rate locked.</b> $' + d.agreedTerms.cpmUsdc + ' per 1k views, on a ' + (d.agreedTerms.dwellHours || 24) + 'h hold.</div>'
+            : '<div style="padding:10px 14px;border-radius:9px;background:var(--ok-wash);color:var(--ok);font-size:13.5px;"><b>Clip accepted.</b></div>';
           document.getElementById('url').value = '';
         }
       } catch(err) {
@@ -977,6 +984,76 @@ function submitToBrief(campId) {
       }
     });
   }
+})();
+
+/* The briefs a creator can actually take. Sourced from /api/campaign, which
+   only lists campaigns that are live and funded — a pool nobody has funded is
+   withheld by the server, so nothing here can promise money that is not
+   there. */
+(function () {
+  var grid = document.getElementById('brief-grid');
+  var picker = document.getElementById('camp');
+  var money = function (v) {
+    return '$' + Number(v || 0).toLocaleString('en-US',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var esc = function (v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+
+  fetch('/api/campaign', { headers: { accept: 'application/json' } })
+    .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(function (d) {
+      var open = (d.campaigns || []).filter(function (c) { return c.status === 'active'; });
+
+      if (picker) {
+        picker.innerHTML = open.length
+          ? open.map(function (c) {
+              return '<option value="' + esc(c.campaignId) + '">' + esc(c.campaignId) +
+                ' — ' + esc(String(c.brief || '').slice(0, 60)) +
+                ' (' + money(c.cpmUsdc) + ' / 1k views)</option>';
+            }).join('')
+          : '<option value="">No campaigns are open right now</option>';
+      }
+
+      if (!grid) return;
+      if (!open.length) {
+        grid.innerHTML = '<p class="panel-sub" style="grid-column:1/-1;">' +
+          'No campaigns are open to creators right now. When a brand funds one it appears here.</p>';
+        return;
+      }
+
+      grid.innerHTML = open.map(function (c) {
+        var remaining = money(c.remainingUsdc) + ' USDC left';
+        return '<div class="camp-box"><div>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+            '<span class="camp-badge-active">● OPEN</span>' +
+            '<span style="font-family:var(--mono);font-size:12px;color:var(--muted);">' + esc(c.campaignId) + '</span>' +
+          '</div>' +
+          '<h4 style="margin:0 0 6px;font-size:17px;font-weight:750;color:var(--text);">' +
+            esc(String(c.brief || '').slice(0, 80)) + '</h4>' +
+          '<p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.45;">' +
+            esc(remaining) + ' · ' + esc(String(c.creators || 0)) + ' creator(s) working on it</p>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:var(--surface-2);border-radius:10px;margin-bottom:14px;">' +
+            '<div><span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">CPM Rate</span>' +
+              '<b style="font-family:var(--mono);font-size:15px;color:var(--ok);">' + money(c.cpmUsdc) + ' USDC / 1k views</b></div>' +
+            '<div><span style="font-size:11px;color:var(--muted);display:block;font-weight:700;text-transform:uppercase;">Hold Period</span>' +
+              '<b style="font-size:13.5px;color:var(--text);">' + esc(String(c.dwellHours || 24)) + ' Hours</b></div>' +
+          '</div></div>' +
+          '<button type="button" class="btn btn-primary" onclick="submitToBrief(\'' + esc(c.campaignId) +
+            '\')" style="width:100%;font-size:13.5px;padding:9px;">Submit Clip to Brief →</button>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(function () {
+      if (picker) picker.innerHTML = '<option value="">Could not load campaigns</option>';
+      if (grid) {
+        grid.innerHTML = '<p class="panel-sub" style="grid-column:1/-1;">' +
+          'Could not load campaigns just now. Try again shortly.</p>';
+      }
+    });
 })();
 </script>
 </body>

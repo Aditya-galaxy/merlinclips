@@ -24,6 +24,7 @@
  * there is no second implementation to drift.
  */
 
+import { apiKeysFromEnv, authorise } from './mcpauth';
 import type { CampaignRuntime } from './campaign/runtime';
 
 const PROTOCOL_VERSION = '2024-11-05';
@@ -61,7 +62,8 @@ export const TOOLS = [
       'Open a campaign you fund yourself. Returns a deposit address. The campaign is invisible '
       + 'to creators and accepts no clips until your USDC confirms on-chain — then it goes live '
       + 'automatically, with no approval step. Pool minimum 100 USDC, per-creator cap minimum 10. '
-      + 'The brief describes the video required; it must not instruct the verifier.',
+      + 'The brief describes the video required; it must not instruct the verifier. '
+      + 'Requires an operator-issued key: send it as `Authorization: Bearer <key>`.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -274,6 +276,14 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
     const name = String(params?.['name'] ?? '');
     const args = (params?.['arguments'] ?? {}) as Record<string, unknown>;
 
+    // Only `create_campaign` needs a key — see WRITE_TOOLS for why the reads
+    // and `submit_clip` deliberately do not. The refusal names the header that
+    // is missing rather than only reporting that something is.
+    const auth = authorise(name, request.headers.get('authorization'), apiKeysFromEnv());
+    if (!auth.ok) {
+      return err(id, auth.status === 503 ? -32000 : -32001, auth.reason);
+    }
+
     try {
       switch (name) {
         case 'list_open_campaigns': {
@@ -295,10 +305,13 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
         }
 
         case 'create_campaign': {
+          // The key's owner, not a field the caller supplies. A caller-supplied
+          // owner would make the record of who opened a campaign worth exactly
+          // as much as the caller's honesty.
           const res = await campaigns.handleAgentCampaign(new Request('http://mcp/api/agent/campaigns', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(args),
+            body: JSON.stringify({ ...args, ownerId: auth.owner }),
           }));
           return ok(id, text(await res.json()));
         }

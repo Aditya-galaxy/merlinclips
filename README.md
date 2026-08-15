@@ -209,6 +209,7 @@ Gemini runs through **Application Default Credentials**, not an API key — `gcl
 | `AGENT_WALLET_ADDRESS` | Where x402 revenue lands. Advertised as `payTo` in every 402 challenge, so unset means the priced endpoints decline to quote rather than inviting payment to a placeholder. |
 | `INSTAGRAM_TESTER_TOKENS` | One access token per authorising Instagram account. Presence is the whole switch: it opens the oracle, URL acceptance and campaign platform selection together. |
 | `POSTHOG_KEY` / `POSTHOG_HOST` | Server-side analytics and error tracking. Absent means nothing is captured. |
+| `MCP_API_KEYS` | `<sha256-of-key>:<owner>` pairs, comma-separated, minted by `./scripts/mcp-key.sh`. Gates `create_campaign` only. Unset means that tool returns 503 — a deployment that has not been told who may write does not know, and does not know means no. |
 | `X402_ALLOW_UNVERIFIED` | Escape hatch for local work. Without it, an x402 payment that cannot be confirmed on chain is refused — which is the default, because the opt-in version of this was never switched on and the paywall served everyone for free. |
 | `TICK_SECRET` | Guards `/api/tick`, via `x-tick-secret`. Unset returns 503 — the service is public by requirement, and this endpoint must not be. |
 | `OPERATOR_SECRET` | Guards `POST /api/campaigns`, via `x-operator-secret`. Unset returns 503. **Deliberately a different value from `TICK_SECRET`** — Cloud Scheduler holds the tick secret, and whatever can trigger a tick should not also be able to commit money by opening a campaign. |
@@ -253,7 +254,9 @@ Merlin Clips exports an **MCP server** at [`https://merlinclips.com/mcp`](https:
 | `get_ledger` | Every settlement with its transaction hash. |
 | `explain_payout_rules` | The dwell arithmetic and the gate order, in full. |
 
-**Authentication: there is none yet, and that is the blocker for handing this to anyone.** Every tool above is callable by anyone who finds the endpoint. That is survivable only because the tools that commit money commit *the caller's own* money — `create_campaign` names a wallet the caller funds, and no tool can move USDC out of a wallet the caller does not control. What an anonymous caller can do is fill the log with campaigns nobody funds, which rate limiting bounds and nothing else prevents. API keys bound to an operator address are the intended fix.
+**Authentication.** `create_campaign` requires an operator-issued key, sent as `Authorization: Bearer <key>`. Mint one with `./scripts/mcp-key.sh <owner>`; only the SHA-256 goes into `MCP_API_KEYS`, so a leaked environment reveals nothing presentable, and each key names an owner that gets recorded on the campaigns it opens — which is the point of keys over one shared secret, since a shared secret cannot be revoked for one caller without revoking it for all of them. A deployment with no keys configured refuses `create_campaign` rather than permitting it.
+
+Everything else is open, for two different reasons. The reads are the audit surface — the ledger, the payout rules, a clip's status, a creator's earnings — and this system's claim is that its arithmetic can be checked by anyone, which a key would contradict. `submit_clip` is open because the payout address *is* the creator's identity: requiring credentials from us would put an operator between a clipper and getting paid. It is rate limited, and a junk submission costs a log entry rather than money, since verification runs in the tick and nothing pays before its views survive the hold.
 
 ---
 

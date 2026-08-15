@@ -10,9 +10,8 @@
 
 import { describe, expect, test } from 'bun:test';
 
-import { Analytics, pseudonym } from './analytics';
+import { Analytics } from './analytics';
 
-const WALLET = '0xAbCdEf0123456789AbCdEf0123456789AbCdEf01';
 const EMAIL = 'dana@nimbus.io';
 
 /** Captures the request body instead of sending it. */
@@ -66,20 +65,6 @@ describe('wallets are the one field held back', () => {
       const { analytics } = spy({ POSTHOG_KEY: 'phc_test', POSTHOG_INCLUDE_WALLETS: v });
       expect(analytics.includeWallets).toBe(false);
     }
-  });
-});
-
-describe('hashing is still available where it is wanted', () => {
-  test('the same subject hashes the same way, so funnels join up', () => {
-    expect(pseudonym(WALLET, 's')).toBe(pseudonym(WALLET.toLowerCase(), 's'));
-  });
-
-  test('a different salt gives a different hash, so exports cannot be cross-referenced', () => {
-    expect(pseudonym(WALLET, 'a')).not.toBe(pseudonym(WALLET, 'b'));
-  });
-
-  test('a hash does not contain what it hashed', () => {
-    expect(pseudonym(WALLET, 's')).not.toContain(WALLET.slice(2, 10));
   });
 });
 

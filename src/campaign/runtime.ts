@@ -273,7 +273,13 @@ export class CampaignRuntime {
       // The policy engine reads this.mandates, replay fills this.store. Without
       // this copy a cold instance boots with no spend authority and refuses
       // every payout it was funded to make.
-      for (const mandate of this.store.exportState().mandates) this.mandates.put(mandate);
+      const replayed = this.store.exportState();
+      for (const mandate of replayed.mandates) this.mandates.put(mandate);
+      // Rebuilt from the campaigns themselves: the binding is a fact about a
+      // campaign, not a separate record, so replay is where it comes back.
+      for (const c of replayed.campaigns) {
+        if (c.fundingWallet) this.cluster.register(c.campaignId, c.fundingWallet);
+      }
       this.loaded = true;
     }).finally(() => {
       this.readyPromise = undefined;
@@ -1280,6 +1286,19 @@ export class CampaignRuntime {
     const result = openCampaign(body);
     if (!result.ok) {
       return Response.json({ error: result.error, field: result.field }, { status: 400 });
+    }
+
+    // One wallet backs one campaign. Enforced here rather than left to the
+    // coverage arithmetic to notice later: two campaigns behind one address
+    // each read the same balance as their own funding, and the inflated
+    // "budget left" reaches creators before anyone reconciles it.
+    if (result.value.fundingWallet) {
+      const bound = this.cluster.register(
+        result.value.campaignId, result.value.fundingWallet, 'operator-supplied',
+      );
+      if (!bound.ok) {
+        return Response.json({ error: bound.error, field: bound.field }, { status: 409 });
+      }
     }
 
     await this.record({ type: 'campaign_upserted', campaign: result.value });

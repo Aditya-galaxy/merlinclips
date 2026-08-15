@@ -752,6 +752,7 @@ const server = Bun.serve({
       '/favicon.ico': 'landing/logo.svg',
       '/og.svg': 'landing/og.svg',
       '/og.png': 'landing/og.png',
+      '/architecture': 'landing/architecture.html',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
       '/api.html': 'landing/api.html',

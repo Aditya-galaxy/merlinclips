@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"
-     role="img" aria-label="Merlin Clips — paid for the views that survived">
+     role="img" aria-label="Merlin Clips — post the clip, get paid in USDC">
   <!--
     The share card.
 
@@ -9,9 +9,13 @@
     that marks the brand in the site nav — instead of gradients, badges and
     glow.
 
-    The claim leads and the name follows. Someone scrolling decides on the
-    sentence, not on whose logo it is, and the sentence here is the whole
-    product: a view counts once it has lasted.
+    The headline sells and the subtitle qualifies. An earlier version led with
+    the mechanic — "paid for the views that survived" — which is the honest
+    thing and the wrong thing to lead with: a creator scrolling decides on
+    whether there is money in it, not on how the money is calculated. The hold
+    is what makes the offer trustworthy rather than what makes it interesting,
+    so it moved down a line. Nothing here claims an amount, because the amount
+    is per campaign and a number we cannot honour is worse than no number.
 
     Margins are wider than the canvas implies. Renderers that fit a wide card
     into a square canvas trim top, bottom and right, so the composition sits
@@ -22,12 +26,12 @@
   <rect width="1200" height="630" fill="#FAF8F5"/>
 
   <g font-family="ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif" fill="#151310">
-    <text x="96" y="250" font-size="82" font-weight="600" letter-spacing="-2.4">Paid for the views</text>
-    <text x="96" y="336" font-size="82" font-weight="600" letter-spacing="-2.4">that survived.</text>
+    <text x="96" y="250" font-size="82" font-weight="600" letter-spacing="-2.4">Post the clip.</text>
+    <text x="96" y="336" font-size="82" font-weight="600" letter-spacing="-2.4">Get paid in USDC.</text>
   </g>
 
   <text x="96" y="402" font-size="27" fill="#5C554C" letter-spacing="-0.2"
-        font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif">A view is payable once it has held for twenty-four hours.</text>
+        font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif">Paid per 1,000 views that survive a 24-hour hold.</text>
 
   <line x1="96" y1="452" x2="700" y2="452" stroke="#E8E3DB" stroke-width="1"/>
 

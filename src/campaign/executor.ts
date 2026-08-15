@@ -120,8 +120,6 @@ export class BunCommandRunner implements CommandRunner {
 export interface CircleExecutorOptions {
   /** Read for the BROADCAST gate. Injectable so tests need not touch the real env. */
   readonly env?: Record<string, string | undefined>;
-  /** The campaign wallet money leaves. */
-  fromAddress: string;
   /** Plan and estimate, never broadcast. The default, deliberately. */
   dryRun?: boolean;
   runner?: CommandRunner;
@@ -182,6 +180,33 @@ export class CircleCliExecutor implements PayoutExecutor {
     const intentId = `pay-${decision.submissionId}-${decision.confirmedViews}`;
     const settledAt = new Date().toISOString();
 
+    // The campaign's own wallet, never a deployment-wide one.
+    //
+    // This used to send from a single `CAMPAIGN_WALLET` for every campaign,
+    // while coverage was checked against `campaign.fundingWallet`. Those are
+    // different addresses, so the funded-ness a creator was shown described
+    // one wallet and their payment drained another: a campaign could read
+    // `covered` while the wallet actually paying had nothing in it, and a
+    // brand's deposit could sit untouched while someone else's pool paid their
+    // creators. Coverage means nothing unless it names the wallet that pays.
+    //
+    // Absent is a refusal, not a fallback. Defaulting to the operator's wallet
+    // is precisely the bug — it pays out real money against a campaign nobody
+    // funded, and it does it silently.
+    const payer = campaign.fundingWallet?.trim();
+    if (!payer) {
+      return {
+        intentId,
+        executed: false,
+        dryRun: this.dryRun,
+        detail: 'campaign has no funding wallet — there is nothing to pay from',
+        error:
+          `campaign ${campaign.campaignId} has no fundingWallet; refusing to settle rather than `
+          + 'falling back to an operator wallet',
+        settledAt,
+      };
+    }
+
     const args = [
       'wallet',
       'transfer',
@@ -191,7 +216,7 @@ export class CircleCliExecutor implements PayoutExecutor {
       '--token',
       USDC_TOKEN[chain],
       '--address',
-      this.options.fromAddress,
+      payer,
       '--chain',
       CLI_CHAIN[chain],
       '--idempotency-key',
@@ -252,105 +277,4 @@ export class CircleCliExecutor implements PayoutExecutor {
       settledAt,
     };
   }
-}
-
-/**
- * Circle Developer Controlled Wallets API Executor.
- * Eliminates host CLI session token expiration in 24/7 serverless Cloud Run.
- */
-export class CircleDeveloperSdkExecutor implements PayoutExecutor {
-  private readonly apiKey: string;
-  private readonly walletId: string;
-  private readonly fetchImpl: typeof fetch;
-
-  constructor(options: { apiKey: string; walletId: string; fetchImpl?: typeof fetch }) {
-    this.apiKey = options.apiKey.trim();
-    this.walletId = options.walletId.trim();
-    this.fetchImpl = options.fetchImpl ?? fetch;
-  }
-
-  async send(input: {
-    decision: PayoutDecision;
-    creator: Creator;
-    campaign: Campaign;
-  }): Promise<PaymentOutcome> {
-    const { decision, creator, campaign } = input;
-    const chain = campaign.chain;
-    const intentId = `pay-${decision.submissionId}-${decision.confirmedViews}`;
-    const settledAt = new Date().toISOString();
-
-    const body = {
-      idempotencyKey: idempotencyUuid(intentId),
-      walletId: this.walletId,
-      destinationAddress: creator.payoutAddress,
-      amounts: [decision.amountUsdc.toString()],
-      tokenId: USDC_TOKEN[chain],
-      feeLevel: 'MEDIUM',
-    };
-
-    try {
-      const res = await this.fetchImpl('https://api.circle.com/v1/w3s/developer/transactions/transfer', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = (await res.json().catch(() => ({}))) as {
-        data?: { id?: string; txHash?: string };
-        message?: string;
-      };
-
-      if (!res.ok) {
-        return {
-          intentId,
-          executed: false,
-          dryRun: false,
-          detail: `Circle Developer API returned ${res.status}`,
-          error: data.message || JSON.stringify(data),
-          settledAt,
-        };
-      }
-
-      const txHash = data.data?.txHash || data.data?.id;
-      return {
-        intentId,
-        executed: true,
-        dryRun: false,
-        detail: `sent ${decision.amountUsdc} USDC to ${creator.payoutAddress} via Circle Developer API`,
-        txHash,
-        explorerUrl: txHash ? `${EXPLORER[chain]}${txHash}` : undefined,
-        settledAt,
-      };
-    } catch (err) {
-      return {
-        intentId,
-        executed: false,
-        dryRun: false,
-        detail: 'Circle Developer API request failed',
-        error: (err as Error).message,
-        settledAt,
-      };
-    }
-  }
-}
-
-/**
- * Smart Multi-Provider Executor Router.
- * Uses Circle Developer SDK if CIRCLE_API_KEY is present, else falls back to Circle CLI.
- */
-export function createPayoutExecutor(
-  fromAddress: string,
-  env: Record<string, string | undefined> = Bun.env,
-): PayoutExecutor {
-  const circleApiKey = env.CIRCLE_API_KEY?.trim();
-  const circleWalletId = env.CIRCLE_WALLET_ID?.trim();
-
-  if (circleApiKey && circleWalletId) {
-    return new CircleDeveloperSdkExecutor({ apiKey: circleApiKey, walletId: circleWalletId });
-  }
-
-  return new CircleCliExecutor({ fromAddress, env });
 }

@@ -24,7 +24,7 @@ function spy() {
 const send = (ex: CircleCliExecutor) => ex.send({
   decision: { submissionId: 's', confirmedViews: 1000n, amountUsdc: new Decimal('1') } as never,
   creator: { payoutAddress: '0x0000000000000000000000000000000000000001' } as never,
-  campaign: { chain: 'base-sepolia' } as never,
+  campaign: { chain: 'base-sepolia', fundingWallet: '0xfrom' } as never,
 });
 
 /** `--estimate` is what makes the CLI price a transfer instead of sending it. */
@@ -34,7 +34,7 @@ describe('broadcasting takes two gates', () => {
   it('does not broadcast on the constructor flag alone', async () => {
     const { calls, runner } = spy();
     await send(new CircleCliExecutor({
-      fromAddress: '0xfrom', runner, dryRun: false, env: {},
+      runner, dryRun: false, env: {},
     }));
     expect(estimated(calls[0]!)).toBe(true);
   });
@@ -42,7 +42,7 @@ describe('broadcasting takes two gates', () => {
   it('does not broadcast on the environment alone', async () => {
     const { calls, runner } = spy();
     await send(new CircleCliExecutor({
-      fromAddress: '0xfrom', runner, env: { BROADCAST: 'true' },
+      runner, env: { BROADCAST: 'true' },
     }));
     expect(estimated(calls[0]!)).toBe(true);
   });
@@ -50,7 +50,7 @@ describe('broadcasting takes two gates', () => {
   it('broadcasts only when both agree', async () => {
     const { calls, runner } = spy();
     await send(new CircleCliExecutor({
-      fromAddress: '0xfrom', runner, dryRun: false, env: { BROADCAST: 'true' },
+      runner, dryRun: false, env: { BROADCAST: 'true' },
     }));
     expect(estimated(calls[0]!)).toBe(false);
   });
@@ -59,7 +59,7 @@ describe('broadcasting takes two gates', () => {
     for (const v of ['TRUE', 'True', '1', 'yes', '', undefined]) {
       const { calls, runner } = spy();
       await send(new CircleCliExecutor({
-        fromAddress: '0xfrom', runner, dryRun: false, env: { BROADCAST: v },
+        runner, dryRun: false, env: { BROADCAST: v },
       }));
       expect(estimated(calls[0]!)).toBe(true);
     }
@@ -67,7 +67,7 @@ describe('broadcasting takes two gates', () => {
 
   it('defaults to dry run when nothing is said at all', async () => {
     const { calls, runner } = spy();
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', runner, env: {} }));
+    await send(new CircleCliExecutor({ runner, env: {} }));
     expect(estimated(calls[0]!)).toBe(true);
   });
 });
@@ -75,7 +75,7 @@ describe('broadcasting takes two gates', () => {
 describe('what the transfer carries', () => {
   it('names the recipient, amount and chain, and an idempotency key', async () => {
     const { calls, runner } = spy();
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', runner, env: {} }));
+    await send(new CircleCliExecutor({ runner, env: {} }));
     const args = calls[0]!;
     expect(args.slice(0, 2)).toEqual(['wallet', 'transfer']);
     expect(args).toContain('0x0000000000000000000000000000000000000001');
@@ -87,8 +87,8 @@ describe('what the transfer carries', () => {
 
   it('sends the same key for the same submission and view count', async () => {
     const a = spy(); const b = spy();
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', runner: a.runner, env: {} }));
-    await send(new CircleCliExecutor({ fromAddress: '0xfrom', runner: b.runner, env: {} }));
+    await send(new CircleCliExecutor({ runner: a.runner, env: {} }));
+    await send(new CircleCliExecutor({ runner: b.runner, env: {} }));
     const keyOf = (c: string[][]) => c[0]![c[0]!.indexOf('--idempotency-key') + 1];
     expect(keyOf(a.calls)).toBe(keyOf(b.calls));
   });

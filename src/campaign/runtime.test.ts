@@ -161,9 +161,8 @@ const TESTNET_W = '0xf461c5bb7e314670ae5c5eeb9929b15728ab2b6c';
 const MAINNET_W = '0x0003a59858f44451be2a5b486ee612b4139700f0';
 
 /** Reach into the built executor — this is exactly what must not drift. */
-const walletOf = (r: CampaignRuntime) =>
-  (r as unknown as { executor: { options?: { fromAddress?: string } } }).executor?.options
-    ?.fromAddress;
+const executorOf = (r: CampaignRuntime) =>
+  (r as unknown as { executor: object }).executor?.constructor.name;
 const isDry = (r: CampaignRuntime) =>
   (r as unknown as { executor: { dryRun?: boolean } }).executor?.dryRun;
 
@@ -180,20 +179,20 @@ describe('a network mismatch cannot be configured', () => {
     ).toThrow(/MAINNET_CAMPAIGN_WALLET/);
   });
 
-  test('unarmed uses the testnet wallet even when a mainnet one is present', () => {
+  test('a configured network builds a real executor', () => {
+    // These env vars no longer name the wallet money leaves — that is
+    // `campaign.fundingWallet`, per campaign. What they still decide is
+    // whether this deployment has a settlement rail at all.
     const r = new CampaignRuntime({
       blobs: new MemoryBlobStore(),
       env: { CAMPAIGN_WALLET: TESTNET_W, MAINNET_CAMPAIGN_WALLET: MAINNET_W },
     });
-    expect(walletOf(r)).toBe(TESTNET_W);
+    expect(executorOf(r)).toBe('CircleCliExecutor');
   });
 
-  test('armed uses the mainnet wallet, never the testnet one', () => {
-    const r = new CampaignRuntime({
-      blobs: new MemoryBlobStore(),
-      env: { ALLOW_MAINNET: 'true', CAMPAIGN_WALLET: TESTNET_W, MAINNET_CAMPAIGN_WALLET: MAINNET_W },
-    });
-    expect(walletOf(r)).toBe(MAINNET_W);
+  test('no network configured plans payouts and never sends them', () => {
+    const r = new CampaignRuntime({ blobs: new MemoryBlobStore(), env: {} });
+    expect(executorOf(r)).toBe('DryRunExecutor');
   });
 });
 
@@ -214,12 +213,12 @@ describe('broadcasting is a separate decision from the network', () => {
       env: { BROADCAST: 'true', CAMPAIGN_WALLET: TESTNET_W },
     });
     expect(isDry(r)).toBe(false);
-    expect(walletOf(r)).toBe(TESTNET_W);
+    expect(executorOf(r)).toBe('CircleCliExecutor');
   });
 
   test('no wallet at all settles nothing rather than guessing', () => {
     const r = new CampaignRuntime({ blobs: new MemoryBlobStore(), env: {} });
-    expect(walletOf(r)).toBeUndefined();
+    expect(executorOf(r)).toBe('DryRunExecutor');
   });
 });
 

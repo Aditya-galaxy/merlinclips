@@ -24,7 +24,7 @@
  * there is no second implementation to drift.
  */
 
-import { apiKeysFromEnv, authorise } from './mcpauth';
+import { authorise } from './mcpauth';
 import type { CampaignRuntime } from './campaign/runtime';
 
 const PROTOCOL_VERSION = '2024-11-05';
@@ -279,12 +279,28 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
     // Only `create_campaign` needs a key — see WRITE_TOOLS for why the reads
     // and `submit_clip` deliberately do not. The refusal names the header that
     // is missing rather than only reporting that something is.
-    const auth = authorise(name, request.headers.get('authorization'), apiKeysFromEnv());
+    const auth = authorise(name, request.headers.get('authorization'), campaigns.mcpKeys);
     if (!auth.ok) {
+      // Captured, not just returned. A refusal is the most informative event
+      // this endpoint produces: it is an agent that found us, chose a tool and
+      // could not use it, which is integration friction rather than noise.
+      void campaigns.analytics.capture({
+        event: 'mcp_tool_refused',
+        distinctId: 'mcp:anonymous',
+        properties: { tool: name, status: auth.status },
+      });
       return err(id, auth.status === 503 ? -32000 : -32001, auth.reason);
     }
 
-    try {
+    const started = Date.now();
+    // The key's owner when there is one, and a single shared id when there is
+    // not. Anonymous callers collapsing to one subject overstates nothing —
+    // we genuinely cannot tell them apart, and inventing a per-request or
+    // per-IP identity would report a population we have not observed.
+    const distinctId = auth.owner === 'public' ? 'mcp:anonymous' : `mcp:${auth.owner}`;
+    let outcome = 'ok';
+
+    const run = async (): Promise<Response> => {
       switch (name) {
         case 'list_open_campaigns': {
           const view = await campaigns.publicView();
@@ -375,13 +391,38 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
         default:
           return err(id, -32601, `unknown tool: ${name}`);
       }
+    };
+
+    try {
+      return await run();
     } catch (error) {
       // Reported as a tool error rather than a transport error, so the agent
       // sees what went wrong instead of assuming the server is unreachable.
+      outcome = 'threw';
       void campaigns.analytics.captureException(error, 'mcp', { tool: name });
       return ok(id, {
         ...text(`${name} failed: ${(error as Error).message}`),
         isError: true,
+      });
+    } finally {
+      // In `finally` so the call is counted whichever way it left. Only
+      // exceptions were captured before, which meant the funnel showed what
+      // broke and never what worked — a tool nobody could complete and a tool
+      // nobody tried looked identical.
+      //
+      // `outcome: 'ok'` means the transport succeeded, not that the agent got
+      // what it wanted: a tool answering `{error: ...}` in its own body counts
+      // here as ok. The distinction that matters for a funnel is the tool
+      // name, and that is recorded either way.
+      void campaigns.analytics.capture({
+        event: 'mcp_tool_called',
+        distinctId,
+        properties: {
+          tool: name,
+          outcome,
+          authenticated: auth.owner !== 'public',
+          durationMs: Date.now() - started,
+        },
       });
     }
   }

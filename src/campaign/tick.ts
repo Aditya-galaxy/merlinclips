@@ -82,6 +82,19 @@ export interface TickDeps {
   verifier?: ClipVerifier;
 }
 
+/** Only what the pass actually calls, so this file stays independent of PostHog. */
+export interface AnalyticsSink {
+  captureModelCall(input: {
+    model: string; latencyMs: number; traceId: string; pass?: boolean;
+    confidence?: number; refusalReason?: string; inputTokens?: number;
+    outputTokens?: number; error?: string; campaignId?: string;
+  }): Promise<boolean>;
+  captureException(
+    error: unknown, where: string,
+    context?: Record<string, string | number | boolean | null>,
+  ): Promise<boolean>;
+}
+
 export interface TickResult {
   readonly startedAt: string;
   /**
@@ -110,7 +123,7 @@ export interface TickResult {
 
 export async function runTick(
   deps: TickDeps,
-  options: { agentId: string; now?: Date } = { agentId: 'campaign-agent' },
+  options: { agentId: string; now?: Date; analytics?: AnalyticsSink } = { agentId: 'campaign-agent' },
 ): Promise<TickResult> {
   const now = options.now ?? new Date();
   const { store, gate, oracle, executor, log, sink, agent, verifier } = deps;
@@ -176,6 +189,7 @@ export async function runTick(
         // and re-judging a clip that already passed would let a flaky model
         // retract a promise the creator has already been paid against.
         if (verifier && !store.latestVerdict(submission.submissionId)) {
+          const startedAt = Date.now();
           try {
             const judged = await verifier.judge({ url: submission.url, brief: campaign.brief });
             const verdict = {
@@ -192,6 +206,18 @@ export async function runTick(
             verdictsRecorded.push(
               `${submission.submissionId}: ${judged.pass ? 'pass' : 'fail'}`,
             );
+            // A campaign refusing most clips is usually a brief creators
+            // cannot satisfy, not a wave of bad creators — and that is only
+            // visible once the verdicts are aggregated.
+            void options.analytics?.captureModelCall({
+              model: judged.model,
+              latencyMs: Date.now() - startedAt,
+              traceId: submission.submissionId,
+              pass: judged.pass,
+              confidence: judged.confidence,
+              refusalReason: judged.pass ? undefined : judged.reasons.join(' '),
+              campaignId: campaign.campaignId,
+            });
           } catch (error) {
             // A verifier outage must not pay an unjudged clip. The gate will
             // refuse on `no_verdict`, which is the correct fail-closed
@@ -199,6 +225,16 @@ export async function runTick(
             errors.push(
               `${submission.submissionId}: verification failed — ${(error as Error).message}`,
             );
+            void options.analytics?.captureModelCall({
+              model: 'unknown',
+              latencyMs: Date.now() - startedAt,
+              traceId: submission.submissionId,
+              error: (error as Error).message,
+              campaignId: campaign.campaignId,
+            });
+            void options.analytics?.captureException(error, 'verifier', {
+              submissionId: submission.submissionId,
+            });
           }
         }
 

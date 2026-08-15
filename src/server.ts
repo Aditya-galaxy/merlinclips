@@ -751,6 +751,23 @@ const server = Bun.serve({
     }
     return new Response('not found', { status: 404 });
   },
+
+  /**
+   * Anything the route handlers let escape.
+   *
+   * Bun's default is a generic "Something went wrong!" with nothing recorded,
+   * which is how the auditor's export returned a 500 for a day without anyone
+   * knowing why. Now the exception reaches Error Tracking with the path that
+   * produced it, and the caller still gets a body that leaks nothing.
+   */
+  error(err: Error) {
+    void campaigns.analytics.captureException(err, 'http');
+    console.error('unhandled request error:', err);
+    return new Response(
+      JSON.stringify({ error: 'something went wrong on our side' }),
+      { status: 500, headers: { 'content-type': 'application/json' } },
+    );
+  },
 });
 
 console.log(`merlinclips console on http://localhost:${server.port}`);

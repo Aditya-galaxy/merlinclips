@@ -99,6 +99,79 @@ export class Analytics {
       return false;
     }
   }
+
+  /**
+   * An error worth someone's attention.
+   *
+   * Sent as PostHog's `$exception` so it lands in Error Tracking rather than
+   * as a bare event. The message is included; a stack is included only when
+   * one exists, because a synthesised stack points at this file rather than at
+   * whatever actually broke.
+   *
+   * The distinct id is the surface, not the person: an error is a property of
+   * the code path, and grouping by user would scatter one bug across everyone
+   * who hit it.
+   */
+  async captureException(
+    error: unknown,
+    where: string,
+    context: Record<string, string | number | boolean | null> = {},
+  ): Promise<boolean> {
+    const e = error instanceof Error ? error : undefined;
+    return this.capture({
+      event: '$exception',
+      distinctId: `surface:${where}`,
+      properties: {
+        ...context,
+        $exception_type: e?.name ?? 'Error',
+        $exception_message: e?.message ?? String(error).slice(0, 400),
+        $exception_source: where,
+        ...(e?.stack ? { $exception_stack_trace_raw: e.stack.slice(0, 4000) } : {}),
+      },
+    });
+  }
+
+  /**
+   * One model call, in the shape PostHog's LLM analytics reads.
+   *
+   * The verdict fields are the point. Latency and token counts say what the
+   * call cost; `pass` and `refusalReason` say whether the brief is asking for
+   * something creators can actually deliver — a campaign refusing most clips
+   * is usually a badly written brief, not a wave of bad creators, and that is
+   * only visible in aggregate.
+   */
+  async captureModelCall(input: {
+    model: string;
+    latencyMs: number;
+    traceId: string;
+    pass?: boolean;
+    confidence?: number;
+    refusalReason?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    error?: string;
+    campaignId?: string;
+  }): Promise<boolean> {
+    return this.capture({
+      event: '$ai_generation',
+      distinctId: `trace:${input.traceId}`,
+      properties: {
+        $ai_trace_id: input.traceId,
+        $ai_model: input.model,
+        $ai_provider: 'google',
+        $ai_latency: input.latencyMs / 1000,
+        $ai_input_tokens: input.inputTokens ?? 0,
+        $ai_output_tokens: input.outputTokens ?? 0,
+        $ai_is_error: Boolean(input.error),
+        ...(input.error ? { $ai_error: input.error.slice(0, 400) } : {}),
+        verdictPass: input.pass ?? null,
+        verdictConfidence: input.confidence ?? null,
+        // Truncated: a reason is a signal here, not a transcript.
+        refusalReason: input.refusalReason?.slice(0, 200) ?? null,
+        campaignId: input.campaignId ?? null,
+      },
+    });
+  }
 }
 
 export function analyticsFromEnv(env: Record<string, string | undefined> = Bun.env): Analytics {

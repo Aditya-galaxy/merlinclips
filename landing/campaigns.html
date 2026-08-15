@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Open campaigns — Merlin Clips</title>
+<meta name="description" content="Campaigns open to clippers right now, with the rate, the hold and how much of the pool is left. Submit a clip with your wallet address — no account needed." />
+<link rel="icon" href="/logo.svg" type="image/svg+xml" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="canonical" href="https://merlinclips.com/campaigns" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Merlin Clips" />
+<meta property="og:url" content="https://merlinclips.com/campaigns" />
+<meta property="og:title" content="Post the clip. Get paid in USDC." />
+<meta property="og:description" content="Campaigns open to clippers right now. Paid per 1,000 views that survive a 24-hour hold. No account needed — your wallet address is the identity." />
+<meta property="og:image" content="https://merlinclips.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Merlin Clips — post the clip, get paid in USDC" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Post the clip. Get paid in USDC." />
+<meta name="twitter:description" content="Campaigns open to clippers right now. No account needed." />
+<meta name="twitter:image" content="https://merlinclips.com/og.png" />
+<link rel="stylesheet" href="/styles.css" />
+<style>
+:root {
+  --bg:#FAF8F5; --surface:#FFF; --surface-2:#F4F1EC;
+  --line:#E8E3DB; --line-hi:#D8D1C6;
+  --text:#151310; --text-2:#5C554C; --muted:#8B8378;
+  --pop:#6D28D9; --pop-wash:#F3EEFE;
+  --ok:#0F7B4F; --ok-wash:#E7F4EE;
+  --warn:#8A5A00; --warn-wash:#FBF1DF;
+  --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --mono: ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,monospace;
+  --sans: -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+       font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:940px; margin:0 auto; padding:0 24px; }
+
+/* ── masthead ───────────────────────────────────────────────────────────── */
+.top { border-bottom:1px solid var(--line); }
+.top .wrap { display:flex; align-items:center; justify-content:space-between; height:64px; }
+.brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text);
+         font-weight:650; letter-spacing:-.01em; }
+.brand .dot { width:9px; height:9px; border-radius:50%; background:var(--pop); }
+.top nav { display:flex; gap:22px; }
+.top nav a { color:var(--text-2); text-decoration:none; font-size:14px; }
+.top nav a:hover { color:var(--text); }
+
+/* ── hero ───────────────────────────────────────────────────────────────── */
+.hero { padding:64px 0 40px; border-bottom:1px solid var(--line); }
+.hero h1 { font-family:var(--serif); font-size:52px; line-height:1.05; letter-spacing:-.028em;
+           font-weight:600; margin:0 0 16px; }
+.hero p { font-size:17px; color:var(--text-2); margin:0; max-width:56ch; }
+.hero .rule { margin-top:26px; display:flex; gap:26px; flex-wrap:wrap;
+              font-size:13.5px; color:var(--muted); }
+.hero .rule b { color:var(--text-2); font-weight:600; }
+
+/* ── list ───────────────────────────────────────────────────────────────── */
+.list { padding:34px 0 80px; display:grid; gap:16px; }
+.camp { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+        padding:22px 24px; }
+.camp .row1 { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.camp .brief { font-size:16.5px; font-weight:560; letter-spacing:-.01em; margin:0 0 4px; }
+.camp .rate { font-family:var(--mono); font-size:22px; font-weight:600; white-space:nowrap; letter-spacing:-.02em; }
+.camp .rate span { font-size:12px; color:var(--muted); font-weight:500; font-family:var(--sans); }
+.facts { display:flex; flex-wrap:wrap; gap:18px; margin-top:14px; padding-top:14px;
+         border-top:1px solid var(--line); font-size:13px; color:var(--text-2); }
+.facts b { font-family:var(--mono); font-weight:600; color:var(--text); }
+.badge { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+         padding:3px 9px; border-radius:99px; }
+.badge.ok { background:var(--ok-wash); color:var(--ok); }
+.badge.part { background:var(--warn-wash); color:var(--warn); }
+.bar { height:4px; background:var(--surface-2); border-radius:99px; margin-top:14px; overflow:hidden; }
+.bar i { display:block; height:100%; background:var(--pop); border-radius:99px; }
+
+/* ── submit ─────────────────────────────────────────────────────────────── */
+.open { margin-top:16px; }
+.open summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--pop);
+                list-style:none; display:inline-flex; align-items:center; gap:7px; }
+.open summary::-webkit-details-marker { display:none; }
+.open summary::after { content:'→'; transition:transform .15s; }
+.open[open] summary::after { transform:rotate(90deg); }
+.form { margin-top:16px; display:grid; gap:10px; }
+.form label { font-size:12.5px; color:var(--muted); font-weight:600; letter-spacing:.02em;
+              text-transform:uppercase; }
+.form input { width:100%; box-sizing:border-box; padding:11px 13px; font-size:14.5px;
+              font-family:var(--mono); border:1px solid var(--line-hi); border-radius:9px;
+              background:var(--bg); color:var(--text); }
+.form input:focus { outline:none; border-color:var(--pop); box-shadow:0 0 0 3px var(--pop-wash); }
+.form button { justify-self:start; padding:11px 22px; font-size:14.5px; font-weight:600;
+               background:var(--text); color:#fff; border:0; border-radius:9px; cursor:pointer; }
+.form button:disabled { opacity:.5; cursor:default; }
+.said { font-size:13.5px; padding:11px 13px; border-radius:9px; display:none; }
+.said.on { display:block; }
+.said.ok { background:var(--ok-wash); color:var(--ok); }
+.said.no { background:#FCEEEC; color:#B02A20; }
+
+.note { font-size:12.5px; color:var(--muted); margin-top:10px; }
+.empty { border:1px dashed var(--line-hi); border-radius:14px; padding:44px 28px;
+         text-align:center; color:var(--text-2); }
+.empty h3 { font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 8px; color:var(--text); }
+.foot { border-top:1px solid var(--line); padding:26px 0 60px; font-size:13px; color:var(--muted); }
+.foot a { color:var(--text-2); }
+@media (max-width:640px) {
+  .hero { padding:44px 0 30px; } .hero h1 { font-size:38px; }
+  .camp .row1 { flex-direction:column; gap:8px; }
+  .top nav { gap:14px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
+    <nav>
+      <a href="/campaigns">Campaigns</a>
+      <a href="/profile">Your studio</a>
+      <a href="/ledger">Ledger</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Post the clip.<br>Get paid in USDC.</h1>
+    <p>Every campaign below has USDC confirmed on-chain behind it before it appears here.
+       Pick one, post your clip, and paste the link. Your wallet address is your account —
+       there is nothing to sign up for.</p>
+    <div class="rule">
+      <span><b>Paid per 1,000 views</b> that survive the hold</span>
+      <span><b>Terms freeze</b> when your clip is accepted</span>
+      <span><b>Settled on Base</b>, every payment checkable</span>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="list" id="list">
+    <div class="empty"><h3>Loading campaigns…</h3></div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    A view counts once it has held for the full window — that is what stops bought views being
+    paid for. <a href="/ledger">See every settlement</a> · <a href="/architecture">How a payout is decided</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  };
+  var usd = function (v) {
+    return '$' + Number(v || 0).toLocaleString('en-US',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var num = function (v) { return Number(v || 0).toLocaleString('en-US'); };
+
+  /* Analytics is optional here on purpose. site.js only defines posthog when a
+     key is configured, and a page whose campaign list depends on a telemetry
+     library loading is a page that breaks for anyone blocking trackers. */
+  var track = function (name, props) {
+    try { if (window.posthog && window.posthog.capture) window.posthog.capture(name, props || {}); }
+    catch (e) { /* never let a metric break the page */ }
+  };
+
+  var ADDR = /^0x[a-fA-F0-9]{40}$/;
+  /* Remembered so a clipper submitting to a second campaign does not retype it.
+     Local only — it is a public address, never a key. */
+  var savedAddr = '';
+  try { savedAddr = localStorage.getItem('mc_payout_addr') || ''; } catch (e) {}
+
+  function card(c) {
+    var pool = Number(c.poolUsdc || 0);
+    var left = Number(c.remainingUsdc || 0);
+    var used = pool > 0 ? Math.max(0, Math.min(100, ((pool - left) / pool) * 100)) : 0;
+    var cov = (c.funding && c.funding.coverage) || 'unknown';
+    /* Said plainly rather than hidden. A creator deciding whether to spend an
+       evening editing is entitled to know whether the money is actually there,
+       and "covered" is a fact about the chain rather than a promise from us. */
+    var badge = cov === 'covered'
+      ? '<span class="badge ok">USDC confirmed on-chain</span>'
+      : '<span class="badge part">Partly funded — ' + esc(cov) + '</span>';
+
+    return ''
+      + '<article class="camp" data-id="' + esc(c.campaignId) + '">'
+      +   '<div class="row1">'
+      +     '<div><p class="brief">' + esc(c.brief) + '</p>' + badge + '</div>'
+      +     '<div class="rate">' + usd(c.cpmUsdc) + '<span> /1k</span></div>'
+      +   '</div>'
+      +   '<div class="bar"><i style="width:' + used.toFixed(1) + '%"></i></div>'
+      +   '<div class="facts">'
+      +     '<span>' + usd(left) + ' of ' + usd(pool) + ' left</span>'
+      +     '<span>Hold <b>' + esc(c.dwellHours) + 'h</b></span>'
+      +     '<span>Max per creator <b>' + usd(c.perCreatorCapUsdc) + '</b></span>'
+      +     '<span><b>' + num(c.creators) + '</b> clipping</span>'
+      +     '<span>' + esc((c.platforms || []).join(', ')) + '</span>'
+      +   '</div>'
+      +   '<details class="open">'
+      +     '<summary>Submit a clip</summary>'
+      +     '<div class="form">'
+      +       '<div><label for="u-' + esc(c.campaignId) + '">Your clip URL</label>'
+      +       '<input id="u-' + esc(c.campaignId) + '" placeholder="https://www.youtube.com/watch?v=…" /></div>'
+      +       '<div><label for="a-' + esc(c.campaignId) + '">Base address for your USDC</label>'
+      +       '<input id="a-' + esc(c.campaignId) + '" value="' + esc(savedAddr) + '" placeholder="0x…" /></div>'
+      +       '<button type="button">Submit and lock this rate</button>'
+      +       '<div class="said"></div>'
+      +       '<p class="note">Submitting freezes ' + usd(c.cpmUsdc) + ' per 1,000 views and the '
+      +         esc(c.dwellHours) + '-hour hold onto your clip. The brand cannot lower them afterwards.</p>'
+      +     '</div>'
+      +   '</details>'
+      + '</article>';
+  }
+
+  function wire(el, c) {
+    var d = el.querySelector('details');
+    d.addEventListener('toggle', function () {
+      if (d.open) track('campaign_selected', { campaignId: c.campaignId, cpmUsdc: c.cpmUsdc });
+    });
+
+    var btn = el.querySelector('button');
+    var said = el.querySelector('.said');
+    var tell = function (msg, ok) {
+      said.className = 'said on ' + (ok ? 'ok' : 'no');
+      said.textContent = msg;
+    };
+
+    btn.addEventListener('click', function () {
+      var url = (el.querySelector('#u-' + CSS.escape(c.campaignId)).value || '').trim();
+      var addr = (el.querySelector('#a-' + CSS.escape(c.campaignId)).value || '').trim();
+      if (!url) return tell('Paste the link to your clip first.', false);
+      if (!ADDR.test(addr)) return tell('That is not a Base address — 0x followed by 40 characters.', false);
+
+      try { localStorage.setItem('mc_payout_addr', addr); } catch (e) {}
+      btn.disabled = true; btn.textContent = 'Submitting…';
+
+      fetch('/api/submissions', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ campaignId: c.campaignId, url: url, payoutAddress: addr })
+      })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+        .then(function (res) {
+          if (!res.ok || res.b.error) {
+            /* The server's own words. It explains why a clip was refused far
+               better than a generic failure line, and a clipper who is told
+               the real reason can fix it. */
+            tell(res.b.error || 'That was not accepted.', false);
+            track('clip_submit_failed', { campaignId: c.campaignId, reason: String(res.b.error || 'unknown').slice(0, 80) });
+            return;
+          }
+          var t = res.b.agreedTerms || {};
+          tell(res.b.alreadySubmitted
+            ? 'Already submitted — this clip is in for this campaign, at ' + usd(t.cpmUsdc) + ' per 1k.'
+            : 'Accepted. Locked at ' + usd(t.cpmUsdc) + ' per 1,000 views on a '
+              + (t.dwellHours || 24) + '-hour hold. Views count from now.', true);
+          /* `clip_submitted` is emitted by the server for both this form and
+             the MCP tool, so it is not repeated here — counting it in both
+             places would double every submission made through the website. */
+          el.querySelector('#u-' + CSS.escape(c.campaignId)).value = '';
+        })
+        .catch(function () { tell('No connection, so nothing was submitted.', false); })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Submit and lock this rate'; });
+    });
+  }
+
+  fetch('/api/campaign', { headers: { accept: 'application/json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      var open = ((d && d.campaigns) || []).filter(function (c) { return c.status === 'active'; });
+      var list = $('list');
+
+      if (!open.length) {
+        /* An empty shelf, said as an empty shelf. Inventing a placeholder
+           campaign here would be the single most damaging thing this page
+           could do — a clipper would spend an evening on it. */
+        list.innerHTML = '<div class="empty"><h3>No campaigns are open right now</h3>'
+          + 'A campaign appears the moment a brand\'s USDC confirms on-chain. '
+          + 'Nothing is listed before then, so what you see here is always real work.</div>';
+        track('campaign_viewed', { open: 0 });
+        return;
+      }
+
+      list.innerHTML = open.map(card).join('');
+      open.forEach(function (c) {
+        var el = list.querySelector('[data-id="' + CSS.escape(c.campaignId) + '"]');
+        if (el) wire(el, c);
+      });
+      track('campaign_viewed', {
+        open: open.length,
+        totalRemainingUsdc: open.reduce(function (t, c) { return t + Number(c.remainingUsdc || 0); }, 0)
+      });
+    })
+    .catch(function () {
+      $('list').innerHTML = '<div class="empty"><h3>Could not load campaigns</h3>'
+        + 'That is us, not you. Refresh in a moment.</div>';
+    });
+})();
+</script>
+<script src="/site.js" defer></script>
+</body>
+</html>

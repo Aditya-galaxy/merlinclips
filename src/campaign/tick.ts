@@ -84,6 +84,11 @@ export interface TickDeps {
 
 /** Only what the pass actually calls, so this file stays independent of PostHog. */
 export interface AnalyticsSink {
+  capture(event: {
+    event: string;
+    distinctId: string;
+    properties?: Record<string, string | number | boolean | null>;
+  }): Promise<boolean>;
   captureModelCall(input: {
     model: string; latencyMs: number; traceId: string; pass?: boolean;
     confidence?: number; refusalReason?: string; inputTokens?: number;
@@ -337,6 +342,25 @@ export async function runTick(
         store.recordPayout(settled);
         paid += 1;
         total = total.plus(decision.amountUsdc);
+
+        // Emitted here rather than from a page, because nothing is watching
+        // when this happens. Settlement runs in a scheduled pass with no
+        // browser attached, so a client-side event would record the payouts a
+        // creator happened to be looking at and no others — which is the
+        // subset least worth measuring.
+        //
+        // After the append, so a payout refused as a duplicate is not counted
+        // as a settlement that occurred.
+        void options.analytics?.capture({
+          event: 'clip_settled',
+          distinctId: `creator:${decision.creatorId}`,
+          properties: {
+            campaignId: decision.campaignId,
+            amountUsdc: Number(decision.amountUsdc.toString()),
+            viewsPaidTo: Number(decision.confirmedViews),
+            broadcast: Boolean(outcome.txHash),
+          },
+        });
       } catch (error) {
         // One clip's oracle timing out must not stop everyone else being paid.
         errors.push(`${submission.submissionId}: ${(error as Error).message}`);

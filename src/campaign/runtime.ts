@@ -854,6 +854,12 @@ export class CampaignRuntime {
         viewsPaidTo: p.viewsPaidTo.toString(),
         settledAt: p.at,
         txHash: p.txHash,
+        // Carried through rather than rebuilt in the page. The creator studio
+        // was composing `basescan.org/tx/<hash>` by hand, which is the mainnet
+        // explorer — every settlement so far is on Base Sepolia, so the one
+        // link that exists to prove a payment happened led to a page saying
+        // the transaction does not exist.
+        explorerUrl: p.explorerUrl,
       });
       lastPaidAtMap.set(p.creatorId.toLowerCase(), p.at);
     }
@@ -1573,6 +1579,23 @@ export class CampaignRuntime {
       await this.record({ type: 'creator_upserted', creator });
       const isNew = await this.record({ type: 'submission_accepted', submission });
       const terms = submission.acceptedTerms;
+
+      // One place, so the web form and the MCP tool are counted the same way
+      // and neither can drift. `isNew` distinguishes a first submission from a
+      // resubmission of the same clip, which dedupes rather than erroring —
+      // counting those as new would inflate the top of the funnel with people
+      // clicking twice.
+      void this.analytics.capture({
+        event: 'clip_submitted',
+        distinctId: `creator:${creator.payoutAddress.toLowerCase()}`,
+        properties: {
+          campaignId: submission.campaignId,
+          platform: submission.platform,
+          firstTime: isNew,
+          cpmUsdc: Number(terms.cpmUsdc.toString()),
+          dwellHours: Math.round(terms.dwellMs / 3_600_000),
+        },
+      });
 
       // Spend authority for this creator, bounded by the terms just frozen.
       //

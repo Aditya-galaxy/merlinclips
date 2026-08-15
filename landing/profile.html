@@ -316,10 +316,16 @@
       /* ── settlements ─────────────────────────────────────────────────── */
       var pays = p.payouts || [];
       fill('payouts', pays.length ? pays.map(function (x) {
-        var link = x.txHash
-          ? '<a class="tx" href="https://basescan.org/tx/' + esc(x.txHash) + '" target="_blank" rel="noopener">'
+        /* The explorer the payout actually settled on, from the API. Built by
+           hand here before, always as basescan.org — the mainnet explorer —
+           while every settlement so far is on Base Sepolia. The one link whose
+           job is to prove a creator was paid led to "transaction not found". */
+        var link = x.txHash && x.explorerUrl
+          ? '<a class="tx" href="' + esc(x.explorerUrl) + '" target="_blank" rel="noopener">'
               + esc(String(x.txHash).slice(0, 10)) + '… ↗</a>'
-          : '<span style="color:var(--muted);font-size:12.5px;">Recorded, not broadcast</span>';
+          : x.txHash
+            ? '<span class="tx" title="' + esc(x.txHash) + '">' + esc(String(x.txHash).slice(0, 10)) + '…</span>'
+            : '<span style="color:var(--muted);font-size:12.5px;">Recorded, not broadcast</span>';
         return '<div class="row">'
           + '<div class="head">' + esc(x.campaignId) + '</div>'
           + '<div class="amt">' + usd(x.amountUsdc) + '</div>'

@@ -18,6 +18,7 @@
  */
 
 import { encodeEvent } from './campaign/events';
+import { handleMcp } from './mcp';
 import {
   budgetSnapshot,
   createDemoWorld,
@@ -495,6 +496,11 @@ const server = Bun.serve({
       return (await spec.exists())
         ? new Response(spec, { headers: { 'content-type': 'application/json; charset=utf-8' } })
         : json({ error: 'spec not found' }, 404);
+    }
+
+    // The transport. /mcp.json describes the tools; this answers calls.
+    if (url.pathname === '/mcp') {
+      return handleMcp(request, campaigns);
     }
 
     if (url.pathname === '/mcp.json') {

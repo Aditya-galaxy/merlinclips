@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "merlinclips": {
+      "type": "http",
+      "url": "https://merlinclips.com/mcp"
+    }
+  }
+}

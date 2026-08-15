@@ -318,7 +318,6 @@ const server = Bun.serve({
       });
     }
 
-    if (url.pathname === '/api/state') return json(state());
 
     // What a creator reads before deciding whether the campaign is worth their
     // effort: the remaining pool, published rather than discoverable only by
@@ -466,10 +465,22 @@ const server = Bun.serve({
 
     // The auditor's export: the whole chain, envelopes included, so anyone can
     // recompute the hashes themselves rather than take our word for it.
+    //
+    // This served `world.ledger` — a scripted simulation that shares nothing
+    // with the campaign engine. The endpoint documented as the audit trail was
+    // exporting invented rows, and in production exported an empty one, which
+    // is worse than having no endpoint.
     if (url.pathname === '/api/ledger.jsonl') {
-      return new Response(world.ledger.toJsonl(), {
+      const envelopes = await campaigns.log.replay();
+      const body = envelopes.map((e) => JSON.stringify(e)).join('\n');
+      return new Response(body ? `${body}\n` : '', {
         headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
       });
+    }
+
+    // The derived hash chain over those same events, recomputed on read.
+    if (url.pathname === '/api/ledger/chain') {
+      return json(await campaigns.log.chain());
     }
 
     if (url.pathname === '/api/reset' && request.method === 'POST') {

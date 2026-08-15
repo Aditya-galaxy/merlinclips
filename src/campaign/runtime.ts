@@ -120,7 +120,8 @@ export class CampaignRuntime {
   readonly mandates: MandateStore;
   public readonly webhooks: import('../telemetry/webhooks').WebhookNotifier;
   private readonly blobs: BlobStore;
-  private readonly log: EventLog;
+  /** Public so the auditor's export can replay the same events the engine reads. */
+  public readonly log: EventLog;
   private readonly oracle: ViewOracle;
   private readonly executor: PayoutExecutor;
   private readonly env: Record<string, string | undefined>;

@@ -141,6 +141,32 @@ export const TOOLS = [
     },
   },
   {
+    name: 'check_clip',
+    description:
+      'What happened to one clip: whether it passed the brief, how many views have survived, '
+      + 'what it has earned, and if it has not paid yet, which gate is holding it and why. '
+      + 'A clip inside its hold is waiting, not rejected — say it that way to the creator.',
+    inputSchema: {
+      type: 'object',
+      properties: { submissionId: { type: 'string', description: 'Returned by submit_clip.' } },
+      required: ['submissionId'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'check_earnings',
+    description:
+      'Everything one payout address has submitted and been paid, across every campaign. '
+      + 'Public by design — the address is the identity here, and its payouts are on-chain '
+      + 'anyway, so anyone can already verify them.',
+    inputSchema: {
+      type: 'object',
+      properties: { payoutAddress: { type: 'string', description: 'The Base address clips were submitted with.' } },
+      required: ['payoutAddress'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'check_campaign_funding',
     description:
       'Read what is actually on-chain behind a campaign pool. Returns coverage as covered, '
@@ -281,6 +307,40 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
             body: JSON.stringify(args),
           }));
           return ok(id, text(await res.json()));
+        }
+
+        case 'check_clip': {
+          const res = await campaigns.handleSubmissionStatus(String(args['submissionId'] ?? ''));
+          return ok(id, text(await res.json()));
+        }
+
+        case 'check_earnings': {
+          // The store is empty until the log has been replayed. Every other
+          // tool goes through a handler that awaits this; reading the store
+          // directly skipped it, so a cold instance answered "no clips, no
+          // earnings" to a creator who had both — the most alarming possible
+          // wrong answer on a payouts product.
+          await campaigns.ready();
+          const wallet = String(args['payoutAddress'] ?? '').toLowerCase();
+          const state = campaigns.store.exportState();
+          const mine = state.submissions.filter((x) => x.creatorId.toLowerCase() === wallet);
+          const paid = campaigns.publicPayoutsFor(wallet);
+          return ok(id, text({
+            payoutAddress: wallet,
+            clipsSubmitted: mine.length,
+            settlements: paid,
+            totalPaidUsdc: paid
+              .reduce((t, x) => t + Number(x.amountUsdc), 0)
+              .toFixed(2),
+            clips: mine.map((x) => ({
+              submissionId: x.submissionId,
+              campaignId: x.campaignId,
+              url: x.url,
+              submittedAt: x.submittedAt,
+              cpmUsdc: x.acceptedTerms.cpmUsdc.toString(),
+              dwellHours: Math.round(x.acceptedTerms.dwellMs / 3_600_000),
+            })),
+          }));
         }
 
         case 'check_campaign_funding': {

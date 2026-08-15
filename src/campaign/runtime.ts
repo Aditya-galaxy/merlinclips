@@ -1817,6 +1817,28 @@ export class CampaignRuntime {
     });
   }
 
+  /**
+   * Settlements to one payout address.
+   *
+   * Public, because the address is the identity here and every payout is on a
+   * public chain already — withholding it would protect nothing and would stop
+   * an agent following up on a clip it submitted.
+   */
+  publicPayoutsFor(payoutAddress: string): Array<Record<string, string | undefined>> {
+    const wallet = payoutAddress.trim().toLowerCase();
+    return this.store
+      .exportState()
+      .payouts.filter((p) => p.creatorId.toLowerCase() === wallet)
+      .map((p) => ({
+        campaignId: p.campaignId,
+        submissionId: p.submissionId,
+        amountUsdc: p.amountUsdc.toString(),
+        viewsPaidTo: p.viewsPaidTo.toString(),
+        settledAt: p.at,
+        txHash: p.txHash,
+      }));
+  }
+
   /** Expose latest tick execution status for asynchronous polling. */
   async handleTickStatus(): Promise<Response> {
     await this.ready();

@@ -73,6 +73,32 @@
         });
       }
 
+      /* ── join this browser to the person the server already knows ────── */
+      if (cfg.posthogKey) {
+        /* Without this the two halves never meet. Server-side events land on a
+           hashed account id; the browsing that led up to them — the referrer,
+           the campaign that brought someone in, the pages they read first —
+           sits on an anonymous id and stays there. identify() merges the
+           anonymous history into the person, which is what turns a pile of
+           events into "who this is, how they arrived, what they did".
+
+           The id is a salted hash. PostHog learns a stable subject, not a
+           wallet and not an email. */
+        fetch('/api/me', { credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (me) {
+            if (!me || !me.signedIn || !me.analyticsId) return;
+            window.posthog.identify(me.analyticsId, {
+              /* Set once, so a later visit does not overwrite how they first
+                 arrived — first-touch attribution is the question worth
+                 answering, and last-touch overwrites it every session. */
+            }, {
+              first_seen_at: new Date().toISOString()
+            });
+          })
+          .catch(function () {});
+      }
+
       /* ── errors the browser sees ─────────────────────────────────────── */
       if (cfg.posthogKey) {
         /* Captured explicitly rather than relying on autocapture, so a page

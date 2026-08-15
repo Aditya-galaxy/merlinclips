@@ -130,8 +130,29 @@ held and rolls into the next, which is why a small balance shows as held
 rather than paid.`;
 
 export async function handleMcp(request: Request, campaigns: CampaignRuntime): Promise<Response> {
+  // The Streamable HTTP transport opens an SSE stream with GET. This server
+  // does not offer one — every tool here answers in a single round trip — and
+  // the spec's answer for that is 405, not a JSON-RPC error. A client reading
+  // -32600 concludes the server is broken rather than that it is
+  // request/response only.
+  //
+  // The body is written for a person, because the other thing that reaches
+  // this URL is someone pasting it into a browser to check it works.
+  if (request.method === 'GET' || request.method === 'HEAD') {
+    return Response.json(
+      {
+        name: 'merlinclips',
+        transport: 'streamable-http (request/response only, no SSE)',
+        usage: 'POST JSON-RPC 2.0 to this URL. Try {"jsonrpc":"2.0","id":1,"method":"tools/list"}',
+        tools: TOOLS.map((t) => t.name),
+        docs: 'https://merlinclips.com/api.html',
+      },
+      { status: 405, headers: { allow: 'POST' } },
+    );
+  }
+
   if (request.method !== 'POST') {
-    return err(null, -32600, 'MCP uses POST with a JSON-RPC 2.0 body');
+    return new Response(null, { status: 405, headers: { allow: 'POST' } });
   }
 
   const body = (await request.json().catch(() => ({}))) as JsonRpcRequest;

@@ -734,7 +734,7 @@ const server = Bun.serve({
       '/logo.svg': 'landing/logo.svg',
       '/favicon.ico': 'landing/logo.svg',
       '/og.svg': 'landing/og.svg',
-      '/og.png': 'landing/og.svg',
+      '/og.png': 'landing/og.png',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',
       '/api.html': 'landing/api.html',
@@ -764,13 +764,24 @@ const server = Bun.serve({
     if (asset) {
       const file = Bun.file(asset);
       if (await file.exists()) {
-        const mimeType = asset.endsWith('.css')
-          ? 'text/css; charset=utf-8'
-          : asset.endsWith('.svg')
-          ? 'image/svg+xml'
-          : asset.endsWith('.ico')
-          ? 'image/x-icon'
-          : 'text/html; charset=utf-8';
+        // Falling through to text/html was silently wrong for two assets that
+        // matter: the share card, which every crawler rejects unless it is
+        // served as an image, and site.js, which a browser enforcing nosniff
+        // would refuse to execute — taking analytics and the bot challenge
+        // with it.
+        const BY_EXTENSION: Record<string, string> = {
+          '.css': 'text/css; charset=utf-8',
+          '.js': 'text/javascript; charset=utf-8',
+          '.json': 'application/json; charset=utf-8',
+          '.svg': 'image/svg+xml',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.webp': 'image/webp',
+          '.ico': 'image/x-icon',
+        };
+        const extension = asset.slice(asset.lastIndexOf('.'));
+        const mimeType = BY_EXTENSION[extension] ?? 'text/html; charset=utf-8';
         return new Response(file, {
           headers: {
             'content-type': mimeType,

@@ -136,7 +136,10 @@
     <a class="l" href="/brands.html">For brands</a>
     <a class="l opt" href="/architecture.html">Architecture</a>
   </div>
-  <a class="cta" href="/auth/logout">Sign out</a>
+  <!-- Swapped by the profile fetch below. Hardcoded to "Sign out", it invited a
+       signed-out visitor to sign out of nothing, on a page whose every tile was
+       already telling them to sign in. -->
+  <a class="cta" id="authcta" href="/signup">Sign in</a>
   <button class="burger" type="button" aria-expanded="false" aria-controls="navlinks"
           aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></nav>
@@ -263,6 +266,9 @@
         fill('wallets', empty('Sign in to link the address your USDC arrives at.'));
         return;
       }
+
+      var cta = $('authcta');
+      if (cta) { cta.textContent = 'Sign out'; cta.href = '/auth/logout'; }
 
       var a = p.account || {};
       if (a.name) set('p-name', a.name);

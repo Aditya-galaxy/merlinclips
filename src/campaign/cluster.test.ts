@@ -59,17 +59,16 @@ describe('an address has to be one somebody can sign for', () => {
   });
 });
 
-describe('one wallet cannot back two pools', () => {
-  test('a second campaign claiming the same address is refused', () => {
-    // The failure this prevents: both campaigns read the same balance as their
-    // own funding, and both publish it to creators as budget left.
+describe('one wallet funds many campaigns', () => {
+  test('a brand can back a second campaign from the same agent wallet', () => {
+    // The normal shape. Circle issues one agent wallet per account per chain,
+    // so forbidding this would forbid the product. What keeps it honest is
+    // funding.ts netting the other pools off the balance before deciding
+    // coverage — arithmetic, not a prohibition.
     const c = new MultiAgentClusterManager();
     ok(c.register('camp-1', A));
-
-    const second = c.register('camp-2', A);
-    expect(second.ok).toBe(false);
-    if (!second.ok) expect(second.error).toContain('camp-1');
-    expect(c.walletFor('camp-2')).toBeUndefined();
+    expect(c.register('camp-2', A).ok).toBe(true);
+    expect([...c.campaignsAt(A)].sort()).toEqual(['camp-1', 'camp-2']);
   });
 
   test('re-registering the same pair is idempotent, not a conflict', () => {
@@ -78,7 +77,7 @@ describe('one wallet cannot back two pools', () => {
     expect(c.register('camp-1', A).ok).toBe(true);
   });
 
-  test('moving a funded campaign to a different address is refused', () => {
+  test('moving a funded campaign to a different address is still refused', () => {
     // The published pool is backed by the first address; silently repointing
     // it would leave that promise behind.
     const c = new MultiAgentClusterManager();
@@ -86,13 +85,12 @@ describe('one wallet cannot back two pools', () => {
     expect(c.register('camp-1', B).ok).toBe(false);
   });
 
-  test('topology reports whether isolation actually holds', () => {
+  test('topology reports sharing rather than forbidding it', () => {
     const c = new MultiAgentClusterManager();
     ok(c.register('camp-1', A));
-    ok(c.register('camp-2', B));
-    const t = c.topology();
-    expect(t.campaigns).toHaveLength(2);
-    expect(t.isolated).toBe(true);
+    ok(c.register('camp-2', A));
+    expect(c.topology().isolated).toBe(false);
+    expect(c.topology().campaigns).toHaveLength(2);
   });
 });
 
@@ -122,11 +120,9 @@ describe('a wallet is freed when its campaign can no longer claim it', () => {
     // platform by the rule meant to protect its creators.
     const c = new MultiAgentClusterManager();
     ok(c.register('camp-1', A));
-    expect(c.register('camp-2', A).ok).toBe(false);
-
     expect(c.release('camp-1')).toBe(true);
     expect(c.register('camp-2', A).ok).toBe(true);
-    expect(c.campaignAt(A)).toBe('camp-2');
+    expect(c.campaignsAt(A)).toEqual(['camp-2']);
   });
 
   test('releasing something never registered is not an error', () => {
@@ -136,7 +132,6 @@ describe('a wallet is freed when its campaign can no longer claim it', () => {
   test('a live campaign still holds its wallet', () => {
     const c = new MultiAgentClusterManager();
     ok(c.register('camp-1', A));
-    expect(c.register('camp-2', A).ok).toBe(false);
     expect(c.walletFor('camp-1')?.address).toBe(A);
   });
 });

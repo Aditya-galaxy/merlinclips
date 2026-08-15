@@ -1,9 +1,11 @@
 /**
- * What reaches PostHog, and — more importantly — what does not.
+ * What reaches PostHog, and what is deliberately held back.
  *
- * The failure this file guards against is not a missing metric. It is a wallet
- * address or an email landing in a third-party analytics store, which is a
- * disclosure that cannot be withdrawn once made.
+ * Creators and brands are identified by email and name — they are the product's
+ * users and reaching them is the point. The line is drawn at wallet addresses:
+ * an email is revocable, while a wallet is a permanent key into a public
+ * ledger, so publishing the link between a person and their address cannot be
+ * undone. That one field is off unless explicitly switched on.
  */
 
 import { describe, expect, test } from 'bun:test';
@@ -23,28 +25,61 @@ function spy(env: Record<string, string | undefined> = { POSTHOG_KEY: 'phc_test'
   return { analytics: new Analytics(env, fetchImpl), sent };
 }
 
-describe('identity never leaves the server', () => {
-  test('a wallet is hashed, and the hash does not contain it', async () => {
+describe('who a person is', () => {
+  test('a creator profile carries their email and name', async () => {
+    // Deliberate: these are your users and you need to reach them. An email in
+    // an analytics store is ordinary and revocable.
     const { analytics, sent } = spy();
-    await analytics.capture({ event: 'creator_signed_up', distinctId: analytics.idFor(WALLET) });
+    await analytics.identify('acct-1', { $email: EMAIL, $name: 'Dana', role: 'creator' });
 
-    const body = JSON.stringify(sent[0]);
-    expect(body).not.toContain(WALLET);
-    expect(body).not.toContain(WALLET.toLowerCase());
+    const set = (sent[0]?.properties as Record<string, unknown>).$set as Record<string, unknown>;
+    expect(sent[0]?.event).toBe('$identify');
+    expect(sent[0]?.distinct_id).toBe('acct-1');
+    expect(set.$email).toBe(EMAIL);
+    expect(set.role).toBe('creator');
   });
 
-  test('an email is hashed too', async () => {
+  test('undefined fields are dropped rather than sent as null', async () => {
     const { analytics, sent } = spy();
-    await analytics.capture({ event: 'brand_enquiry_received', distinctId: analytics.idFor(EMAIL) });
-    expect(JSON.stringify(sent[0])).not.toContain(EMAIL);
+    await analytics.identify('acct-1', { $email: EMAIL, handle: undefined });
+    const set = (sent[0]?.properties as Record<string, unknown>).$set as Record<string, unknown>;
+    expect('handle' in set).toBe(false);
+  });
+});
+
+describe('wallets are the one field held back', () => {
+  test('excluded by default', async () => {
+    // An email is revocable. A wallet is a permanent key into a public ledger:
+    // anyone reading this, or a leaked export, can see every transaction that
+    // person has ever made, for as long as the chain exists.
+    const { analytics } = spy();
+    expect(analytics.includeWallets).toBe(false);
   });
 
-  test('the same subject hashes the same way, so funnels still join up', () => {
+  test('included only when explicitly turned on', async () => {
+    const { analytics } = spy({ POSTHOG_KEY: 'phc_test', POSTHOG_INCLUDE_WALLETS: 'true' });
+    expect(analytics.includeWallets).toBe(true);
+  });
+
+  test('anything other than the exact opt-in leaves it off', async () => {
+    for (const v of ['1', 'yes', 'TRUE', '']) {
+      const { analytics } = spy({ POSTHOG_KEY: 'phc_test', POSTHOG_INCLUDE_WALLETS: v });
+      expect(analytics.includeWallets).toBe(false);
+    }
+  });
+});
+
+describe('hashing is still available where it is wanted', () => {
+  test('the same subject hashes the same way, so funnels join up', () => {
     expect(pseudonym(WALLET, 's')).toBe(pseudonym(WALLET.toLowerCase(), 's'));
   });
 
   test('a different salt gives a different hash, so exports cannot be cross-referenced', () => {
     expect(pseudonym(WALLET, 'a')).not.toBe(pseudonym(WALLET, 'b'));
+  });
+
+  test('a hash does not contain what it hashed', () => {
+    expect(pseudonym(WALLET, 's')).not.toContain(WALLET.slice(2, 10));
   });
 });
 

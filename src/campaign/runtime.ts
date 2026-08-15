@@ -952,9 +952,22 @@ export class CampaignRuntime {
     this.store.putCreatorAccount(updatedAccount);
     await this.record({ type: 'account_upserted', account: updatedAccount });
 
+    void this.analytics.identify(accountId, {
+      $email: updatedAccount.email || undefined,
+      $name: updatedAccount.name || undefined,
+      handle: updatedAccount.handle || undefined,
+      creatorType: updatedAccount.creatorType ?? undefined,
+      language: updatedAccount.language ?? undefined,
+      role: 'creator',
+      walletsLinked: existingWallets.length,
+      joinedAt: updatedAccount.joinedAt,
+      // Held back unless POSTHOG_INCLUDE_WALLETS is set: an email is
+      // revocable, a wallet is a permanent key into a public ledger.
+      payoutWallet: this.analytics.includeWallets ? wallet : undefined,
+    });
     void this.analytics.capture({
       event: existingAcc ? 'creator_profile_updated' : 'creator_signed_up',
-      distinctId: this.analytics.idFor(accountId),
+      distinctId: accountId,
       properties: {
         walletsLinked: existingWallets.length,
         hasHandle: Boolean(updatedAccount.handle),
@@ -1209,9 +1222,17 @@ export class CampaignRuntime {
     if (stored) {
       const enquiry = result.value;
       // Shape, not identity: who they are stays in the enquiry record.
+      void this.analytics.identify(enquiry.email, {
+        $email: enquiry.email,
+        $name: enquiry.name,
+        website: enquiry.website || undefined,
+        role: 'brand',
+        budget: enquiry.budget,
+        companyDomain: enquiry.companyDomain,
+      });
       void this.analytics.capture({
         event: 'brand_enquiry_received',
-        distinctId: this.analytics.idFor(enquiry.email),
+        distinctId: enquiry.email,
         properties: {
           budget: enquiry.budget,
           wantsAgency: enquiry.wantsAgency,

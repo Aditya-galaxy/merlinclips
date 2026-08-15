@@ -46,6 +46,7 @@ export class Analytics {
   private readonly key?: string;
   private readonly host: string;
   private readonly salt: string;
+  private readonly walletsAllowed: boolean;
   /** Counted rather than thrown, so a broken pipe is visible without noise. */
   public failures = 0;
   public sent = 0;
@@ -57,6 +58,7 @@ export class Analytics {
     this.key = env.POSTHOG_KEY?.trim() || undefined;
     this.host = (env.POSTHOG_HOST?.trim() || 'https://eu.i.posthog.com').replace(/\/+$/, '');
     this.salt = env.POSTHOG_SALT?.trim() || 'merlinclips';
+    this.walletsAllowed = env.POSTHOG_INCLUDE_WALLETS === 'true';
   }
 
   get configured(): boolean {
@@ -171,6 +173,40 @@ export class Analytics {
         campaignId: input.campaignId ?? null,
       },
     });
+  }
+
+  /**
+   * Who someone is, attached to their profile.
+   *
+   * `$set` properties are PostHog's person properties: they persist on the
+   * profile rather than on a single event, which is what makes a People page
+   * show a person instead of a row of hashes.
+   *
+   * Wallet addresses are the one field held back by default. An email in an
+   * analytics store is ordinary and revocable; a wallet is a permanent key
+   * into a public ledger, so anyone reading this — or a leaked export — can
+   * see every transaction that person has ever made, forever. Set
+   * POSTHOG_INCLUDE_WALLETS=true to include them anyway; the switch exists so
+   * that is a decision rather than a default.
+   */
+  async identify(
+    distinctId: string,
+    person: Record<string, string | number | boolean | null | undefined>,
+  ): Promise<boolean> {
+    const set: Record<string, string | number | boolean | null> = {};
+    for (const [k, v] of Object.entries(person)) {
+      if (v !== undefined) set[k] = v;
+    }
+    return this.capture({
+      event: '$identify',
+      distinctId,
+      properties: { $set: set } as unknown as Record<string, string>,
+    });
+  }
+
+  /** Whether wallet addresses may be sent. Off unless explicitly turned on. */
+  get includeWallets(): boolean {
+    return this.walletsAllowed;
   }
 }
 

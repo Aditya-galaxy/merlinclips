@@ -321,7 +321,7 @@ const server = Bun.serve({
         // hash of their account id — the same value the server uses — so
         // handing it back reveals nothing they do not already know about
         // themselves, and nothing about anyone else.
-        analyticsId: session ? campaigns.analytics.idFor(session.creatorId) : null,
+        analyticsId: session?.creatorId ?? null,
       });
     }
 

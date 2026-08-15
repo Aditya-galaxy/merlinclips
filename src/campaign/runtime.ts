@@ -238,23 +238,29 @@ export class CampaignRuntime {
   private buildExecutor(): PayoutExecutor {
     const onMainnet = this.env.ALLOW_MAINNET === 'true';
 
-    // Circle's Agent Stack, which is what this settles through: the wallet
-    // below is an agent wallet created by `circle wallet login`, and the CLI
-    // is the Agent Stack component that moves USDC out of it.
-    const wallet = (
+    // Circle's Agent Stack, which is what this settles through: the CLI is the
+    // Agent Stack component that moves USDC, signing with the session created
+    // by `circle wallet login`.
+    //
+    // This env var no longer names the wallet money leaves — that is
+    // `campaign.fundingWallet`, decided per campaign, because the wallet
+    // coverage is checked against has to be the wallet that pays. What is left
+    // here is the question the deployment still has to answer: is settlement
+    // configured at all, and on which network. Unset means no settlement rail,
+    // so payouts are planned and never sent.
+    const configured = (
       onMainnet ? this.env.MAINNET_CAMPAIGN_WALLET : this.env.CAMPAIGN_WALLET
     )?.trim();
 
-    if (onMainnet && !wallet) {
+    if (onMainnet && !configured) {
       throw new Error(
         'ALLOW_MAINNET=true but MAINNET_CAMPAIGN_WALLET is unset. Refusing to start: ' +
-          'settling on mainnet from the testnet wallet is not a recoverable mistake.',
+          'settling on mainnet from a testnet session is not a recoverable mistake.',
       );
     }
-    if (!wallet) return new DryRunExecutor();
+    if (!configured) return new DryRunExecutor();
 
     return new CircleCliExecutor({
-      fromAddress: wallet,
       dryRun: this.env.BROADCAST !== 'true',
       // The runtime's own env, not the process's. Without this the executor
       // read `Bun.env` for its broadcast gate while the runtime read the
@@ -1154,7 +1160,11 @@ export class CampaignRuntime {
       const refusals = Array.from(campaignRefusalsMap.entries()).map(([r, count]) => ({ reason: r, count }));
       const remainingMicro = c.poolUsdc.micro - spentMicro;
 
-      const fundingWalletAddr = c.fundingWallet || '0x0003a59858f44451be2a5b486ee612b4139700f0';
+      // No fallback. This read the operator's own address when a campaign had
+      // no wallet, so an unfunded campaign displayed the treasury as its
+      // funding wallet — the operator saw an address backed by our balance and
+      // had no way to tell it apart from a brand that had actually deposited.
+      const fundingWalletAddr = c.fundingWallet ?? null;
 
       return {
         campaignId: c.campaignId,

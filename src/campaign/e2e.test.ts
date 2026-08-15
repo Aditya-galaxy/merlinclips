@@ -260,7 +260,6 @@ describe.skipIf(!OPT_IN || !Bun.env.CAMPAIGN_WALLET)('settlement against the rea
     // real chain. The revert is the wallet having no USDC — and the executor
     // must report executed:false so the tick marks nothing as settled.
     const executor = new CircleCliExecutor({
-      fromAddress: Bun.env.CAMPAIGN_WALLET!,
       dryRun: true,
     });
     const outcome = await executor.send({

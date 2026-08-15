@@ -54,6 +54,7 @@ export interface OpenCampaignInput {
   readonly minStanding?: string;
   /** Places held for creators with no record yet. Absent means computed. */
   readonly reservedForUnproven?: number;
+  readonly selfServe?: boolean;
 }
 
 export type Refusal = { ok: false; error: string; field?: string };
@@ -272,6 +273,7 @@ export function openCampaign(
       // evening against a budget nobody had checked. So a new campaign opens
       // `pending_funding`, a balance read moves it to the approval queue, and
       // an operator takes it live from there.
+      selfServe: input.selfServe === true,
       status: 'pending_funding',
       startsAt: now.toISOString(),
       endsAt: new Date(endsAtMs).toISOString(),

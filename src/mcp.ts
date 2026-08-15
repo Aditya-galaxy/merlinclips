@@ -12,11 +12,13 @@
  *
  * ## Which tools exist here
  *
- * Only the ones an agent can genuinely complete. Opening a campaign is
- * operator-gated because declaring a pool commits money, and exposing a tool
- * that always answers 401 teaches an agent that the server is broken rather
- * than that the action is privileged. The tools below are the public surface:
- * read what is open, submit a clip, check what backs a pool, read the ledger.
+ * Only the ones an agent can genuinely complete.
+ *
+ * `create_campaign` opens a campaign the caller funds itself, which is why it
+ * is here at all. The operator route stays privileged because it commits our
+ * money; this one commits the caller's, stays invisible until their deposit
+ * confirms on-chain, and can pay nobody until then — so the judgement a human
+ * was making is made by the chain instead.
  *
  * Every one of them is a thin call onto the same handlers the website uses, so
  * there is no second implementation to drift.
@@ -52,6 +54,28 @@ export const TOOLS = [
       + 'pool is left. Only campaigns with USDC verified on-chain behind them appear — an '
       + 'unfunded pool is withheld rather than advertised.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    name: 'create_campaign',
+    description:
+      'Open a campaign you fund yourself. Returns a deposit address. The campaign is invisible '
+      + 'to creators and accepts no clips until your USDC confirms on-chain — then it goes live '
+      + 'automatically, with no approval step. Pool minimum 100 USDC, per-creator cap minimum 10. '
+      + 'The brief describes the video required; it must not instruct the verifier.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        brief: { type: 'string', description: 'What the clip must show. Judged against this.' },
+        poolUsdc: { type: 'string', description: 'Total budget. Minimum 100.' },
+        cpmUsdc: { type: 'string', description: 'Paid per 1,000 surviving views.' },
+        perCreatorCapUsdc: { type: 'string', description: 'Max one creator can earn. Minimum 10.' },
+        fundingWallet: { type: 'string', description: 'Address you will deposit to. One wallet, one campaign.' },
+        chain: { type: 'string', description: 'base or base-sepolia.' },
+        dwellHours: { type: 'number', description: 'How long views must hold. Minimum 1, default 24.' },
+      },
+      required: ['brief', 'poolUsdc', 'cpmUsdc', 'perCreatorCapUsdc', 'fundingWallet'],
+      additionalProperties: false,
+    },
   },
   {
     name: 'submit_clip',
@@ -193,6 +217,15 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
                 backedOnChain: c.funding.coverage,
               })),
           }));
+        }
+
+        case 'create_campaign': {
+          const res = await campaigns.handleAgentCampaign(new Request('http://mcp/api/agent/campaigns', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(args),
+          }));
+          return ok(id, text(await res.json()));
         }
 
         case 'submit_clip': {

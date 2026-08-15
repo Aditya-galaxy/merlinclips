@@ -109,6 +109,22 @@
 .tx { font-family: var(--mono); font-size: 12.5px; color: var(--pop); font-weight: 600; text-decoration: none; }
 .tx:hover { text-decoration: underline; }
 .gate { font-size: 13px; color: var(--muted); margin-top: 22px; line-height: 1.6; }
+
+/* The seam between the record and the action. Full width and first, because
+   the thing a creator came to do is submit another clip — it used to sit in a
+   right-hand column below two retrospective panels. */
+.next { display:flex; align-items:center; gap:16px; margin:0 0 28px;
+        padding:18px 22px; border:1px solid var(--line); border-radius:14px;
+        background:var(--surface, #fff); text-decoration:none; color:inherit;
+        transition:border-color .15s, transform .15s; }
+.next:hover { border-color:var(--pop); transform:translateY(-1px); }
+.next-k { font-size:16px; font-weight:650; letter-spacing:-.01em; }
+.next-s { flex:1; font-size:13.5px; color:var(--muted); }
+.next-go { font-size:20px; color:var(--pop); }
+@media (max-width:640px) {
+  .next { flex-wrap:wrap; gap:6px 14px; }
+  .next-s { flex-basis:100%; order:3; }
+}
 </style>
 </head>
 <body>
@@ -160,63 +176,47 @@
     </div>
   </div>
 
-  <div class="split">
-    <div>
-      <section class="sec">
-        <h2>Open campaigns</h2>
-        <p class="lede">Only campaigns with money verified on-chain behind them appear here.
-          The remaining pool is what is left to earn, not what was advertised.</p>
-        <div class="rows" id="briefs"><div class="empty">Loading…</div></div>
-      </section>
+  <!--
+    One column, in the order a creator actually reads it: what am I owed, what
+    is each clip waiting on, where did the money go, and where does it arrive.
 
-      <section class="sec">
-        <h2>Your clips</h2>
-        <p class="lede">A clip inside its hold is waiting, not refused. When it is refused, the
-          verifier's own words are shown.</p>
-        <div class="rows" id="clips"><div class="empty">Loading…</div></div>
-      </section>
+    The submit form and the open-campaign list used to live here, in a second
+    column beside all of that. Both now live on /campaigns, which does the job
+    better — it shows the brief, the rate, the cap and the on-chain backing
+    beside the field you paste into, and it works for someone who has never
+    signed in. Keeping a second copy here meant two implementations of the one
+    interaction that commits a creator to an evening of work, and they would
+    have drifted.
 
-      <section class="sec">
-        <h2>Settlements</h2>
-        <p class="lede">Each one is a transaction you can open on Basescan and check against
-          this page.</p>
-        <div class="rows" id="payouts"><div class="empty">Loading…</div></div>
-      </section>
-    </div>
+    So this page is the record and /campaigns is the action, with the band
+    below as the seam between them.
+  -->
+  <a class="next" href="/campaigns">
+    <span class="next-k">Submit a clip</span>
+    <span class="next-s" id="open-count">Browse campaigns open right now</span>
+    <span class="next-go" aria-hidden="true">&rarr;</span>
+  </a>
 
-    <div>
-      <section class="sec">
-        <h2>Submit a clip</h2>
-        <p class="lede">Your rate and hold are frozen the moment this is accepted. A brand
-          cannot lower them afterwards.</p>
-        <div class="panel">
-          <div class="f">
-            <label for="camp">Campaign</label>
-            <select id="camp"><option value="">Loading…</option></select>
-          </div>
-          <div class="f">
-            <label for="url">Clip URL</label>
-            <input id="url" type="url" placeholder="https://youtube.com/shorts/…" />
-            <p class="hint">YouTube and X. One post, one claimant.</p>
-          </div>
-          <div class="f">
-            <label for="addr">Payout wallet</label>
-            <input id="addr" type="text" placeholder="0x…" spellcheck="false" />
-            <p class="hint">Base address. This is where USDC arrives.</p>
-          </div>
-          <button class="go" id="go" type="button">Submit &amp; lock my rate</button>
-          <div id="said"></div>
-        </div>
-      </section>
+  <section class="sec">
+    <h2>Your clips</h2>
+    <p class="lede">A clip inside its hold is waiting, not refused. When it is refused, the
+      verifier's own words are shown.</p>
+    <div class="rows" id="clips"><div class="empty">Loading…</div></div>
+  </section>
 
-      <section class="sec">
-        <h2>Wallets</h2>
-        <div class="rows" id="wallets"><div class="empty">None linked yet.</div></div>
-        <p class="gate">Payouts go only to an address you have linked. Nothing here can move
-          money — it is a record of where money arrives.</p>
-      </section>
-    </div>
-  </div>
+  <section class="sec">
+    <h2>Settlements</h2>
+    <p class="lede">Each one is a transaction you can open on the block explorer and check
+      against this page.</p>
+    <div class="rows" id="payouts"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section class="sec">
+    <h2>Wallets</h2>
+    <div class="rows" id="wallets"><div class="empty">None linked yet.</div></div>
+    <p class="gate">Payouts go only to an address you have linked. Nothing here can move
+      money — it is a record of where money arrives.</p>
+  </section>
 
 </main>
 
@@ -343,75 +343,35 @@
         }).join(''));
       }
       var first = (p.wallets || [])[0];
-      if (first && $('addr') && !$('addr').value) $('addr').value = first;
+      if (first) {
+        /* /campaigns reads this to prefill the payout field. A public address,
+           never a key — and only written when the account already has one, so
+           it carries nothing the server did not already associate with them. */
+        try { localStorage.setItem('mc_payout_addr', first); } catch (e) {}
+      }
     })
     .catch(function () {
       fill('clips', empty('Could not load your clips just now. Try again shortly.'));
     });
 
-  /* ── open campaigns, from the public listing ───────────────────────────── */
+  /* ── how much work is waiting, for the band above ──────────────────────── */
   fetch('/api/campaign', { headers: { accept: 'application/json' } })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
       var open = ((d && d.campaigns) || []).filter(function (c) { return c.status === 'active'; });
-      var picker = $('camp');
-      if (picker) {
-        picker.innerHTML = open.length
-          ? open.map(function (c) {
-              return '<option value="' + esc(c.campaignId) + '">'
-                + esc(String(c.brief).slice(0, 54)) + ' — ' + usd(c.cpmUsdc) + '/1k</option>';
-            }).join('')
-          : '<option value="">No campaigns open right now</option>';
+      if (!open.length) {
+        set('open-count', 'No campaigns open right now — we will have more soon');
+        return;
       }
-      fill('briefs', open.length ? open.map(function (c) {
-        return '<div class="row">'
-          + '<div class="head">' + esc(String(c.brief).slice(0, 90)) + '</div>'
-          + '<div class="amt">' + usd(c.cpmUsdc) + '<span style="font-size:12px;color:var(--muted);font-weight:500;"> /1k</span></div>'
-          + '<div class="meta">'
-            + '<span>' + usd(c.remainingUsdc) + ' left</span>'
-            + '<span>' + esc(c.dwellHours) + 'h hold</span>'
-            + '<span>cap ' + usd(c.perCreatorCapUsdc) + '</span>'
-            + '<span>' + num(c.creators) + ' creators</span>'
-          + '</div></div>';
-      }).join('') : empty('No campaigns are open right now. When a brand funds one it appears here.'));
+      var pool = open.reduce(function (t, c) { return t + Number(c.remainingUsdc || 0); }, 0);
+      var top = open.reduce(function (m, c) { return Math.max(m, Number(c.cpmUsdc || 0)); }, 0);
+      /* The two numbers that decide whether it is worth opening: how much is
+         left to earn, and the best rate on offer. Both come off the same feed
+         the campaigns page renders, so they cannot disagree with it. */
+      set('open-count', open.length + (open.length === 1 ? ' campaign open' : ' campaigns open')
+        + ' · ' + usd(pool) + ' left to earn · up to ' + usd(top) + ' per 1k');
     })
-    .catch(function () { fill('briefs', empty('Could not load campaigns just now.')); });
-
-  /* ── submit ────────────────────────────────────────────────────────────── */
-  var go = $('go');
-  if (go) {
-    go.addEventListener('click', function () {
-      var said = $('said');
-      var url = ($('url').value || '').trim();
-      var addr = ($('addr').value || '').trim();
-      var camp = ($('camp').value || '').trim();
-      var tell = function (msg, ok) {
-        said.className = 'said ' + (ok ? 'ok' : 'no');
-        said.textContent = msg;
-      };
-      if (!camp) return tell('Pick a campaign first.', false);
-      if (!url) return tell('Paste the link to your clip.', false);
-      if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) return tell('That is not a Base address — 0x followed by 40 characters.', false);
-
-      go.disabled = true; go.textContent = 'Submitting…';
-      fetch('/api/submissions', {
-        method: 'POST', credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ campaignId: camp, url: url, payoutAddress: addr })
-      })
-        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-        .then(function (res) {
-          if (!res.ok) return tell(res.d.error || 'That was not accepted.', false);
-          var t = res.d.agreedTerms;
-          tell(t ? 'Accepted. Locked at ' + usd(t.cpmUsdc) + ' per 1k views on a ' + (t.dwellHours || 24) + 'h hold.'
-                 : 'Accepted.', true);
-          $('url').value = '';
-          setTimeout(function () { window.location.reload(); }, 1800);
-        })
-        .catch(function () { tell('No connection, so nothing was submitted.', false); })
-        .finally(function () { go.disabled = false; go.textContent = 'Submit & lock my rate'; });
-    });
-  }
+    .catch(function () { set('open-count', 'Browse campaigns open right now'); });
 })();
 </script>
 <script src="/site.js" defer></script>

@@ -413,11 +413,21 @@ const server = Bun.serve({
        * than served: analytics silently not working is a far smaller problem
        * than an account key in a public JSON response.
        */
-      const rawKey = process.env['POSTHOG_PUBLIC_KEY']?.trim() ?? '';
+      // Two names for one key, which is why the browser stayed dark after the
+      // server was configured. Server-side analytics reads POSTHOG_KEY; this
+      // read only POSTHOG_PUBLIC_KEY, so setting the documented variable
+      // switched on half the telemetry and left the client half silently off —
+      // and "silently off" is indistinguishable from "nobody visited".
+      //
+      // Falling back rather than renaming, because the same `phc_` project key
+      // is correct in both places: it is publishable by design. The prefix
+      // guard below is what keeps that safe, and it still runs on whichever
+      // variable supplied the value.
+      const rawKey = (process.env['POSTHOG_PUBLIC_KEY'] ?? process.env['POSTHOG_KEY'])?.trim() ?? '';
       const publishable = rawKey.startsWith('phc_');
       if (rawKey && !publishable) {
         console.error(
-          `refusing to publish POSTHOG_PUBLIC_KEY: it starts "${rawKey.slice(0, 4)}" and only `
+          `refusing to publish the PostHog key: it starts "${rawKey.slice(0, 4)}" and only `
           + '"phc_" project keys are publishable. A phs_ key grants account-wide access — '
           + 'revoke it and use the Project API Key from Settings → Project.',
         );

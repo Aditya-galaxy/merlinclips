@@ -37,11 +37,11 @@
 }
 body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
        font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
-.wrap { max-width:940px; margin:0 auto; padding:0 24px; }
+.cq-wrap { max-width:940px; margin:0 auto; padding:0 24px; }
 
 /* ── masthead ───────────────────────────────────────────────────────────── */
 .top { border-bottom:1px solid var(--line); }
-.top .wrap { display:flex; align-items:center; justify-content:space-between; height:64px; }
+.top .cq-wrap { display:flex; align-items:center; justify-content:space-between; height:64px; }
 .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text);
          font-weight:650; letter-spacing:-.01em; }
 .brand .dot { width:9px; height:9px; border-radius:50%; background:var(--pop); }
@@ -50,16 +50,16 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .top nav a:hover { color:var(--text); }
 
 /* ── hero ───────────────────────────────────────────────────────────────── */
-.hero { padding:64px 0 40px; border-bottom:1px solid var(--line); }
-.hero h1 { font-family:var(--serif); font-size:52px; line-height:1.05; letter-spacing:-.028em;
+.cq-hero { padding:64px 0 40px; border-bottom:1px solid var(--line); }
+.cq-hero h1 { font-family:var(--serif); font-size:52px; line-height:1.05; letter-spacing:-.028em;
            font-weight:600; margin:0 0 16px; }
-.hero p { font-size:17px; color:var(--text-2); margin:0; max-width:56ch; }
-.hero .rule { margin-top:26px; display:flex; gap:26px; flex-wrap:wrap;
+.cq-hero p { font-size:17px; color:var(--text-2); margin:0; max-width:56ch; }
+.cq-hero .cq-rule { margin-top:26px; display:flex; gap:26px; flex-wrap:wrap;
               font-size:13.5px; color:var(--muted); }
-.hero .rule b { color:var(--text-2); font-weight:600; }
+.cq-hero .cq-rule b { color:var(--text-2); font-weight:600; }
 
 /* ── list ───────────────────────────────────────────────────────────────── */
-.list { padding:34px 0 80px; display:grid; gap:16px; }
+.cq-list { padding:34px 0 80px; display:grid; gap:16px; }
 .camp { background:var(--surface); border:1px solid var(--line); border-radius:14px;
         padding:22px 24px; }
 .camp .row1 { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
@@ -69,10 +69,10 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .facts { display:flex; flex-wrap:wrap; gap:18px; margin-top:14px; padding-top:14px;
          border-top:1px solid var(--line); font-size:13px; color:var(--text-2); }
 .facts b { font-family:var(--mono); font-weight:600; color:var(--text); }
-.badge { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+.cq-badge { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
          padding:3px 9px; border-radius:99px; }
-.badge.ok { background:var(--ok-wash); color:var(--ok); }
-.badge.part { background:var(--warn-wash); color:var(--warn); }
+.cq-badge.ok { background:var(--ok-wash); color:var(--ok); }
+.cq-badge.part { background:var(--warn-wash); color:var(--warn); }
 .bar { height:4px; background:var(--surface-2); border-radius:99px; margin-top:14px; overflow:hidden; }
 .bar i { display:block; height:100%; background:var(--pop); border-radius:99px; }
 
@@ -93,19 +93,19 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .form button { justify-self:start; padding:11px 22px; font-size:14.5px; font-weight:600;
                background:var(--text); color:#fff; border:0; border-radius:9px; cursor:pointer; }
 .form button:disabled { opacity:.5; cursor:default; }
-.said { font-size:13.5px; padding:11px 13px; border-radius:9px; display:none; }
-.said.on { display:block; }
-.said.ok { background:var(--ok-wash); color:var(--ok); }
-.said.no { background:#FCEEEC; color:#B02A20; }
+.cq-said { font-size:13.5px; padding:11px 13px; border-radius:9px; display:none; }
+.cq-said.on { display:block; }
+.cq-said.ok { background:var(--ok-wash); color:var(--ok); }
+.cq-said.no { background:#FCEEEC; color:#B02A20; }
 
-.note { font-size:12.5px; color:var(--muted); margin-top:10px; }
+.cq-note { font-size:12.5px; color:var(--muted); margin-top:10px; }
 .empty { border:1px dashed var(--line-hi); border-radius:14px; padding:44px 28px;
          text-align:center; color:var(--text-2); }
 .empty h3 { font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 8px; color:var(--text); }
-.foot { border-top:1px solid var(--line); padding:26px 0 60px; font-size:13px; color:var(--muted); }
-.foot a { color:var(--text-2); }
+.cq-foot { border-top:1px solid var(--line); padding:26px 0 60px; font-size:13px; color:var(--muted); }
+.cq-foot a { color:var(--text-2); }
 @media (max-width:640px) {
-  .hero { padding:44px 0 30px; } .hero h1 { font-size:38px; }
+  .cq-hero { padding:44px 0 30px; } .cq-hero h1 { font-size:38px; }
   .camp .row1 { flex-direction:column; gap:8px; }
   .top nav { gap:14px; }
 }
@@ -114,7 +114,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 <body>
 
 <header class="top">
-  <div class="wrap">
+  <div class="cq-wrap">
     <a class="brand" href="/"><span class="dot"></span>Merlin Clips</a>
     <nav>
       <a href="/campaigns">Campaigns</a>
@@ -124,13 +124,13 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
   </div>
 </header>
 
-<section class="hero">
-  <div class="wrap">
+<section class="cq-hero">
+  <div class="cq-wrap">
     <h1>Post the clip.<br>Get paid in USDC.</h1>
     <p>Every campaign below has USDC confirmed on-chain behind it before it appears here.
        Pick one, post your clip, and paste the link. Your wallet address is your account —
        there is nothing to sign up for.</p>
-    <div class="rule">
+    <div class="cq-rule">
       <span><b>Paid per 1,000 views</b> that survive the hold</span>
       <span><b>Terms freeze</b> when your clip is accepted</span>
       <span><b>Settled on Base</b>, every payment checkable</span>
@@ -138,14 +138,14 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
   </div>
 </section>
 
-<main class="wrap">
-  <div class="list" id="list">
+<main class="cq-wrap">
+  <div class="cq-list" id="list">
     <div class="empty"><h3>Loading campaigns…</h3></div>
   </div>
 </main>
 
-<footer class="foot">
-  <div class="wrap">
+<footer class="cq-foot">
+  <div class="cq-wrap">
     A view counts once it has held for the full window — that is what stops bought views being
     paid for. <a href="/ledger">See every settlement</a> · <a href="/architecture">How a payout is decided</a>
   </div>
@@ -188,8 +188,8 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
        evening editing is entitled to know whether the money is actually there,
        and "covered" is a fact about the chain rather than a promise from us. */
     var badge = cov === 'covered'
-      ? '<span class="badge ok">USDC confirmed on-chain</span>'
-      : '<span class="badge part">Partly funded — ' + esc(cov) + '</span>';
+      ? '<span class="cq-badge ok">USDC confirmed on-chain</span>'
+      : '<span class="cq-badge part">Partly funded — ' + esc(cov) + '</span>';
 
     return ''
       + '<article class="camp" data-id="' + esc(c.campaignId) + '">'
@@ -213,8 +213,8 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       +       '<div><label for="a-' + esc(c.campaignId) + '">Base address for your USDC</label>'
       +       '<input id="a-' + esc(c.campaignId) + '" value="' + esc(savedAddr) + '" placeholder="0x…" /></div>'
       +       '<button type="button">Submit and lock this rate</button>'
-      +       '<div class="said"></div>'
-      +       '<p class="note">Submitting freezes ' + usd(c.cpmUsdc) + ' per 1,000 views and the '
+      +       '<div class="cq-said"></div>'
+      +       '<p class="cq-note">Submitting freezes ' + usd(c.cpmUsdc) + ' per 1,000 views and the '
       +         esc(c.dwellHours) + '-hour hold onto your clip. The brand cannot lower them afterwards.</p>'
       +     '</div>'
       +   '</details>'
@@ -228,9 +228,9 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
     });
 
     var btn = el.querySelector('button');
-    var said = el.querySelector('.said');
+    var said = el.querySelector('.cq-said');
     var tell = function (msg, ok) {
-      said.className = 'said on ' + (ok ? 'ok' : 'no');
+      said.className = 'cq-said on ' + (ok ? 'ok' : 'no');
       said.textContent = msg;
     };
 

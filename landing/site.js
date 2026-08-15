@@ -55,8 +55,10 @@
 
         window.posthog.init(cfg.posthogKey, {
           api_host: host,
-          /* Served from our origin, so the SDK must not rewrite asset URLs. */
-          ui_host: 'https://eu.posthog.com',
+          /* Served from our origin, so the SDK must not rewrite asset URLs.
+             The dashboard origin follows the region the server is configured
+             for — hardcoding EU sent US projects to an empty dashboard. */
+          ui_host: cfg.posthogUiHost || 'https://eu.posthog.com',
           person_profiles: 'identified_only',
           capture_pageview: true,
           capture_pageleave: true,

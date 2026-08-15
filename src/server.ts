@@ -386,6 +386,12 @@ const server = Bun.serve({
         turnstileSiteKey: process.env['TURNSTILE_SITE_KEY'] ?? '',
         posthogKey: process.env['POSTHOG_PUBLIC_KEY'] ?? '',
         ingestPath: '/ingest',
+        // Derived from POSTHOG_HOST rather than hardcoded. The SDK needs the
+        // dashboard origin for links it renders, and a page on US cloud
+        // pointing at the EU dashboard sends people to an empty project.
+        posthogUiHost: (process.env['POSTHOG_HOST'] ?? '').includes('us.i.posthog.com')
+          ? 'https://us.posthog.com'
+          : 'https://eu.posthog.com',
       });
     }
 

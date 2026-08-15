@@ -126,8 +126,9 @@
   <section id="b-account" hidden>
     <div class="shead"><h2>Account</h2></div>
     <div class="rows" id="b-arows"></div>
-    <p class="note">Read-only. Opening a campaign or changing a budget goes through us on
-      purpose &mdash; a dashboard that can move money is a dashboard worth attacking.</p>
+    <p class="note">Read-only, and it stays that way. Your USDC sits in your own agent wallet;
+      we read its balance to confirm a pool is backed and never take custody. A dashboard that
+      can move money is a dashboard worth attacking, and this one cannot.</p>
   </section>
 
 </main></div>
@@ -140,7 +141,7 @@
     <div class="modal-header">
       <span class="eyebrow">Deposit USDC</span>
       <h3 id="fund-modal-title">Fund Campaign Wallet</h3>
-      <p id="fund-modal-subtitle" class="note">Load USDC onto Base / Base Sepolia to cover creator payouts.</p>
+      <p id="fund-modal-subtitle" class="note">This is <strong>your</strong> wallet, not ours. We read its balance to confirm the pool is real and we never hold your funds — so there is nothing to refund if you stop, because nothing left.</p>
     </div>
     
     <div class="modal-body">
@@ -174,7 +175,7 @@
           <span class="option-num">B</span>
           <h4>🏦 Option B: Direct QR &amp; Address Transfer</h4>
         </div>
-        <p class="fine">Send ERC-20 USDC directly to your campaign funding wallet:</p>
+        <p class="fine">Send ERC-20 USDC to the wallet you control. We only read it:</p>
         <div class="address-copy-box">
           <code id="fund-wallet-address">0x...</code>
           <button type="button" class="btn quiet sm" id="copy-wallet-btn">Copy</button>

@@ -363,7 +363,7 @@ export class CampaignRuntime {
         agent: this.agent,
         verifier: this.verifier,
       },
-      { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at },
+      { agentId: this.env.AGENT_ID ?? 'campaign-agent', now: at, analytics: this.analytics },
     );
     await this.rememberLastTick(this.lastTick);
 

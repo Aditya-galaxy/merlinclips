@@ -73,6 +73,33 @@
         });
       }
 
+      /* ── errors the browser sees ─────────────────────────────────────── */
+      if (cfg.posthogKey) {
+        /* Captured explicitly rather than relying on autocapture, so a page
+           that breaks before the SDK settles still reports. Both handlers are
+           deliberately quiet: an error report must never itself throw. */
+        window.addEventListener('error', function (e) {
+          try {
+            window.posthog.capture('$exception', {
+              $exception_type: (e.error && e.error.name) || 'Error',
+              $exception_message: e.message || 'script error',
+              $exception_source: e.filename || 'unknown',
+              $exception_stack_trace_raw: (e.error && e.error.stack) || undefined
+            });
+          } catch (_) {}
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          try {
+            var r = e.reason;
+            window.posthog.capture('$exception', {
+              $exception_type: (r && r.name) || 'UnhandledRejection',
+              $exception_message: (r && r.message) || String(r).slice(0, 300),
+              $exception_stack_trace_raw: (r && r.stack) || undefined
+            });
+          } catch (_) {}
+        });
+      }
+
       /* ── bot challenge on the enquiry form ───────────────────────────── */
       var slot = document.getElementById('e-turnstile-slot');
       if (cfg.turnstileSiteKey && slot) {

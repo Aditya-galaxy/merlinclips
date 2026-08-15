@@ -119,6 +119,27 @@ print(next((e.get('value', '') for e in envs if e.get('name') == '$1'), ''))
 " 2>/dev/null
 }
 
+# --set-env-vars REPLACES the whole environment, so anything not named on that
+# line is deleted by the next deploy. That is how the PostHog key disappeared:
+# set once by hand, then silently dropped, and analytics stopped without a
+# single error anywhere. Everything below is read off the running service first
+# so a redeploy inherits working config instead of erasing it.
+
+# Where x402 revenue lands. Advertised in the 402 challenge as `payTo`, so a
+# placeholder here is not a harmless default — a well-behaved client would send
+# USDC to a string that is not an address and destroy it. Unset means the priced
+# endpoints decline to quote at all, which is the safe reading.
+AGENT_WALLET_ADDRESS="${AGENT_WALLET_ADDRESS:-$(deployed_env AGENT_WALLET_ADDRESS)}"
+
+# Who may open a campaign through MCP: <sha256-of-key>:<owner> pairs, hashes
+# rather than keys, minted by scripts/mcp-key.sh. A deploy that forgot this one
+# would reopen the endpoint to anyone.
+MCP_API_KEYS="${MCP_API_KEYS:-$(deployed_env MCP_API_KEYS)}"
+
+POSTHOG_KEY="${POSTHOG_KEY:-$(deployed_env POSTHOG_KEY)}"
+POSTHOG_HOST="${POSTHOG_HOST:-$(deployed_env POSTHOG_HOST)}"
+POSTHOG_INCLUDE_WALLETS="${POSTHOG_INCLUDE_WALLETS:-$(deployed_env POSTHOG_INCLUDE_WALLETS)}"
+
 # The wallets this deployment's Circle session can sign transfers from.
 #
 # Campaigns are funded to a wallet and paid out of that same wallet, so this
@@ -130,23 +151,7 @@ print(next((e.get('value', '') for e in envs if e.get('name') == '$1'), ''))
 # There is deliberately no default. The value that used to sit here was one
 # hardcoded address used for *both* networks, and it was not a wallet the
 # session held — so the configured payer could not have signed anything, and
-# nothing said so until a payout was attempted. Unset is the honest state for a
-# deployment that has not been told: it settles nothing rather than settling
-# from an address nobody checked.
-# Where x402 revenue lands. Advertised in the 402 challenge as `payTo`, so a
-# placeholder here is not a harmless default — a well-behaved client would send
-# USDC to a string that is not an address and destroy it. Unset means the
-# priced endpoints refuse to quote at all, which is the safe reading.
-AGENT_WALLET_ADDRESS="${AGENT_WALLET_ADDRESS:-$(deployed_env AGENT_WALLET_ADDRESS)}"
-
-# --set-env-vars REPLACES the whole environment, so anything not named on that
-# line is deleted by the next deploy. That is how the PostHog key disappeared:
-# it was set once by hand, then silently dropped, and analytics stopped without
-# a single error anywhere. Carried forward like everything else now.
-POSTHOG_KEY="${POSTHOG_KEY:-$(deployed_env POSTHOG_KEY)}"
-POSTHOG_HOST="${POSTHOG_HOST:-$(deployed_env POSTHOG_HOST)}"
-POSTHOG_INCLUDE_WALLETS="${POSTHOG_INCLUDE_WALLETS:-$(deployed_env POSTHOG_INCLUDE_WALLETS)}"
-
+# nothing said so until a payout was attempted.
 SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-$(deployed_env SETTLEMENT_WALLETS)}"
 MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-$(deployed_env MAINNET_SETTLEMENT_WALLETS)}"
 
@@ -162,6 +167,16 @@ for real, list the addresses the settling Circle session holds:
     ./deploy.sh
 
 NOWALLET
+fi
+
+if [ -z "$MCP_API_KEYS" ]; then
+  cat <<'NOKEYS'
+Note: MCP_API_KEYS is unset, so create_campaign refuses with 503. Reads and
+clip submission stay open. Mint a key and redeploy:
+
+  ./scripts/mcp-key.sh <owner>
+
+NOKEYS
 fi
 
 # Carried forward from the running service, not regenerated.
@@ -198,7 +213,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},MCP_API_KEYS=${MCP_API_KEYS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # The scheduler holds the tick secret in a header, so the two can drift apart
 # and the only symptom is a 401 an hour into a log nobody is reading — which is

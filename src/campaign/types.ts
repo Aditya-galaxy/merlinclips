@@ -17,7 +17,7 @@ import type { Chain } from '../schemas';
 import type { Standing } from './standing';
 
 /** Where a clip was posted. Only these two can be verified without app review. */
-export type Platform = 'youtube' | 'x';
+export type Platform = 'youtube' | 'x' | 'instagram';
 
 export type CampaignStatus =
   /** Written down, nothing behind it yet. */

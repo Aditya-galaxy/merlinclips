@@ -77,6 +77,14 @@ function amount(raw: unknown, field: string): Result<Decimal> {
 }
 
 const CHAINS = new Set(['base', 'base-sepolia', 'ethereum', 'eth-sepolia', 'polygon', 'polygon-amoy']);
+/**
+ * Platforms a campaign may list, unless the deployment enables more.
+ *
+ * Mirrors `ALWAYS_ENABLED` in verify.ts: these are the ones confirmable with no
+ * per-creator authorisation. Instagram is confirmable only where a creator has
+ * authorised us, so it is passed in by a deployment that holds tokens rather
+ * than assumed here.
+ */
 const PLATFORMS = new Set<Platform>(['youtube', 'x']);
 
 /**
@@ -119,6 +127,7 @@ export function briefAddressesTheJudge(brief: string): string | undefined {
 export function openCampaign(
   input: OpenCampaignInput,
   now: Date = new Date(),
+  enabled: ReadonlySet<Platform> = PLATFORMS,
 ): Result<Campaign> {
   const brief = typeof input.brief === 'string' ? input.brief.trim() : '';
   if (brief.length < 10) {
@@ -192,10 +201,11 @@ export function openCampaign(
     ? (input.platforms as Platform[])
     : (['youtube'] as Platform[]);
   for (const p of platforms) {
-    if (!PLATFORMS.has(p)) {
+    if (!enabled.has(p)) {
       return bad(
-        `platform "${p}" is not verifiable — YouTube and X only. Instagram, ` +
-          'Facebook and TikTok need platform app review we do not hold.',
+        `platform "${p}" is not verifiable here — ${[...enabled].join(' and ')} only. `
+          + 'Instagram needs a creator to authorise us, and Facebook and TikTok need '
+          + 'platform app review we do not hold.',
         'platforms',
       );
     }

@@ -24,7 +24,17 @@
 
 import { confirmedViews, hasDwelled, MIN_DWELL_HOURS } from './views';
 import { canonicalUrl, parsePostUrl } from './postref';
-import type { Snapshot } from './types';
+import type { Platform, Snapshot } from './types';
+
+/**
+ * Platforms confirmable with no per-creator authorisation.
+ *
+ * YouTube's statistics endpoint answers for any public video with one API key.
+ * Instagram has no equivalent — insights are readable only for media inside an
+ * account that authorised us — so it is enabled per deployment rather than
+ * listed here.
+ */
+export const ALWAYS_ENABLED: readonly Platform[] = ['youtube', 'x'];
 
 /** Judges a clip against a brief. The Gemini verifier implements this. */
 export interface ClipVerifier {
@@ -122,7 +132,17 @@ export interface PreviewResponse {
 
 export function previewClip(
   request: { url: string; dwellHours?: number },
-  deps: { tracking: TrackingStore; now?: () => Date },
+  deps: {
+    tracking: TrackingStore;
+    now?: () => Date;
+    /**
+     * Platforms this deployment can actually confirm views on. Defaults to the
+     * ones needing no per-creator authorisation, so a deployment that has not
+     * been told about Instagram tokens refuses Instagram rather than accepting
+     * clips it can never count.
+     */
+    enabled?: ReadonlySet<Platform>;
+  },
 ): PreviewResponse {
   const now = (deps.now ?? (() => new Date()))();
   const dwellHours = Math.min(
@@ -147,6 +167,30 @@ export function previewClip(
         'unrecognised post URL — Instagram, Facebook and TikTok need platform ' +
           'app review we do not hold, and accepting those links would promise ' +
           'a check we cannot perform.',
+      ],
+    };
+  }
+
+  // Parsing a URL and being able to check it are different questions, and this
+  // is where they separate. Instagram URLs parse — the oracle needs the
+  // shortcode — but insights are first-party only, so a clip is checkable only
+  // where an account has authorised us. Accepting one otherwise would take a
+  // creator's work against a count nothing can ever read.
+  const enabled = deps.enabled ?? new Set<Platform>(ALWAYS_ENABLED);
+  if (!enabled.has(ref.platform)) {
+    return {
+      supported: false,
+      url: null,
+      platform: null,
+      tracked: false,
+      trackingSince: null,
+      confirmedAvailable: false,
+      readyAt: null,
+      dwellHours,
+      note: 'YouTube and X only.',
+      errors: [
+        `${ref.platform} is not enabled here — it needs platform app review we do `
+          + 'not hold yet, and accepting the link would promise a check we cannot perform.',
       ],
     };
   }

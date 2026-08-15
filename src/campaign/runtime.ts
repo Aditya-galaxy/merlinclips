@@ -34,6 +34,8 @@ import { apply as applyEvent } from './eventlog';
 import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
+import { analyticsFromEnv } from '../telemetry/analytics';
+import { turnstileFromEnv } from '../telemetry/turnstile';
 import { webhookFromEnv } from '../telemetry/webhooks';
 import { openCampaign, submitClip } from './intake';
 import { standingFor, type Standing } from './standing';
@@ -164,6 +166,10 @@ export class CampaignRuntime {
    * that stops one balance backing two pools in the meantime.
    */
   public readonly cluster = new MultiAgentClusterManager();
+  /** Product analytics, captured server-side so blockers cannot undercount. */
+  public readonly analytics = analyticsFromEnv();
+  /** Bot challenge on the public enquiry form. */
+  public readonly turnstile = turnstileFromEnv();
   /** Token bucket rate limiter for public API doors. */
   public readonly rateLimiter = new TokenBucketRateLimiter({ capacity: 60, refillRate: 10 });
 
@@ -945,6 +951,16 @@ export class CampaignRuntime {
     // the moment that instance recycled.
     this.store.putCreatorAccount(updatedAccount);
     await this.record({ type: 'account_upserted', account: updatedAccount });
+
+    void this.analytics.capture({
+      event: existingAcc ? 'creator_profile_updated' : 'creator_signed_up',
+      distinctId: this.analytics.idFor(accountId),
+      properties: {
+        walletsLinked: existingWallets.length,
+        hasHandle: Boolean(updatedAccount.handle),
+        creatorType: updatedAccount.creatorType ?? null,
+      },
+    });
     await this.record({
       type: 'creator_upserted',
       creator: {
@@ -1164,6 +1180,20 @@ export class CampaignRuntime {
     }
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+
+    // Before parsing, so a bot never reaches the webhook fan-out.
+    const challenge = await this.turnstile.check(
+      body.turnstileToken ?? body['cf-turnstile-response'],
+      clientIp === 'anonymous' ? undefined : clientIp.split(',')[0]?.trim(),
+    );
+    if (!challenge.ok) {
+      return Response.json(
+        { error: `Could not verify you are human — ${challenge.reason}. Please try again.`,
+          field: 'turnstile' },
+        { status: 403 },
+      );
+    }
+
     const result = parseEnquiry(body);
     if (!result.ok) {
       return Response.json({ error: result.error, field: result.field }, { status: 400 });
@@ -1178,6 +1208,18 @@ export class CampaignRuntime {
 
     if (stored) {
       const enquiry = result.value;
+      // Shape, not identity: who they are stays in the enquiry record.
+      void this.analytics.capture({
+        event: 'brand_enquiry_received',
+        distinctId: this.analytics.idFor(enquiry.email),
+        properties: {
+          budget: enquiry.budget,
+          wantsAgency: enquiry.wantsAgency,
+          hasWebsite: Boolean(enquiry.website),
+          companyDomain: enquiry.companyDomain,
+          challenged: challenge.checked,
+        },
+      });
       const notifyEmail = process.env.ENQUIRY_NOTIFY_EMAIL ?? process.env.OPERATOR_EMAIL ?? 'aditya@merlinclips.com';
       await this.webhooks.alert({
         event: 'enquiry_received',

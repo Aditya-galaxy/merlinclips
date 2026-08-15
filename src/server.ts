@@ -323,6 +323,69 @@ const server = Bun.serve({
     // What a creator reads before deciding whether the campaign is worth their
     // effort: the remaining pool, published rather than discoverable only by
     // submitting and being told the pot ran dry.
+    /**
+     * PostHog behind our own origin.
+     *
+     * A crypto-native audience runs blockers, and a request to a known
+     * analytics domain is the first thing they drop — so the events that
+     * matter most, from the users most likely to matter, are exactly the ones
+     * a direct integration loses. Served from merlinclips.com, it is a
+     * first-party request and survives.
+     *
+     * Deliberately narrow: only the ingest paths, only to the configured host,
+     * and the path is rebuilt rather than passed through, so this cannot be
+     * driven as an open proxy.
+     */
+    if (url.pathname === '/ingest' || url.pathname.startsWith('/ingest/')) {
+      const host = (process.env['POSTHOG_HOST'] ?? 'https://eu.i.posthog.com').replace(/\/+$/, '');
+      const rest = url.pathname.slice('/ingest'.length) || '/';
+      const allowed = /^\/(i\/v0\/e|e|decide|s|array|static|batch|capture|flags)(\/|$)/.test(rest);
+      if (!allowed) return json({ error: 'not a PostHog ingest path' }, 404);
+
+      const target = `${host}${rest}${url.search}`;
+      const headers = new Headers();
+      const ct = request.headers.get('content-type');
+      if (ct) headers.set('content-type', ct);
+      const forwarded = request.headers.get('x-forwarded-for');
+      if (forwarded) headers.set('x-forwarded-for', forwarded);
+
+      try {
+        const upstream = await fetch(target, {
+          method: request.method,
+          headers,
+          body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body,
+          // @ts-expect-error Bun streams a request body without buffering it.
+          duplex: 'half',
+        });
+        return new Response(upstream.body, {
+          status: upstream.status,
+          headers: {
+            'content-type': upstream.headers.get('content-type') ?? 'application/json',
+            'cache-control': 'no-store',
+          },
+        });
+      } catch {
+        // Analytics must never take the site down with it.
+        return new Response('', { status: 204 });
+      }
+    }
+
+    /**
+     * The two publishable keys the static pages need.
+     *
+     * Both are designed to ship in a page — a Turnstile *site* key and a
+     * PostHog *project* key authorise nothing on their own; the secrets that
+     * do (TURNSTILE_SECRET, the PostHog personal key) never leave the server.
+     * Serving them here keeps the HTML free of per-environment values.
+     */
+    if (url.pathname === '/api/web-config') {
+      return json({
+        turnstileSiteKey: process.env['TURNSTILE_SITE_KEY'] ?? '',
+        posthogKey: process.env['POSTHOG_PUBLIC_KEY'] ?? '',
+        ingestPath: '/ingest',
+      });
+    }
+
     if (url.pathname === '/api/campaign') return json(await campaigns.publicView());
 
     // A brand opens a campaign. Operator-gated: declaring a pool is declaring
@@ -634,6 +697,7 @@ const server = Bun.serve({
       '/': 'landing/index.html',
       '/index.html': 'landing/index.html',
       '/styles.css': 'landing/styles.css',
+      '/site.js': 'landing/site.js',
       '/logo.svg': 'landing/logo.svg',
       '/favicon.ico': 'landing/logo.svg',
       '/og.svg': 'landing/og.svg',

@@ -688,12 +688,24 @@ export class CampaignRuntime {
   }
 
   private async accountFor(request: Request): Promise<string | undefined> {
+    return (await this.sessionFor(request))?.creatorId;
+  }
+
+  /**
+   * The whole session, not just the id.
+   *
+   * Onboarding used to default a creator's name to the literal string
+   * "Creator" and synthesise an email, while Google had already told us both
+   * at sign-in. The dashboard then showed "Creator" to someone whose name we
+   * knew, which is a small thing that reads as the product not knowing who
+   * they are.
+   */
+  private async sessionFor(request: Request) {
     const secret = this.env.SESSION_SECRET?.trim();
     if (!secret) return undefined;
-    const session = await verifySession(
+    return verifySession(
       readSessionCookie(request.headers.get('cookie'), SESSION_COOKIE_NAME), secret,
     );
-    return session?.creatorId;
   }
 
   /**
@@ -886,7 +898,8 @@ export class CampaignRuntime {
     // accumulated in a single record's linkedWallets — and nobody could reach
     // it afterwards, because reading a profile requires the session that
     // writing one did not.
-    const accountId = await this.accountFor(request);
+    const session = await this.sessionFor(request);
+    const accountId = session?.creatorId;
     if (!accountId) {
       return Response.json(
         { error: 'sign in before saving a profile — a payout address has to belong to someone' },
@@ -938,8 +951,9 @@ export class CampaignRuntime {
     const updatedAccount: CreatorAccount = {
       accountId,
       googleSub: existingAcc?.googleSub || accountId,
-      name: typeof body.name === 'string' && body.name ? body.name : existingAcc?.name || 'Creator',
-      email: existingAcc?.email || `${accountId}@merlinclips.user`,
+      name: (typeof body.name === 'string' && body.name)
+        || session?.name || existingAcc?.name || 'Creator',
+      email: session?.email || existingAcc?.email || `${accountId}@merlinclips.user`,
       handle: typeof body.handle === 'string' ? body.handle : existingAcc?.handle || 'creator',
       bio: typeof body.bio === 'string' ? body.bio : existingAcc?.bio || '',
       language: typeof body.language === 'string' ? body.language : existingAcc?.language || 'English',

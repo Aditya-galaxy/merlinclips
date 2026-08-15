@@ -256,11 +256,32 @@ export class GcsBlobStore implements BlobStore {
     const now = Date.now();
     if (this.token && this.token.expiresAtMs > now + 60_000) return this.token.value;
 
+    // An operator-supplied token, for running a pass off Cloud Run.
+    //
+    // Settlement needs the Circle CLI, and the CLI cannot run in the
+    // container: its login is an emailed OTP and its session expires in about
+    // twenty days, so there is nothing to bake into an image. That leaves one
+    // honest arrangement — the pass runs on a machine that is logged in, and
+    // reads the same state Cloud Run does. This is what lets it.
+    //
+    // Short-lived by construction: `gcloud auth print-access-token` mints an
+    // hour, so nothing durable is copied anywhere.
+    const supplied = process.env['GCS_ACCESS_TOKEN']?.trim();
+    if (supplied) {
+      this.token = { value: supplied, expiresAtMs: now + 45 * 60_000 };
+      return supplied;
+    }
+
     const response = await this.fetchImpl(
       'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token',
       { headers: { 'Metadata-Flavor': 'Google' } },
     );
-    if (!response.ok) throw new Error(`metadata server refused a token: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(
+        `metadata server refused a token: ${response.status}. Off Cloud Run, set `
+        + 'GCS_ACCESS_TOKEN=$(gcloud auth print-access-token) instead.',
+      );
+    }
     const body = (await response.json()) as { access_token: string; expires_in: number };
     this.token = {
       value: body.access_token,

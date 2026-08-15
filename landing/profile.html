@@ -113,17 +113,17 @@
 /* The seam between the record and the action. Full width and first, because
    the thing a creator came to do is submit another clip — it used to sit in a
    right-hand column below two retrospective panels. */
-.next { display:flex; align-items:center; gap:16px; margin:0 0 28px;
+.cs-next { display:flex; align-items:center; gap:16px; margin:0 0 28px;
         padding:18px 22px; border:1px solid var(--line); border-radius:14px;
         background:var(--surface, #fff); text-decoration:none; color:inherit;
         transition:border-color .15s, transform .15s; }
-.next:hover { border-color:var(--pop); transform:translateY(-1px); }
-.next-k { font-size:16px; font-weight:650; letter-spacing:-.01em; }
-.next-s { flex:1; font-size:13.5px; color:var(--muted); }
-.next-go { font-size:20px; color:var(--pop); }
+.cs-next:hover { border-color:var(--pop); transform:translateY(-1px); }
+.cs-next-k { font-size:16px; font-weight:650; letter-spacing:-.01em; }
+.cs-next-s { flex:1; font-size:13.5px; color:var(--muted); }
+.cs-next-go { font-size:20px; color:var(--pop); }
 @media (max-width:640px) {
-  .next { flex-wrap:wrap; gap:6px 14px; }
-  .next-s { flex-basis:100%; order:3; }
+  .cs-next { flex-wrap:wrap; gap:6px 14px; }
+  .cs-next-s { flex-basis:100%; order:3; }
 }
 </style>
 </head>
@@ -191,10 +191,10 @@
     So this page is the record and /campaigns is the action, with the band
     below as the seam between them.
   -->
-  <a class="next" href="/campaigns">
-    <span class="next-k">Submit a clip</span>
-    <span class="next-s" id="open-count">Browse campaigns open right now</span>
-    <span class="next-go" aria-hidden="true">&rarr;</span>
+  <a class="cs-next" href="/campaigns">
+    <span class="cs-next-k">Submit a clip</span>
+    <span class="cs-next-s" id="open-count">Browse campaigns open right now</span>
+    <span class="cs-next-go" aria-hidden="true">&rarr;</span>
   </a>
 
   <section class="sec">

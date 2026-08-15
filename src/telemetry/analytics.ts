@@ -21,8 +21,6 @@
  * failure is swallowed after being counted.
  */
 
-import { createHash } from 'node:crypto';
-
 export interface AnalyticsEvent {
   /** Snake-case, past tense: `creator_onboarded`, `brand_enquiry_received`. */
   readonly event: string;
@@ -31,21 +29,10 @@ export interface AnalyticsEvent {
   readonly properties?: Record<string, string | number | boolean | null>;
 }
 
-/**
- * A one-way id for a subject.
- *
- * Salted with POSTHOG_SALT so the same wallet does not produce the same hash
- * across unrelated deployments, and so a leaked analytics export cannot be
- * rainbow-tabled back to an address list.
- */
-export function pseudonym(raw: string, salt: string): string {
-  return createHash('sha256').update(`${salt}:${raw.toLowerCase().trim()}`).digest('hex').slice(0, 32);
-}
 
 export class Analytics {
   private readonly key?: string;
   private readonly host: string;
-  private readonly salt: string;
   private readonly walletsAllowed: boolean;
   /** Counted rather than thrown, so a broken pipe is visible without noise. */
   public failures = 0;
@@ -57,7 +44,6 @@ export class Analytics {
   ) {
     this.key = env.POSTHOG_KEY?.trim() || undefined;
     this.host = (env.POSTHOG_HOST?.trim() || 'https://eu.i.posthog.com').replace(/\/+$/, '');
-    this.salt = env.POSTHOG_SALT?.trim() || 'merlinclips';
     this.walletsAllowed = env.POSTHOG_INCLUDE_WALLETS === 'true';
   }
 
@@ -65,10 +51,6 @@ export class Analytics {
     return Boolean(this.key);
   }
 
-  /** Hash a wallet, email or account id into a stable analytics subject. */
-  idFor(raw: string): string {
-    return pseudonym(raw, this.salt);
-  }
 
   /**
    * Record an event. Never throws, never blocks the caller's response.

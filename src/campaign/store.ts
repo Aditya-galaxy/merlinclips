@@ -36,7 +36,6 @@ export class CampaignStore implements CampaignView {
   private readonly accounts = new Map<string, CreatorAccount>();
   /** Replay lands mandates here; the runtime copies them into its MandateStore. */
   private readonly mandates = new Map<string, Mandate>();
-  private readonly brands = new Map<string, BrandProfile>();
   private readonly verdicts = new Map<string, Verdict[]>();
   private readonly snaps = new Map<string, Snapshot[]>();
   private readonly payouts: Payout[] = [];
@@ -59,13 +58,7 @@ export class CampaignStore implements CampaignView {
     return this.accounts.get(accountId);
   }
 
-  putBrandProfile(brand: BrandProfile): void {
-    this.brands.set(brand.brandId, brand);
-  }
 
-  getBrandProfile(brandId: string): BrandProfile | undefined {
-    return this.brands.get(brandId);
-  }
 
   putCampaign(campaign: Campaign): void {
     this.campaigns.set(campaign.campaignId, campaign);

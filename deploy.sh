@@ -104,6 +104,21 @@ MISSINGKEY
   exit 1
 fi
 
+# Read a value off the running service, so a redeploy inherits working config
+# rather than replacing it. See the note on the secrets below.
+deployed_env() {
+  gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" \
+    --format=json 2>/dev/null \
+    | python3 -c "
+import sys, json
+try:
+    envs = json.load(sys.stdin)['spec']['template']['spec']['containers'][0].get('env', [])
+except Exception:
+    envs = []
+print(next((e.get('value', '') for e in envs if e.get('name') == '$1'), ''))
+" 2>/dev/null
+}
+
 # The wallets this deployment's Circle session can sign transfers from.
 #
 # Campaigns are funded to a wallet and paid out of that same wallet, so this
@@ -118,8 +133,8 @@ fi
 # nothing said so until a payout was attempted. Unset is the honest state for a
 # deployment that has not been told: it settles nothing rather than settling
 # from an address nobody checked.
-SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-}"
-MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-}"
+SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-$(deployed_env SETTLEMENT_WALLETS)}"
+MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-$(deployed_env MAINNET_SETTLEMENT_WALLETS)}"
 
 if [ -z "$SETTLEMENT_WALLETS" ]; then
   cat <<'NOWALLET'
@@ -135,8 +150,21 @@ for real, list the addresses the settling Circle session holds:
 NOWALLET
 fi
 
-# Ensure secrets exist so Cloud Run endpoints (/api/tick and /api/campaigns) remain active
+# Carried forward from the running service, not regenerated.
+#
+# These were `${X:-$(openssl rand -hex 24)}`, so every deploy that did not
+# happen to have the value in its shell minted a new one. The service came up
+# healthy with a secret nothing else knew, and the Cloud Scheduler job kept
+# sending the old header — so `/api/tick` returned 401 every hour and the
+# hourly snapshot loop stopped. Nothing surfaced it: the deploy succeeded, the
+# health check passed, and the only symptom was that no dwell window ever
+# completed and nobody was paid. It ran that way for four days.
+#
+# Reading the deployed value first makes a redeploy leave working config alone.
+# Generating is the last resort, for a service that does not exist yet.
+TICK_SECRET="${TICK_SECRET:-$(deployed_env TICK_SECRET)}"
 TICK_SECRET="${TICK_SECRET:-$(openssl rand -hex 24)}"
+OPERATOR_SECRET="${OPERATOR_SECRET:-$(deployed_env OPERATOR_SECRET)}"
 OPERATOR_SECRET="${OPERATOR_SECRET:-$(openssl rand -hex 24)}"
 
 # Google OAuth & Session Configuration
@@ -157,6 +185,33 @@ gcloud run deploy "$SERVICE" \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
   --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+
+# The scheduler holds the tick secret in a header, so the two can drift apart
+# and the only symptom is a 401 an hour into a log nobody is reading — which is
+# how the snapshot loop stayed down for four days. Carrying the secret forward
+# above should prevent it; this checks rather than assumes, because the failure
+# is silent and the cost is that nobody gets paid.
+SCHEDULED=$(gcloud scheduler jobs describe merlinclips-tick \
+  --project "$PROJECT" --location "$REGION" \
+  --format="value(httpTarget.headers)" 2>/dev/null \
+  | tr ';' '\n' | sed -n 's/^x-tick-secret=//p')
+
+if [ -z "$SCHEDULED" ]; then
+  echo "Note: no merlinclips-tick scheduler job found — see the command below."
+elif [ "$SCHEDULED" != "$TICK_SECRET" ]; then
+  cat <<DRIFT
+
+The scheduler's tick secret does not match the one just deployed, so every
+hourly tick will 401 and no view snapshot will be taken. Fix it now:
+
+  gcloud scheduler jobs update http merlinclips-tick \\
+    --project ${PROJECT} --location ${REGION} \\
+    --update-headers "x-tick-secret=${TICK_SECRET}"
+
+DRIFT
+else
+  echo "Scheduler: tick secret matches"
+fi
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should

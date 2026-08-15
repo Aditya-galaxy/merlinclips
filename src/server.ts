@@ -480,6 +480,12 @@ const server = Bun.serve({
       return campaigns.handleTickStatus();
     }
 
+    // Take a published campaign down. Operator-gated: it is a moderation lever.
+    const endMatch = url.pathname.match(/^\/api\/campaigns\/([A-Za-z0-9._-]+)\/end$/);
+    if (endMatch && request.method === 'POST') {
+      return campaigns.handleEndCampaign(request, endMatch[1]!);
+    }
+
     const checkFundingMatch = url.pathname.match(/^\/api\/campaigns\/([A-Za-z0-9._-]+)\/check-funding$/);
     if (checkFundingMatch && (request.method === 'POST' || request.method === 'GET')) {
       return campaigns.handleCheckFunding(checkFundingMatch[1]!);

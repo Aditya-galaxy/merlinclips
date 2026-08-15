@@ -104,10 +104,36 @@ MISSINGKEY
   exit 1
 fi
 
-# Active Circle Funded Agent Wallet (Base Mainnet / Testnet)
-DEFAULT_WALLET="0x0003a59858f44451be2a5b486ee612b4139700f0"
-CAMPAIGN_WALLET="${CAMPAIGN_WALLET:-$DEFAULT_WALLET}"
-MAINNET_CAMPAIGN_WALLET="${MAINNET_CAMPAIGN_WALLET:-$DEFAULT_WALLET}"
+# The wallets this deployment's Circle session can sign transfers from.
+#
+# Campaigns are funded to a wallet and paid out of that same wallet, so this
+# list decides which funding wallets `create_campaign` will accept. Get it from
+# the session that will actually settle:
+#
+#   circle wallet list --chain BASE-SEPOLIA
+#
+# There is deliberately no default. The value that used to sit here was one
+# hardcoded address used for *both* networks, and it was not a wallet the
+# session held — so the configured payer could not have signed anything, and
+# nothing said so until a payout was attempted. Unset is the honest state for a
+# deployment that has not been told: it settles nothing rather than settling
+# from an address nobody checked.
+SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-}"
+MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-}"
+
+if [ -z "$SETTLEMENT_WALLETS" ]; then
+  cat <<'NOWALLET'
+
+Note: SETTLEMENT_WALLETS is unset, so this deployment will plan payouts and
+never send them, and it will accept any funding wallet on a campaign. To settle
+for real, list the addresses the settling Circle session holds:
+
+  SETTLEMENT_WALLETS="$(circle wallet list --chain BASE-SEPOLIA --output json \
+    | python3 -c 'import sys,json;print(",".join(w["address"] for w in json.load(sys.stdin)))')" \
+    ./deploy.sh
+
+NOWALLET
+fi
 
 # Ensure secrets exist so Cloud Run endpoints (/api/tick and /api/campaigns) remain active
 TICK_SECRET="${TICK_SECRET:-$(openssl rand -hex 24)}"
@@ -130,7 +156,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},CAMPAIGN_WALLET=${CAMPAIGN_WALLET},MAINNET_CAMPAIGN_WALLET=${MAINNET_CAMPAIGN_WALLET},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # ALLOW_MAINNET and BROADCAST are deliberately never forwarded here. Unset in
 # Cloud Run means estimate-only on testnet, which is the state a deploy should
@@ -153,7 +179,7 @@ echo "Live: $URL"
 # deploy reported a failed health check on a service that was serving fine.
 echo "Health: $(curl -fsS "$URL/health" || echo 'FAILED')"
 echo "Config: $(curl -fsS "$URL/api/campaign" | head -c 200 || echo 'unreachable')"
-echo "Active Wallet: $CAMPAIGN_WALLET"
+echo "Settles from: ${SETTLEMENT_WALLETS:-<nothing — payouts are planned, never sent>}"
 echo "Tick Secret: $TICK_SECRET"
 echo "Operator Secret: $OPERATOR_SECRET"
 

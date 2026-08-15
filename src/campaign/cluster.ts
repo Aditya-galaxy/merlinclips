@@ -16,10 +16,15 @@
  *      hundred dollars, promised three times, published to creators as the
  *      amount left to earn.
  *
- * The third is why this module refuses rather than reports. A campaign's
- * wallet is *exclusive*: assigning an address that already backs another
- * campaign is rejected at registration, so the arithmetic in `funding.ts`
- * cannot be asked a question it would answer wrongly.
+ * The third is handled by arithmetic rather than by a prohibition. A brand
+ * funds every campaign from one agent wallet — that is the normal shape, and
+ * Circle issues one agent wallet per account per chain, so forbidding it would
+ * forbid the product. `funding.ts` nets the other campaigns' outstanding pools
+ * off the balance before deciding coverage, which answers the question
+ * correctly for a shared wallet instead of refusing to be asked.
+ *
+ * What this module keeps is the record of which campaigns an address backs,
+ * which is what that netting reads.
  *
  * ## What this module will not do
  *
@@ -97,7 +102,8 @@ export function provisionCommand(campaignId: string): string {
 export class MultiAgentClusterManager {
   private readonly byCampaign = new Map<string, CampaignWallet>();
   /** Reverse index, so exclusivity is a lookup rather than a scan. */
-  private readonly byAddress = new Map<string, string>();
+  /** Reverse index: every campaign an address currently backs. */
+  private readonly byAddress = new Map<string, Set<string>>();
 
   /**
    * Bind an address to a campaign, or explain why not.
@@ -143,15 +149,6 @@ export class MultiAgentClusterManager {
       };
     }
 
-    const claimedBy = this.byAddress.get(lower);
-    if (claimedBy && claimedBy !== id) {
-      return {
-        ok: false,
-        field: 'address',
-        error: `${addr} already backs ${claimedBy}. One wallet cannot cover two pools — `
-          + 'both would report the same balance as their own funding.',
-      };
-    }
 
     const wallet: CampaignWallet = {
       campaignId: id,
@@ -160,7 +157,9 @@ export class MultiAgentClusterManager {
       custody,
     };
     this.byCampaign.set(id, wallet);
-    this.byAddress.set(lower, id);
+    const backing = this.byAddress.get(lower) ?? new Set<string>();
+    backing.add(id);
+    this.byAddress.set(lower, backing);
     return { ok: true, wallet };
   }
 
@@ -177,7 +176,9 @@ export class MultiAgentClusterManager {
     const held = this.byCampaign.get(campaignId);
     if (!held) return false;
     this.byCampaign.delete(campaignId);
-    this.byAddress.delete(held.address.toLowerCase());
+    const backing = this.byAddress.get(held.address.toLowerCase());
+    backing?.delete(campaignId);
+    if (backing && backing.size === 0) this.byAddress.delete(held.address.toLowerCase());
     return true;
   }
 
@@ -185,9 +186,9 @@ export class MultiAgentClusterManager {
     return this.byCampaign.get(campaignId);
   }
 
-  /** Which campaign an address backs, if any. Used to enforce exclusivity. */
-  campaignAt(address: string): string | undefined {
-    return this.byAddress.get(address?.trim().toLowerCase() ?? '');
+  /** Every campaign an address currently backs. */
+  campaignsAt(address: string): readonly string[] {
+    return [...(this.byAddress.get(address?.trim().toLowerCase() ?? '') ?? [])];
   }
 
   /**
@@ -239,6 +240,9 @@ export class MultiAgentClusterManager {
     return {
       treasuryAddress: SAFE_TREASURY_ADDRESS,
       campaigns,
+      // Reported, not enforced. A brand funding several campaigns from one
+      // agent wallet is the normal case; what keeps it honest is coverage
+      // netting the other pools off the balance, not a rule against sharing.
       isolated: distinct.size === campaigns.length,
     };
   }

@@ -65,13 +65,59 @@ export const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        brief: { type: 'string', description: 'What the clip must show. Judged against this.' },
+        brief: {
+          type: 'string',
+          description: 'What the clip must show, in plain language — this is the whole spec and '
+            + 'Gemini judges every clip against it. There is no separate title field. Describe '
+            + 'the video required; do not address the verifier, as briefs that instruct it are '
+            + 'refused. Good: "Show the product running, name spoken aloud in the first five '
+            + 'seconds, no competitor logos."',
+        },
         poolUsdc: { type: 'string', description: 'Total budget. Minimum 100.' },
         cpmUsdc: { type: 'string', description: 'Paid per 1,000 surviving views.' },
         perCreatorCapUsdc: { type: 'string', description: 'Max one creator can earn. Minimum 10.' },
-        fundingWallet: { type: 'string', description: 'Address you will deposit to. One wallet, one campaign.' },
-        chain: { type: 'string', description: 'base or base-sepolia.' },
-        dwellHours: { type: 'number', description: 'How long views must hold. Minimum 1, default 24.' },
+        fundingWallet: {
+          type: 'string',
+          description: 'Your agent wallet. One wallet can fund every campaign you run — '
+            + 'coverage nets your other pools off the balance, so each one only counts money '
+            + 'not already promised elsewhere.',
+        },
+        chain: { type: 'string', description: 'base or base-sepolia. Default base.' },
+        dwellHours: {
+          type: 'number',
+          description: 'How long a view must hold before it is payable. Minimum 1, default 24. '
+            + 'Shorter pays faster and filters less.',
+        },
+        platforms: {
+          type: 'array',
+          items: { type: 'string', enum: ['youtube', 'x'] },
+          description: 'Where clips may be posted. YouTube and X only — the others need '
+            + 'platform app review we do not hold. Default ["youtube"].',
+        },
+        minCpmUsdc: {
+          type: 'string',
+          description: 'Floor of the rate band. The agent may move the rate as the pool '
+            + 'drains, but only inside this band. Defaults to cpmUsdc.',
+        },
+        maxCpmUsdc: { type: 'string', description: 'Ceiling of the rate band. Defaults to cpmUsdc.' },
+        minStanding: {
+          type: 'string',
+          enum: ['unproven', 'building', 'reliable', 'exceptional'],
+          description: 'Lowest creator standing accepted. Omit to open it to everyone, which '
+            + 'is usually right — places are reserved for newcomers regardless.',
+        },
+        reservedForUnproven: {
+          type: 'number',
+          description: 'Places held for creators with no track record. Omit to let us compute it.',
+        },
+        settlementDays: {
+          type: 'number',
+          description: 'How long after a clip is accepted it can still be paid. Default 14. '
+            + 'This is an obligation to the creator, not a convenience.',
+        },
+        endsAt: { type: 'string', description: 'ISO date the campaign stops accepting clips. Default 30 days.' },
+        ownerId: { type: 'string', description: 'Your brand id, if you have one. Groups campaigns on your dashboard.' },
+        campaignId: { type: 'string', description: 'Your own id for it. Omit and we generate one.' },
       },
       required: ['brief', 'poolUsdc', 'cpmUsdc', 'perCreatorCapUsdc', 'fundingWallet'],
       additionalProperties: false,

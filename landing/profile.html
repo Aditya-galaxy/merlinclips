@@ -230,8 +230,21 @@
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (p) {
       if (!p) {
-        fill('clips', empty('Sign in to see your clips. <a href="/signup.html">Sign in</a>.'));
-        fill('payouts', empty('Nothing to show until you sign in.'));
+        /* Signed out. Every tile still held its "—" placeholder, so the page
+           read as broken rather than as a page waiting for a sign-in. Say so
+           once, plainly, and stop pretending there are figures to load. */
+        set('p-name', 'Creator Studio');
+        set('p-joined', 'Sign in to see what you have earned.');
+        var rank = $('p-rank'); if (rank) rank.hidden = true;
+        ['t-earned', 't-holding', 't-views', 't-subs'].forEach(function (id) { set(id, '—'); });
+        set('t-holding-sub', 'Sign in to see this');
+        set('t-standing-says', 'Sign in to see this');
+        fill('clips', empty(
+          'Sign in and your clips, holds and payouts appear here.<br>'
+          + '<a class="go" style="display:inline-block;width:auto;margin-top:14px;padding:10px 22px;'
+          + 'text-decoration:none;" href="/signup.html">Sign in with Google</a>'));
+        fill('payouts', empty('Settlements appear here once you have signed in and been paid.'));
+        fill('wallets', empty('Sign in to link the address your USDC arrives at.'));
         return;
       }
 

@@ -43,16 +43,34 @@ commits real money.
 | Tool | What it does |
 |---|---|
 | `list_open_campaigns` | Campaigns open to creators, with rate, hold and remaining pool. Only funded campaigns appear |
+| `create_campaign` | Open a campaign you fund yourself. Returns a deposit address; goes live when the chain confirms |
 | `submit_clip` | Submit a clip. Keyless — the payout address is the identity |
-| `check_campaign_funding` | What is actually on-chain behind a pool |
+| `check_clip` | What happened to one clip: verdict, surviving views, earnings, or which gate holds it |
+| `check_earnings` | Everything one payout address has submitted and been paid |
+| `check_campaign_funding` | What is actually on-chain behind a pool. This is what takes a self-funded campaign live |
 | `get_ledger` | Every campaign and every settled payout, with its Base transaction |
 | `explain_payout_rules` | The gates in order, and what each refusal means |
+
+## Running a campaign
+
+```
+create_campaign          -> brief, poolUsdc, cpmUsdc, perCreatorCapUsdc, fundingWallet
+                            returns a deposit address; nobody can see it yet
+   (send USDC from your own wallet to your own wallet)
+check_campaign_funding   -> coverage covered -> live: true, no approval step
+```
+
+Nothing is held on your behalf. The wallet is yours, we read its balance to
+confirm the pool is real, and payouts leave it for the creator. One wallet can
+fund every campaign you run — coverage subtracts what your other campaigns
+already claim, so you run as many as your balance genuinely covers.
 
 ## Submitting a clip
 
 ```
 list_open_campaigns          -> pick a campaignId
 submit_clip                  -> campaignId, url, payoutAddress
+check_clip                   -> verdict, surviving views, or why it is held
 ```
 
 The rate, hold and per-creator cap are frozen onto the submission the moment it

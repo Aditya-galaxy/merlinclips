@@ -156,6 +156,13 @@
       </label>
     </div>
 
+    <!-- Renders only when TURNSTILE_SITE_KEY is set; the server treats a
+         missing token as unchallenged rather than refusing the enquiry, so an
+         unconfigured deployment still hears from brands. -->
+    <div class="ff wide" id="e-turnstile-slot" hidden>
+      <div class="cf-turnstile" data-sitekey="" data-theme="auto" data-size="flexible"></div>
+    </div>
+
     <div class="ff wide">
       <button class="btn pop" type="submit" id="e-go">Send this to the team</button>
       <p class="fine">A person reads these. No drip sequence, no sales cadence.</p>
@@ -255,6 +262,12 @@
     go.disabled = true;
     go.textContent = 'Sending…';
 
+    /* The widget writes its token into a hidden input named
+       cf-turnstile-response. Absent when Turnstile is not configured, which
+       the server treats as unchallenged rather than refused. */
+    var tsField = form.querySelector('[name="cf-turnstile-response"]');
+    if (tsField && tsField.value) body.turnstileToken = tsField.value;
+
     fetch('/api/brand-enquiry', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -265,6 +278,11 @@
         if (!res.ok) {
           if (res.d && res.d.field) blame(res.d.field, res.d.error);
           else tell(res.d && res.d.error ? res.d.error : 'That did not send. Try again shortly.', true);
+          /* A Turnstile token is single-use. Without this reset a retry after
+             any error reuses a spent token and fails for the wrong reason. */
+          if (window.turnstile && typeof window.turnstile.reset === 'function') {
+            try { window.turnstile.reset(); } catch (e) {}
+          }
           return;
         }
         form.querySelectorAll('input, textarea, select').forEach(function (i) {
@@ -389,5 +407,6 @@
   });
 })();
 </script>
+<script src="/site.js" defer></script>
 </body>
 </html>

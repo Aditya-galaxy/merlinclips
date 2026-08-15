@@ -67,6 +67,21 @@ export class EventLog {
         throw new Error(`event ${key} could not be read: ${(error as Error).message}`);
       }
     }
+    // Time order, explicitly. `blobs.list` returns keys lexicographically and
+    // the key is the event id, which for a mutable entity ends in a content
+    // hash — so unsorted replay let the *hash* decide which version of a
+    // campaign survived a restart. An operator ending a campaign wrote a
+    // correct, newest event and then watched the campaign come back live on
+    // the next cold start, because `cmp-x-cc95535f` (active) sorts after
+    // `cmp-x-550fa9fc` (ended).
+    //
+    // `eventId` breaks ties so the order is total: two events sharing a
+    // millisecond must not reorder between replays, or the derived hash chain
+    // is not reproducible and cannot be checked by anyone.
+    envelopes.sort((a, b) => {
+      const at = Date.parse(a.at) - Date.parse(b.at);
+      return at !== 0 ? at : a.eventId.localeCompare(b.eventId);
+    });
     return envelopes;
   }
 

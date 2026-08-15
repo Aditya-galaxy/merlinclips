@@ -1625,9 +1625,41 @@ export class CampaignRuntime {
       // What it still owes, not what it started with: money already paid out
       // has left the wallet and is reflected in the balance we just read.
       const remaining = other.poolUsdc.micro - this.store.spentOnCampaign(other.campaignId).micro;
-      if (remaining > 0n) micro += remaining;
+      if (remaining <= 0n) continue;
+      micro += other.status === 'ended' ? this.endedCeiling(other, remaining) : remaining;
     }
     return new Decimal(micro);
+  }
+
+  /**
+   * The most an *ended* campaign can still draw from its funding wallet.
+   *
+   * A live campaign reserves its whole remaining pool, because any of it might
+   * still be claimed by a clip nobody has submitted yet. An ended campaign
+   * cannot: it accepts no new clips, so the only claims left are the creators
+   * who already have accepted clips, and each of those is capped at the
+   * per-creator limit. Reserving the full pool for them would strand the
+   * difference — a 100 USDC campaign that ends owing one creator capped at 10
+   * would hold 90 USDC hostage against every other campaign on that wallet.
+   *
+   * Still bounded by `remaining`: the ceiling is what the campaign could owe,
+   * never more than it has left to give.
+   */
+  private endedCeiling(campaign: Campaign, remaining: bigint): bigint {
+    const creators = new Set(
+      this.store
+        .exportState()
+        .submissions.filter((s) => s.campaignId === campaign.campaignId)
+        .map((s) => s.creatorId),
+    );
+
+    let ceiling = 0n;
+    for (const creatorId of creators) {
+      const headroom = campaign.perCreatorCapUsdc.micro
+        - this.store.spentOnCreator(campaign.campaignId, creatorId).micro;
+      if (headroom > 0n) ceiling += headroom;
+    }
+    return ceiling < remaining ? ceiling : remaining;
   }
 
   /** Route handler for on-demand funding balance check for a campaign. */

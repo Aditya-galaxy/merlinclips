@@ -474,7 +474,15 @@ export class CampaignRuntime {
       // unfunded pool next to a rate is the exact thing this system is meant to
       // stop: the number a creator uses to decide whether the evening is worth
       // it, published before anyone checked it.
-      campaigns: await Promise.all(state.campaigns.filter((c) => isLaunched(c.status)).map(async (c) => {
+      // Launched *and* not ended. Two different questions were sharing one
+      // predicate: the payout gate must keep settling an ended campaign,
+      // because clips accepted under its frozen terms are still owed, while
+      // this listing is what a creator reads as available work. An ended
+      // campaign shown here invites an evening of editing against a brief that
+      // will refuse the submission.
+      campaigns: await Promise.all(state.campaigns
+        .filter((c) => isLaunched(c.status) && c.status !== 'ended')
+        .map(async (c) => {
         // What a creator wants before committing an evening: is anyone else
         // here, is this campaign actually paying, and how much is left. All
         // three are already in the store; publishing them is what turns a
@@ -1755,6 +1763,58 @@ export class CampaignRuntime {
       campaign: { ...campaign, status: 'active' },
     });
     return Response.json({ ok: true, status: 'active', campaignId });
+  }
+
+  /**
+   * Take a published campaign down.
+   *
+   * Nothing could do this. A campaign that turned out to be abusive, or a
+   * brief that should never have gone out, stayed live and kept accepting
+   * clips — there was no lever at all, which is a poor answer to "what happens
+   * when something bad gets published".
+   *
+   * Ending refuses *new* clips. It does not abandon work already accepted:
+   * terms were frozen at acceptance and the settlement window is an obligation
+   * to the creator, not a convenience for us. A creator who edited last night
+   * against a brief we later regret is still owed, and the tick keeps settling
+   * ended campaigns for exactly that reason. Anything else would make "your
+   * rate is locked" a lie the first time it was tested.
+   *
+   * There is nothing to refund. The pool never left the funder's wallet — we
+   * read its balance, we do not hold it — so ending simply stops us reading it,
+   * and the money is already where it started.
+   */
+  async handleEndCampaign(request: Request, campaignId: string): Promise<Response> {
+    const guard = this.requireOperator(request);
+    if (guard) return guard;
+    await this.ready();
+
+    const campaign = this.store.campaign(campaignId);
+    if (!campaign) return Response.json({ error: 'unknown campaign' }, { status: 404 });
+    if (campaign.status === 'ended') {
+      return Response.json({ ok: true, status: 'ended', note: 'already ended' });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as { reason?: unknown };
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+
+    await this.record({ type: 'campaign_upserted', campaign: { ...campaign, status: 'ended' } });
+    this.cluster.release(campaignId);
+
+    const owed = this.store
+      .exportState()
+      .submissions.filter((x) => x.campaignId === campaignId).length;
+
+    return Response.json({
+      ok: true,
+      status: 'ended',
+      campaignId,
+      reason: reason || undefined,
+      acceptedClipsStillOwed: owed,
+      note: 'No new clips are accepted. Clips already accepted keep their frozen terms and '
+        + 'settle as their views survive. Nothing is refunded because the pool never left the '
+        + "funder's wallet.",
+    });
   }
 
   /** Expose latest tick execution status for asynchronous polling. */

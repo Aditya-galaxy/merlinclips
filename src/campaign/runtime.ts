@@ -277,8 +277,13 @@ export class CampaignRuntime {
       for (const mandate of replayed.mandates) this.mandates.put(mandate);
       // Rebuilt from the campaigns themselves: the binding is a fact about a
       // campaign, not a separate record, so replay is where it comes back.
+      // Ended campaigns do not hold their wallet. They are owed nothing, so
+      // the address is free for the next one — which is what lets an agent
+      // with a single wallet run more than one campaign in its lifetime.
       for (const c of replayed.campaigns) {
-        if (c.fundingWallet) this.cluster.register(c.campaignId, c.fundingWallet);
+        if (c.fundingWallet && c.status !== 'ended') {
+          this.cluster.register(c.campaignId, c.fundingWallet);
+        }
       }
       this.loaded = true;
     }).finally(() => {

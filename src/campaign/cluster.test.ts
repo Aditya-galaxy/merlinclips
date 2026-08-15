@@ -114,3 +114,29 @@ describe('splitting a deposit', () => {
     expect('ok' in r && r.ok === false).toBe(true);
   });
 });
+
+describe('a wallet is freed when its campaign can no longer claim it', () => {
+  test('release lets the same address back a later campaign', () => {
+    // A Circle agent wallet is one per account per chain. A permanent lock
+    // meant an agent got one campaign ever and was then shut out of the
+    // platform by the rule meant to protect its creators.
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    expect(c.register('camp-2', A).ok).toBe(false);
+
+    expect(c.release('camp-1')).toBe(true);
+    expect(c.register('camp-2', A).ok).toBe(true);
+    expect(c.campaignAt(A)).toBe('camp-2');
+  });
+
+  test('releasing something never registered is not an error', () => {
+    expect(new MultiAgentClusterManager().release('camp-nope')).toBe(false);
+  });
+
+  test('a live campaign still holds its wallet', () => {
+    const c = new MultiAgentClusterManager();
+    ok(c.register('camp-1', A));
+    expect(c.register('camp-2', A).ok).toBe(false);
+    expect(c.walletFor('camp-1')?.address).toBe(A);
+  });
+});

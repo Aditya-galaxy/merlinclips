@@ -164,6 +164,23 @@ export class MultiAgentClusterManager {
     return { ok: true, wallet };
   }
 
+  /**
+   * Free an address once its campaign can no longer claim it.
+   *
+   * Exclusivity binds among campaigns that are still owed money, not for all
+   * time. A Circle agent wallet is one per account per chain, so a permanent
+   * lock meant an agent got exactly one campaign ever and was then shut out of
+   * its own platform — the rule protecting creators would have stopped the
+   * people it was meant to serve from coming back.
+   */
+  release(campaignId: string): boolean {
+    const held = this.byCampaign.get(campaignId);
+    if (!held) return false;
+    this.byCampaign.delete(campaignId);
+    this.byAddress.delete(held.address.toLowerCase());
+    return true;
+  }
+
   walletFor(campaignId: string): CampaignWallet | undefined {
     return this.byCampaign.get(campaignId);
   }

@@ -153,9 +153,18 @@ export function verifyPayment(
   if (verifySignature && !verifySignature(payload)) {
     return { ok: false, reason: 'payment signature did not verify' };
   }
-  if (!verifySignature && process.env['X402_REQUIRE_SIGNATURE'] === 'true') {
-    // Fail closed: an unconfigured verifier must not mean "accept anything".
-    return { ok: false, reason: 'no signature verifier configured' };
+  if (!verifySignature) {
+    // Every check above reads a field the caller wrote. On their own they
+    // establish that the caller can describe a correct payment, which is not
+    // the same as having made one — and this branch used to serve the request
+    // regardless, gated on an opt-in `X402_REQUIRE_SIGNATURE` that was never
+    // set. Safety cannot be the setting nobody turns on.
+    //
+    // Unverified is now a refusal. The escape hatch is explicit, and it is
+    // named for what it does rather than for what it protects.
+    if (process.env['X402_ALLOW_UNVERIFIED'] !== 'true') {
+      return { ok: false, reason: 'payment could not be verified' };
+    }
   }
 
   return {
@@ -172,4 +181,52 @@ export function verifyPayment(
 /** Encode a payment payload the way a client would. Used by tests and the demo client. */
 export function encodePayment(payload: Record<string, unknown>): string {
   return btoa(JSON.stringify(payload));
+}
+
+/**
+ * The full check: the header parses and describes a correct payment, *and* the
+ * chain agrees the payment happened.
+ *
+ * Split from `verifyPayment` rather than folded into it because the field
+ * checks are pure and the chain read is not, and the pure half is what the
+ * property tests exercise. Callers on a money path want this one.
+ */
+export async function verifyPaid(
+  header: string | null,
+  config: X402Config,
+  onchain?: {
+    verify(input: { txHash: string; payTo: string; price: Decimal }): Promise<
+      { ok: true; payer: string; amountUsdc: Decimal } | { ok: false; reason: string }
+    >;
+  },
+): Promise<VerificationResult> {
+  // A placeholder recipient is not a cheap default, it is an invitation to
+  // send USDC somewhere nobody can spend it from. An endpoint that cannot
+  // receive must not advertise a price.
+  if (!/^0x[0-9a-fA-F]{40}$/.test(config.payTo)) {
+    return { ok: false, reason: 'this endpoint has no receiving wallet configured' };
+  }
+
+  const shape = verifyPayment(header, config, onchain ? () => true : undefined);
+  if (!shape.ok) return shape;
+  if (!onchain) return shape;
+
+  const settled = await onchain.verify({
+    txHash: shape.proof.txHash,
+    payTo: config.payTo,
+    price: config.priceUsdc,
+  });
+  if (!settled.ok) return { ok: false, reason: settled.reason };
+
+  // The chain's numbers, not the caller's. The header said what it intended to
+  // pay; this is what arrived.
+  return {
+    ok: true,
+    proof: {
+      payer: settled.payer,
+      amountUsdc: settled.amountUsdc,
+      txHash: shape.proof.txHash,
+      network: shape.proof.network,
+    },
+  };
 }

@@ -58,7 +58,7 @@ describe('the 402 a machine reads', () => {
 
 describe('verification refuses everything that is nearly right', () => {
   test('a correct payment is accepted', () => {
-    const result = verifyPayment(goodPayment(), config);
+    const result = verifyPayment(goodPayment(), config, () => true);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.proof.amountUsdc.toString()).toBe('1');
@@ -77,7 +77,7 @@ describe('verification refuses everything that is nearly right', () => {
   });
 
   test('overpayment is accepted — the buyer chose to', () => {
-    expect(verifyPayment(goodPayment({ amount: '2000000' }), config).ok).toBe(true);
+    expect(verifyPayment(goodPayment({ amount: '2000000' }), config, () => true).ok).toBe(true);
   });
 
   test('a payment on the wrong network is refused', () => {
@@ -93,7 +93,7 @@ describe('verification refuses everything that is nearly right', () => {
   });
 
   test('recipient matching is case-insensitive, as addresses are', () => {
-    expect(verifyPayment(goodPayment({ payTo: WALLET.toLowerCase() }), config).ok).toBe(true);
+    expect(verifyPayment(goodPayment({ payTo: WALLET.toLowerCase() }), config, () => true).ok).toBe(true);
   });
 
   test('a malformed header is refused, not guessed at', () => {
@@ -119,15 +119,13 @@ describe('signature verification fails closed', () => {
     expect(verifyPayment(goodPayment(), config, () => true).ok).toBe(true);
   });
 
-  test('when signatures are required, an unconfigured verifier refuses', () => {
-    // An unconfigured verifier must never mean "accept anything".
-    process.env['X402_REQUIRE_SIGNATURE'] = 'true';
-    try {
-      const result = verifyPayment(goodPayment(), config);
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.reason).toContain('no signature verifier');
-    } finally {
-      delete process.env['X402_REQUIRE_SIGNATURE'];
-    }
+  test('an unconfigured verifier refuses, by default', () => {
+    // This is the whole fix. Refusing used to be opt-in via
+    // X402_REQUIRE_SIGNATURE, which no deployment set, so every field check
+    // above was passed by a header a stranger wrote and the service was
+    // handed over for free. Safety cannot be the setting nobody turns on.
+    const result = verifyPayment(goodPayment(), config);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toContain('could not be verified');
   });
 });

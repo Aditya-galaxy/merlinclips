@@ -448,6 +448,11 @@ const server = Bun.serve({
       return campaigns.handleBrandEnquiry(request);
     }
 
+    // Self-serve: an agent opens a campaign it funds itself.
+    if (url.pathname === '/api/agent/campaigns' && request.method === 'POST') {
+      return campaigns.handleAgentCampaign(request);
+    }
+
     if (url.pathname === '/api/campaigns' && request.method === 'POST') {
       return campaigns.handleOpenCampaign(request);
     }

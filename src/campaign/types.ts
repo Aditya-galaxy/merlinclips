@@ -85,6 +85,17 @@ export interface Campaign {
    */
   readonly fundingWallet?: string;
   /**
+   * Opened by an agent that funds it itself, rather than by an operator.
+   *
+   * The operator gate exists because coverage is a fact about the chain while
+   * launching is a decision about whose brief reaches our creators. For a
+   * self-serve campaign the agent's own deposit is that decision — it is their
+   * money at risk, and the funding gate still protects the creator's evening.
+   * This skips the human, and nothing else: the pool minimum, the brief
+   * screen, wallet exclusivity and every payout gate still apply.
+   */
+  readonly selfServe?: boolean;
+  /**
    * The lowest standing this campaign accepts. Absent means open to anyone,
    * which is the default and stays the default — a floor is a thing a brand
    * asks for, not a thing we impose on their behalf.

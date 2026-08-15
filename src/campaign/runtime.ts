@@ -48,7 +48,7 @@ import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
 import { isLaunched } from './types';
-import type { Campaign } from './types';
+import type { Campaign, CampaignStatus } from './types';
 import type { CreatorAccount } from './types';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
@@ -1291,6 +1291,61 @@ export class CampaignRuntime {
     );
   }
 
+  /**
+   * An agent opens its own campaign and funds it itself.
+   *
+   * Public, unlike the operator route, because what made that route privileged
+   * was that it committed *our* money. Here the pool is the caller's, the
+   * campaign is invisible until their deposit confirms on-chain, and it can
+   * pay nobody until then — so the thing the gate protected is protected by
+   * the chain instead of by a person.
+   *
+   * Rate-limited, because free campaign creation is free log writes. A refused
+   * caller is told to wait rather than quietly dropped.
+   */
+  async handleAgentCampaign(request: Request): Promise<Response> {
+    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    if (!this.rateLimiter.consume(clientIp)) {
+      return Response.json({ error: 'too many campaigns opened — try again shortly' }, { status: 429 });
+    }
+    await this.ready();
+
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const result = openCampaign({ ...body, selfServe: true });
+    if (!result.ok) {
+      return Response.json({ error: result.error, field: result.field }, { status: 400 });
+    }
+
+    const campaign = result.value;
+    if (!campaign.fundingWallet) {
+      return Response.json(
+        { error: 'fundingWallet is required — it is the address you deposit to, and the one we read',
+          field: 'fundingWallet' },
+        { status: 400 },
+      );
+    }
+
+    const bound = this.cluster.register(campaign.campaignId, campaign.fundingWallet, 'operator-supplied');
+    if (!bound.ok) {
+      return Response.json({ error: bound.error, field: bound.field }, { status: 409 });
+    }
+
+    await this.record({ type: 'campaign_upserted', campaign });
+    return Response.json(
+      {
+        campaignId: campaign.campaignId,
+        status: campaign.status,
+        depositTo: campaign.fundingWallet,
+        chain: campaign.chain,
+        poolUsdc: campaign.poolUsdc.toString(),
+        next: `Send ${campaign.poolUsdc} USDC to ${campaign.fundingWallet} on ${campaign.chain}, `
+          + 'then call check_campaign_funding. It goes live the moment coverage confirms — '
+          + 'no approval step. Creators cannot see it until then.',
+      },
+      { status: 201 },
+    );
+  }
+
   async handleOpenCampaign(request: Request): Promise<Response> {
     const guard = this.requireOperator(request);
     if (guard) return guard;
@@ -1589,11 +1644,24 @@ export class CampaignRuntime {
     //
     // Only from pending_funding. A campaign an operator already approved, or
     // paused, is not dragged back into the queue by a later balance read.
+    // A self-serve campaign goes straight live; an operator-opened one queues.
+    //
+    // The approval step exists because coverage is a fact about the chain and
+    // launching is a decision about whose brief reaches our creators. When an
+    // agent funds its own campaign it has made that decision with its own
+    // money, so there is no second judgement left for a human to add — and a
+    // queue nobody needs is just a campaign that never opens.
+    //
+    // Nothing else is relaxed. The pool minimum, the brief screen, wallet
+    // exclusivity and every payout gate apply exactly as before, and an
+    // unfunded self-serve campaign is as invisible as any other.
     let advanced = false;
+    let becomes: CampaignStatus | undefined;
     if (campaign.status === 'pending_funding' && funding.coverage === 'covered') {
+      becomes = campaign.selfServe ? 'active' : 'awaiting_operator_approval';
       await this.record({
         type: 'campaign_upserted',
-        campaign: { ...campaign, status: 'awaiting_operator_approval' },
+        campaign: { ...campaign, status: becomes },
       });
       advanced = true;
     }
@@ -1601,7 +1669,8 @@ export class CampaignRuntime {
     return Response.json({
       ok: true,
       funding,
-      status: advanced ? 'awaiting_operator_approval' : campaign.status,
+      status: becomes ?? campaign.status,
+      live: becomes === 'active',
       advanced,
     });
   }

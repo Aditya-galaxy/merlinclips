@@ -77,6 +77,34 @@ interface PersistedTick {
   readonly errors: readonly string[];
 }
 
+/**
+ * The addresses this deployment can sign transfers from, per network.
+ *
+ * Network-selected for the same reason the executor is: a Circle agent wallet
+ * exists on one chain, so a mainnet deployment listing testnet addresses can
+ * sign for none of them. Reading one variable *or* the other means the mismatch
+ * cannot be configured — there is no combination that arms mainnet against a
+ * testnet list.
+ *
+ * Addresses are lowercased on the way in. They arrive from three places that
+ * disagree on case — a brand pasting from a block explorer, an agent echoing
+ * our own JSON, and a shell variable — and a checksummed address failing to
+ * match the same address in lowercase would reject a wallet we do hold.
+ */
+export function signableWallets(
+  env: Record<string, string | undefined> = Bun.env,
+): ReadonlySet<string> {
+  const raw = env.ALLOW_MAINNET === 'true'
+    ? env.MAINNET_SETTLEMENT_WALLETS
+    : env.SETTLEMENT_WALLETS;
+  return new Set(
+    (raw ?? '')
+      .split(',')
+      .map((a) => a.trim().toLowerCase())
+      .filter((a) => a.length > 0),
+  );
+}
+
 export function chooseBlobStore(env: Record<string, string | undefined> = Bun.env): BlobStore {
   if (env.GCS_BUCKET) return new GcsBlobStore(env.GCS_BUCKET);
   if (env.STATE_DIR) return new FileBlobStore(env.STATE_DIR);
@@ -152,6 +180,24 @@ export class CampaignRuntime {
   public balances?: BalanceReader =
     Bun.env.CAMPAIGN_BALANCE_READER === 'off' ? undefined : new RpcBalanceReader();
 
+  /**
+   * The wallets this deployment's Circle session can actually sign for.
+   *
+   * A campaign is funded to `campaign.fundingWallet` and paid out of it, so an
+   * address we hold no key for produces a campaign that takes a brand's
+   * deposit and can never pay a creator — and only says so at settlement,
+   * after the clips are made. The container has no Circle CLI (see the
+   * Dockerfile: the session is an interactive OTP login and cannot live in an
+   * image), so it cannot ask; the deployment has to tell it.
+   *
+   * Empty means no settlement rail, which is already a deployment that pays
+   * nobody — `buildExecutor` returns a `DryRunExecutor` on the same condition.
+   * The guard only bites when the deployment claims it *can* settle, because
+   * that is the case where a campaign would otherwise be accepted on a promise
+   * we cannot keep.
+   */
+  private readonly signable: ReadonlySet<string>;
+
   /** Two-phase budget reservation engine for enterprise campaign payouts. */
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
@@ -175,6 +221,7 @@ export class CampaignRuntime {
 
   constructor(options: CampaignRuntimeOptions = {}) {
     this.env = options.env ?? Bun.env;
+    this.signable = signableWallets(this.env);
     this.webhooks = options.webhooks ?? webhookFromEnv(this.env);
     this.blobs = options.blobs ?? chooseBlobStore(this.env);
     this.log = new EventLog(this.blobs);
@@ -242,23 +289,19 @@ export class CampaignRuntime {
     // Agent Stack component that moves USDC, signing with the session created
     // by `circle wallet login`.
     //
-    // This env var no longer names the wallet money leaves — that is
+    // These no longer name the wallet money leaves — that is
     // `campaign.fundingWallet`, decided per campaign, because the wallet
-    // coverage is checked against has to be the wallet that pays. What is left
-    // here is the question the deployment still has to answer: is settlement
-    // configured at all, and on which network. Unset means no settlement rail,
-    // so payouts are planned and never sent.
-    const configured = (
-      onMainnet ? this.env.MAINNET_CAMPAIGN_WALLET : this.env.CAMPAIGN_WALLET
-    )?.trim();
-
-    if (onMainnet && !configured) {
+    // coverage is checked against has to be the wallet that pays. What the
+    // deployment still has to answer is which wallets it can sign for, which
+    // is also the answer to whether it can settle at all. Empty means no
+    // settlement rail, so payouts are planned and never sent.
+    if (onMainnet && this.signable.size === 0) {
       throw new Error(
-        'ALLOW_MAINNET=true but MAINNET_CAMPAIGN_WALLET is unset. Refusing to start: ' +
+        'ALLOW_MAINNET=true but MAINNET_SETTLEMENT_WALLETS is empty. Refusing to start: ' +
           'settling on mainnet from a testnet session is not a recoverable mistake.',
       );
     }
-    if (!configured) return new DryRunExecutor();
+    if (this.signable.size === 0) return new DryRunExecutor();
 
     return new CircleCliExecutor({
       dryRun: this.env.BROADCAST !== 'true',
@@ -1348,7 +1391,20 @@ export class CampaignRuntime {
       );
     }
 
-    const bound = this.cluster.register(campaign.campaignId, campaign.fundingWallet, 'operator-supplied');
+    const unsignable = this.unsignable(campaign.fundingWallet);
+    if (unsignable) {
+      return Response.json({ error: unsignable, field: 'fundingWallet' }, { status: 400 });
+    }
+
+    // 'circle-agent-wallet' only when we know it is one — having passed the
+    // guard above means it is on this deployment's signable list. With no rail
+    // configured the guard is silent and we know nothing, so the label stays
+    // the weaker one rather than claiming custody we cannot demonstrate.
+    const bound = this.cluster.register(
+      campaign.campaignId,
+      campaign.fundingWallet,
+      this.signable.size > 0 ? 'circle-agent-wallet' : 'operator-supplied',
+    );
     if (!bound.ok) {
       return Response.json({ error: bound.error, field: bound.field }, { status: 409 });
     }
@@ -1385,8 +1441,18 @@ export class CampaignRuntime {
     // each read the same balance as their own funding, and the inflated
     // "budget left" reaches creators before anyone reconciles it.
     if (result.value.fundingWallet) {
+      // Same guard as the agent route. An operator can still open a campaign
+      // with no wallet at all and attach one later; what they cannot do is
+      // name one this deployment could never pay from.
+      const unsignable = this.unsignable(result.value.fundingWallet);
+      if (unsignable) {
+        return Response.json({ error: unsignable, field: 'fundingWallet' }, { status: 400 });
+      }
+
       const bound = this.cluster.register(
-        result.value.campaignId, result.value.fundingWallet, 'operator-supplied',
+        result.value.campaignId,
+        result.value.fundingWallet,
+        this.signable.size > 0 ? 'circle-agent-wallet' : 'operator-supplied',
       );
       if (!bound.ok) {
         return Response.json({ error: bound.error, field: bound.field }, { status: 409 });
@@ -1639,6 +1705,29 @@ export class CampaignRuntime {
       micro += other.status === 'ended' ? this.endedCeiling(other, remaining) : remaining;
     }
     return new Decimal(micro);
+  }
+
+  /**
+   * Why this deployment cannot settle from `address`, or undefined if it can.
+   *
+   * Checked at creation rather than at settlement because of when each one
+   * hurts. At settlement the brand has already deposited and creators have
+   * already made clips against a brief they were shown — the money is stuck
+   * and the work is done. At creation nothing has happened yet and the caller
+   * can pick a different wallet.
+   *
+   * Silent when the deployment has no settlement rail at all: it pays nobody
+   * from any address, so singling this one out would be misleading.
+   */
+  private unsignable(address: string): string | undefined {
+    if (this.signable.size === 0) return undefined;
+    if (this.signable.has(address.trim().toLowerCase())) return undefined;
+    return (
+      `we cannot sign for ${address}, so a campaign funded there could take your deposit `
+      + 'and never pay a creator. Use a wallet provisioned for this deployment, or ask the '
+      + 'operator to provision one — funding a campaign is not the same as us being able to '
+      + 'spend from it.'
+    );
   }
 
   /**

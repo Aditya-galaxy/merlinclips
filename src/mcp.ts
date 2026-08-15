@@ -80,7 +80,10 @@ export const TOOLS = [
           type: 'string',
           description: 'Your agent wallet. One wallet can fund every campaign you run — '
             + 'coverage nets your other pools off the balance, so each one only counts money '
-            + 'not already promised elsewhere.',
+            + 'not already promised elsewhere. It must be a wallet provisioned for this '
+            + 'deployment: the campaign is paid out of the same wallet it is funded to, so an '
+            + 'address we hold no key for is refused here rather than failing at the first '
+            + 'payout. Ask the operator to provision one if you do not have it.',
         },
         chain: { type: 'string', description: 'base or base-sepolia. Default base.' },
         dwellHours: {

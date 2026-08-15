@@ -174,9 +174,9 @@ describe('a network mismatch cannot be configured', () => {
     expect(
       () => new CampaignRuntime({
         blobs: new MemoryBlobStore(),
-        env: { ALLOW_MAINNET: 'true', CAMPAIGN_WALLET: TESTNET_W },
+        env: { ALLOW_MAINNET: 'true', SETTLEMENT_WALLETS: TESTNET_W },
       }),
-    ).toThrow(/MAINNET_CAMPAIGN_WALLET/);
+    ).toThrow(/MAINNET_SETTLEMENT_WALLETS/);
   });
 
   test('a configured network builds a real executor', () => {
@@ -185,7 +185,7 @@ describe('a network mismatch cannot be configured', () => {
     // whether this deployment has a settlement rail at all.
     const r = new CampaignRuntime({
       blobs: new MemoryBlobStore(),
-      env: { CAMPAIGN_WALLET: TESTNET_W, MAINNET_CAMPAIGN_WALLET: MAINNET_W },
+      env: { SETTLEMENT_WALLETS: TESTNET_W, MAINNET_SETTLEMENT_WALLETS: MAINNET_W },
     });
     expect(executorOf(r)).toBe('CircleCliExecutor');
   });
@@ -202,7 +202,7 @@ describe('broadcasting is a separate decision from the network', () => {
     // testnet payout was to also unlock mainnet.
     const r = new CampaignRuntime({
       blobs: new MemoryBlobStore(),
-      env: { ALLOW_MAINNET: 'true', MAINNET_CAMPAIGN_WALLET: MAINNET_W },
+      env: { ALLOW_MAINNET: 'true', MAINNET_SETTLEMENT_WALLETS: MAINNET_W },
     });
     expect(isDry(r)).toBe(true);
   });
@@ -210,7 +210,7 @@ describe('broadcasting is a separate decision from the network', () => {
   test('testnet can broadcast for real without unlocking mainnet', () => {
     const r = new CampaignRuntime({
       blobs: new MemoryBlobStore(),
-      env: { BROADCAST: 'true', CAMPAIGN_WALLET: TESTNET_W },
+      env: { BROADCAST: 'true', SETTLEMENT_WALLETS: TESTNET_W },
     });
     expect(isDry(r)).toBe(false);
     expect(executorOf(r)).toBe('CircleCliExecutor');

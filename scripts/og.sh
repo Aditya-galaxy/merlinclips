@@ -20,6 +20,15 @@ fi
 
 render() { rsvg-convert -w 1200 -h 630 landing/og.svg -o "$1"; }
 
+# The favicons come from the same source for the same reason. /favicon.ico used
+# to be routed at logo.svg, so anything fetching that path — Google's
+# search-result icon fetcher among them — received SVG bytes and rendered
+# nothing.
+icons() {
+  rsvg-convert -w 32  -h 32  landing/logo.svg -o landing/favicon-32.png
+  rsvg-convert -w 180 -h 180 landing/logo.svg -o landing/apple-touch-icon.png
+}
+
 if [ "${1:-}" = "--check" ]; then
   tmp=$(mktemp -t og).png
   render "$tmp"
@@ -31,5 +40,7 @@ if [ "${1:-}" = "--check" ]; then
   echo "og.png matches og.svg"
 else
   render landing/og.png
+  icons
   echo "wrote landing/og.png ($(wc -c < landing/og.png) bytes, 1200x630)"
+  echo "wrote landing/favicon-32.png and landing/apple-touch-icon.png"
 fi

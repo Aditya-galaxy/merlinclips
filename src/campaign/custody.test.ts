@@ -131,3 +131,51 @@ describe('a campaign with no wallet is refused, not charged to the operator', ()
     expect(outcome.executed).toBe(false);
   });
 });
+
+/**
+ * `live` answers "may creators work on this", not "did this call change it".
+ *
+ * It was `becomes === 'active'`, and `becomes` is only assigned when the call
+ * transitions the campaign. So the first poll after funding said `live: true`
+ * and every poll after that said `live: false` about the same live campaign —
+ * while `list_open_campaigns` went on advertising it. An agent deciding
+ * whether to send creators at a campaign reads this field.
+ */
+describe('what check_campaign_funding calls live', () => {
+  const runtimeWith = async (status: Campaign['status'], balance: string) => {
+    const { CampaignRuntime } = await import('./runtime');
+    const { MemoryBlobStore } = await import('./persistence');
+    const rt = new CampaignRuntime({
+      blobs: new MemoryBlobStore(),
+      env: { SESSION_SECRET: 's'.repeat(32) },
+    });
+    rt.balances = { async usdcBalance() { return new Decimal(balance); } };
+    await rt.ready();
+    await rt.record({
+      type: 'campaign_upserted',
+      campaign: { ...campaign(BRAND_A), status, selfServe: true },
+    });
+    const res = await rt.handleCheckFunding('camp-1');
+    return (await res.json()) as { status: string; live: boolean; advanced: boolean };
+  };
+
+  test('a campaign already active reads live on every poll, not just the first', async () => {
+    const body = await runtimeWith('active', '500');
+    expect(body).toMatchObject({ status: 'active', live: true, advanced: false });
+  });
+
+  test('the poll that funds it reports both live and advanced', async () => {
+    const body = await runtimeWith('pending_funding', '500');
+    expect(body).toMatchObject({ status: 'active', live: true, advanced: true });
+  });
+
+  test('an underfunded campaign is not live', async () => {
+    const body = await runtimeWith('pending_funding', '1');
+    expect(body.live).toBe(false);
+  });
+
+  test('an ended campaign is not live', async () => {
+    const body = await runtimeWith('ended', '500');
+    expect(body.live).toBe(false);
+  });
+});

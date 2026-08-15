@@ -1721,11 +1721,17 @@ export class CampaignRuntime {
       advanced = true;
     }
 
+    // `live` is a fact about the campaign, `advanced` is a fact about this
+    // call. Reading `becomes === 'active'` conflated them: `becomes` is only
+    // set when this call moved the campaign, so polling a campaign that was
+    // already live answered `live: false` — and an agent deciding whether to
+    // send creators at it reads exactly this field.
+    const status = becomes ?? campaign.status;
     return Response.json({
       ok: true,
       funding,
-      status: becomes ?? campaign.status,
-      live: becomes === 'active',
+      status,
+      live: status === 'active',
       advanced,
     });
   }

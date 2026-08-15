@@ -382,9 +382,33 @@ const server = Bun.serve({
      * Serving them here keeps the HTML free of per-environment values.
      */
     if (url.pathname === '/api/web-config') {
+      /**
+       * Only a publishable key may leave this endpoint.
+       *
+       * PostHog issues two kinds and they are one character apart. `phc_` is
+       * the project key, designed to ship in a page and able to do nothing but
+       * write events. `phs_` is a personal key with account-wide read and
+       * write — projects, insights, deletion.
+       *
+       * Pasting the wrong one here publishes it to every visitor, and the
+       * mistake is invisible because both are just strings that make the page
+       * load. So the wrong prefix is withheld and named in the logs rather
+       * than served: analytics silently not working is a far smaller problem
+       * than an account key in a public JSON response.
+       */
+      const rawKey = process.env['POSTHOG_PUBLIC_KEY']?.trim() ?? '';
+      const publishable = rawKey.startsWith('phc_');
+      if (rawKey && !publishable) {
+        console.error(
+          `refusing to publish POSTHOG_PUBLIC_KEY: it starts "${rawKey.slice(0, 4)}" and only `
+          + '"phc_" project keys are publishable. A phs_ key grants account-wide access — '
+          + 'revoke it and use the Project API Key from Settings → Project.',
+        );
+      }
+
       return json({
         turnstileSiteKey: process.env['TURNSTILE_SITE_KEY'] ?? '',
-        posthogKey: process.env['POSTHOG_PUBLIC_KEY'] ?? '',
+        posthogKey: publishable ? rawKey : '',
         ingestPath: '/ingest',
         // Derived from POSTHOG_HOST rather than hardcoded. The SDK needs the
         // dashboard origin for links it renders, and a page on US cloud

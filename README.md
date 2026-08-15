@@ -117,6 +117,8 @@ The engine's core competence, extracted and priced in three tiers:
 
 x402 throughout — **no account, no API key, no card on file.**
 
+A payment is confirmed against the chain before anything is served: the claimed transaction must have succeeded, be recent, and carry a USDC transfer to us of at least the price, with the asset checked so a token minted for the purpose does not read as USDC. The amount recorded is the chain's, not the caller's. This is worth stating because it was not true until recently — the checks ran against fields the caller wrote, and a forged header bought a real verdict for nothing *and was booked as revenue received*. Payment that cannot be confirmed is now refused rather than waved through.
+
 The free tier is deliberate and it deliberately omits the numbers. It tells a buying agent everything needed to *plan* a call and nothing it could use *instead of* one. The larger sellers in Circle's marketplace all list free routes for the same reason: an agent has to be able to discover you and confirm you work before it will spend anything.
 
 The price gap is honest rather than promotional — `/api/views` is a tenth of `/api/verify` because no model runs, and charging the same for both would be charging for work we didn't do.
@@ -131,17 +133,17 @@ The machine-readable contract is [openapi.json](openapi.json), served at `/opena
 
 | Component | State |
 |---|---|
-| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 555 tests passing, 10 skipped (the live-money ones), typecheck clean |
-| **Multi-Provider Executor (Circle SDK & CLI)** | **Done** — Uses Circle Developer Controlled Wallets REST API to eliminate 24d session token expiry in Cloud Run, with CLI fallback |
-| **View Oracle** | **YouTube only** — YouTube Data API, batched 50 videos per call. X returns *cannot tell* (`XOracleUnavailable`) rather than a number; Instagram and TikTok need platform review we do not hold. An oracle that cannot read a platform says so instead of guessing. |
+| **Payout Gate, Dwell Engine, Rate Band, Terms** | **Done** — 710 tests passing, 10 skipped (the live-money ones), typecheck clean |
+| **Payout Executor** | **Done** — `circle wallet transfer`, paying from the campaign's own funding wallet. A campaign with no wallet is refused rather than charged to an operator wallet. The Developer-Controlled-Wallets path described here previously was unreachable code and has been removed. |
+| **View Oracle** | **YouTube only** — YouTube Data API, batched 50 videos per call. X returns *cannot tell* (`XOracleUnavailable`) rather than a number. Instagram ships behind `INSTAGRAM_TESTER_TOKENS` — insights are first-party only, so a clip is readable only inside an account that authorised us, which also means a creator cannot claim someone else's reel. Unset, Instagram is refused at submission rather than accepted and left uncountable. TikTok has no route to a reader. An oracle that cannot read a platform says so instead of guessing. |
 | **Verification Code Anti-Spam Token** | **Done** — Generates unique `MC-XXXXXX` tokens for creator ownership validation |
 | **Account to Wallet Linkage & Brand Ownership** | **Done** — `CreatorAccount` links multiple EVM wallets; `Campaign` owned by verified `BrandProfile` |
 | **Slack & Discord Webhook Alerts** | **Done** — `WebhookNotifier` dispatches non-blocking alerts for depleted pools, failed payouts, and lease contention |
 | **Tiered Flat Brand Platform Pricing** | **Done** — Flat platform fees ($49, $199, $499, Custom) + ~$0.05 settlement fee |
 | **1,000 Confirmed View Settlement Floor** | **Done** — Micro-views accumulate until 1,000 views to prevent gas/API fee waste |
 | **Gemini Clip Verifier** | **Done** — Runs on Vertex via ADC, no API key, judged inside the tick |
-| **On-Chain USDC, Base Mainnet** | **Wallet funded and moving** — agent wallet [`0x0003a598…`](https://basescan.org/address/0x0003a59858f44451be2a5b486ee612b4139700f0) holds live USDC and has executed Gateway funding operations on-chain. **A creator payout has not yet settled on mainnet**; the path is exercised end to end against the real CLI, wallet and chain with `--estimate`. |
-| **Cloud Run Deployment** | **Done** — Live on Base Mainnet |
+| **On-Chain USDC** | **Settled on testnet, not on mainnet.** One real creator payout has settled on Base Sepolia — [`0x824155cc…`](https://sepolia.basescan.org/tx/0x824155cc56f479dff319146783f1dcf16dd8848e3d8bcd05a7ddc89bbdc3ad9e), 2.372 USDC for 1,186 views that survived the hold. On mainnet the agent wallet holds live USDC and has executed Gateway funding operations, but **no creator payout has settled there**; the path runs end to end against the real CLI, wallet and chain with `--estimate`. |
+| **Cloud Run Deployment** | **Done** — deployed with mainnet unarmed. `ALLOW_MAINNET` and `BROADCAST` are both unset, so payouts are planned and never broadcast. |
 | **Wiring** | **Asserted Mechanically** — `wiring.test.ts` fails on any module the server cannot reach |
 
 ### On-chain USDC on Base Mainnet, and what each transaction is
@@ -202,8 +204,12 @@ Gemini runs through **Application Default Credentials**, not an API key — `gcl
 |---|---|
 | `YOUTUBE_API_KEY` | View counts. Absent means the oracle reports *cannot tell*, never zero. |
 | `GOOGLE_GENAI_USE_VERTEXAI` / `GOOGLE_CLOUD_PROJECT` | Vertex via ADC. |
-| `CAMPAIGN_WALLET` | Circle agent wallet on **testnet**. |
-| `MAINNET_CAMPAIGN_WALLET` | Circle agent wallet on **mainnet**. |
+| `SETTLEMENT_WALLETS` | Comma-separated addresses this deployment's Circle session can sign for, on **testnet**. Payouts leave the campaign's own `fundingWallet`, so this is what `create_campaign` checks a proposed wallet against — a campaign funded to an address we hold no key for would take a deposit and never pay a creator. Empty means no settlement rail: payouts are planned, never sent. |
+| `MAINNET_SETTLEMENT_WALLETS` | The same, on **mainnet**. Read only when `ALLOW_MAINNET=true`, so no configuration arms mainnet against a testnet list. |
+| `AGENT_WALLET_ADDRESS` | Where x402 revenue lands. Advertised as `payTo` in every 402 challenge, so unset means the priced endpoints decline to quote rather than inviting payment to a placeholder. |
+| `INSTAGRAM_TESTER_TOKENS` | One access token per authorising Instagram account. Presence is the whole switch: it opens the oracle, URL acceptance and campaign platform selection together. |
+| `POSTHOG_KEY` / `POSTHOG_HOST` | Server-side analytics and error tracking. Absent means nothing is captured. |
+| `X402_ALLOW_UNVERIFIED` | Escape hatch for local work. Without it, an x402 payment that cannot be confirmed on chain is refused — which is the default, because the opt-in version of this was never switched on and the paywall served everyone for free. |
 | `TICK_SECRET` | Guards `/api/tick`, via `x-tick-secret`. Unset returns 503 — the service is public by requirement, and this endpoint must not be. |
 | `OPERATOR_SECRET` | Guards `POST /api/campaigns`, via `x-operator-secret`. Unset returns 503. **Deliberately a different value from `TICK_SECRET`** — Cloud Scheduler holds the tick secret, and whatever can trigger a tick should not also be able to commit money by opening a campaign. |
 | `GCS_BUCKET` | Durable state. Without it the store is in-memory on a service that scales to zero. |
@@ -225,7 +231,7 @@ Declaring a campaign pool is a **financial liability commitment** on Base Mainne
 [Brand / Agent Form] ➔ [USDC Deposit to Base Wallet] ➔ [RPC Deposit Check] ➔ [1-Click Operator Launch] ➔ [Live Payout Pool]
 ```
 
-- **The Brand / Client (Unauthenticated Intake)**: External brands, protocols, or AI agents submit campaign proposals via `POST /api/brand-enquiry` or `/launch.html`. Proposals are saved as `pending_funding` with on-chain deposit instructions (`0x0003a59858f44451be2a5b486ee612b4139700f0`).
+- **The Brand / Client (Unauthenticated Intake)**: External brands, protocols, or AI agents submit campaign proposals via `POST /api/brand-enquiry` or `/launch.html`. Proposals are saved as `pending_funding` with on-chain deposit instructions naming the campaign's own funding wallet — the same address coverage is read from and payouts leave, because a campaign checked against one wallet and paid from another is not funded in any sense a creator can rely on.
 - **The Campaign Lifecycle**: `POST /api/campaigns` opens a campaign as `pending_funding`. It is withheld from `/api/campaign`, so no creator is shown a pool nobody has funded, and `/api/submissions` refuses clips against it.
 - **On-Chain Deposit Verification**: `POST /api/campaigns/:id/check-funding` reads the USDC balance behind the pool over Base RPC. Coverage comes back as `covered | partial | empty | unknown | no_wallet`; a failed lookup reports `unknown` rather than being read as zero. A `pending_funding` campaign that reads `covered` moves to `awaiting_operator_approval`.
 - **The Operator (Merlin Clips Team)**: The Merlin Clips team holds the `OPERATOR_SECRET` (deliberately separate from `TICK_SECRET`). `POST /api/campaigns/:id/approve` takes a queued campaign live from `/brand.html`. It re-reads the chain at that moment, so a campaign whose money left after the deposit was first seen will not open, and a deployment that cannot read balances refuses rather than opening blind.
@@ -234,18 +240,24 @@ Declaring a campaign pool is a **financial liability commitment** on Base Mainne
 
 ### 🤖 2. Model Context Protocol (MCP) & ElizaOS Integration (`/mcp.json`)
 
-Merlin Clips natively exports an **MCP Server Specification** ([`https://merlinclips.com/mcp.json`](https://merlinclips.com/mcp.json)) allowing autonomous AI agents (ElizaOS, Claude, Cursor) to manage campaigns programmatically:
+Merlin Clips exports an **MCP server** at [`https://merlinclips.com/mcp`](https://merlinclips.com/mcp) — JSON-RPC 2.0 over streamable HTTP, with the descriptor at `/mcp.json` — so an agent (ElizaOS, Claude Code, Codex, Cursor) can run a campaign end to end without a dashboard.
 
-| MCP Tool Name | Function & Purpose |
+| Tool | What it does |
 |---|---|
-| `merlinclips_create_campaign` | Declare a new clip bounty campaign (requires agent's operator token). |
-| `merlinclips_submit_clip` | Register a submitted short-form video URL (Shorts, TikTok, Reels, X). |
-| `merlinclips_verify_retention` | Query Gemini AI compliance verdict and 24h view survival rate. |
-| `merlinclips_get_ledger` | Fetch the public, immutable on-chain USDC settlement ledger & BaseScan hashes. |
+| `list_open_campaigns` | Live campaigns only. A campaign nobody has funded is invisible here. |
+| `create_campaign` | Opens a campaign as `pending_funding` and returns `depositTo`. Refuses a funding wallet this deployment cannot sign for. |
+| `check_campaign_funding` | Reads the chain. `covered` takes a self-funded campaign live; coverage nets other campaigns' outstanding pools off the same wallet, so one balance cannot back two budgets. |
+| `submit_clip` | Registers a YouTube clip and freezes its terms at submission. |
+| `check_clip` | Verdict, confirmed views, payable amount, and why it is not more. |
+| `check_earnings` | Everything settled to a payout address. |
+| `get_ledger` | Every settlement with its transaction hash. |
+| `explain_payout_rules` | The dwell arithmetic and the gate order, in full. |
+
+**Authentication: there is none yet, and that is the blocker for handing this to anyone.** Every tool above is callable by anyone who finds the endpoint. That is survivable only because the tools that commit money commit *the caller's own* money — `create_campaign` names a wallet the caller funds, and no tool can move USDC out of a wallet the caller does not control. What an anonymous caller can do is fill the log with campaigns nobody funds, which rate limiting bounds and nothing else prevents. API keys bound to an operator address are the intended fix.
 
 ---
 
-**Scope, stated plainly.** YouTube and X only — Instagram, Facebook and TikTok need Meta/TikTok app review, which runs 2–6 weeks. We do not claim to detect bots better than anyone; we bound the damage and make every decision auditable. Payouts at scale are regulated, and this operates at demo scale.
+**Scope, stated plainly.** YouTube is the only platform with a working view oracle. X is accepted and never accrues. Instagram works only where a creator has authorised us through a Meta app in development mode, which is enough for a pilot and not for a launch — public access needs App Review, 2–6 weeks. TikTok has no route at all. We do not claim to detect bots better than anyone; we bound the damage and make every decision auditable. Payouts at scale are regulated, and this operates at demo scale.
 
 ## Pre-existing work, disclosed
 

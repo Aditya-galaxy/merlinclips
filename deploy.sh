@@ -139,6 +139,14 @@ print(next((e.get('value', '') for e in envs if e.get('name') == '$1'), ''))
 # priced endpoints refuse to quote at all, which is the safe reading.
 AGENT_WALLET_ADDRESS="${AGENT_WALLET_ADDRESS:-$(deployed_env AGENT_WALLET_ADDRESS)}"
 
+# --set-env-vars REPLACES the whole environment, so anything not named on that
+# line is deleted by the next deploy. That is how the PostHog key disappeared:
+# it was set once by hand, then silently dropped, and analytics stopped without
+# a single error anywhere. Carried forward like everything else now.
+POSTHOG_KEY="${POSTHOG_KEY:-$(deployed_env POSTHOG_KEY)}"
+POSTHOG_HOST="${POSTHOG_HOST:-$(deployed_env POSTHOG_HOST)}"
+POSTHOG_INCLUDE_WALLETS="${POSTHOG_INCLUDE_WALLETS:-$(deployed_env POSTHOG_INCLUDE_WALLETS)}"
+
 SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-$(deployed_env SETTLEMENT_WALLETS)}"
 MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-$(deployed_env MAINNET_SETTLEMENT_WALLETS)}"
 
@@ -190,7 +198,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # The scheduler holds the tick secret in a header, so the two can drift apart
 # and the only symptom is a 401 an hour into a log nobody is reading — which is

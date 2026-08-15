@@ -263,24 +263,6 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 }
 .btn-orange-check:hover { transform: scale(1.05); }
 
-/* Whop Centered Screen (Matching Screenshot 2) */
-.whop-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px 20px;
-}
-.whop-icon-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: #F3F4F6;
-  display: grid;
-  place-items: center;
-  margin-bottom: 20px;
-}
 
 /* Nav Actions (Matching Screenshots) */
 .wizard-actions {
@@ -374,7 +356,6 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           <div class="progress-step" id="p-3"></div>
           <div class="progress-step" id="p-4"></div>
           <div class="progress-step" id="p-5"></div>
-          <div class="progress-step" id="p-6"></div>
         </div>
 
         <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" />
@@ -539,22 +520,8 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           </div>
         </div>
 
-        <!-- Step 5: Connect your Whop account (Matching Screenshot 2) -->
+<!-- Step 6: Base Payout Wallet -->
         <div class="step-pane" id="step-5" hidden>
-          <div class="whop-screen">
-            <div class="whop-icon-badge">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="#111827"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <h2 class="step-title" style="margin-bottom:8px;">Connect your Whop account</h2>
-            <p style="font-size:14px;color:var(--text-2);margin:0 0 24px;max-width:320px;">Link your Whop account to finish setting up your profile.</p>
-
-            <button type="button" class="btn-continue" id="btn-connect-whop" style="width:100%;max-width:360px;padding:14px;margin-bottom:12px;">Connect Whop</button>
-            <button type="button" class="btn-back" id="btn-skip-whop" style="width:100%;max-width:360px;padding:12px;">Skip for now →</button>
-          </div>
-        </div>
-
-        <!-- Step 6: Base Payout Wallet -->
-        <div class="step-pane" id="step-6" hidden>
           <h2 class="step-title">Base Payout Wallet</h2>
           <p style="font-size:14px;color:var(--text-2);margin:0 0 20px;">Enter your wallet address to receive your USDC earnings directly on Base.</p>
 
@@ -614,7 +581,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 <script>
 (function() {
   var currentStep = 1;
-  var totalSteps = 6;
+  var totalSteps = 5;
   var customLanguages = [];
   var currentAvatarUrl = null;
   var connectedSocials = {};
@@ -868,23 +835,6 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     });
   }
 
-  // Connect Whop & Skip Handlers
-  var btnWhop = document.getElementById('btn-connect-whop');
-  if (btnWhop) {
-    btnWhop.addEventListener('click', function() {
-      var whopUrl = 'https://whop.com/login/?next=%2Foauth%2Fauthorize%3Fclient_id%3Dapp_QRxsQodZgK1r4D%26redirect_uri%3Dhttps%253A%252F%252Fmerlinclips.com%252Fapi%252Fauth%252Foauth2%252Fcallback%252Fwhop%26scope%3Dopenid%2Bprofile%2Bemail%26response_type%3Dcode';
-      window.location.href = whopUrl;
-    });
-  }
-
-  var btnSkipWhop = document.getElementById('btn-skip-whop');
-  if (btnSkipWhop) {
-    btnSkipWhop.addEventListener('click', function() {
-      currentStep = 6;
-      showStep(6);
-    });
-  }
-
   // Auto-Generate Base Wallet
   var genBtn = document.getElementById('btn-gen-wallet');
   if (genBtn) {
@@ -924,7 +874,6 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     btnBack.style.visibility = (step > 1) ? 'visible' : 'hidden';
     
     if (step === 5) {
-      // Step 5 is Whop Connect Screen (Matching Screenshot 2)
       document.querySelector('.wizard-actions').style.display = 'none';
     } else {
       document.querySelector('.wizard-actions').style.display = 'flex';

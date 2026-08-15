@@ -770,6 +770,8 @@ const server = Bun.serve({
       '/apple-touch-icon.png': 'landing/apple-touch-icon.png',
       '/og.svg': 'landing/og.svg',
       '/og.png': 'landing/og.png',
+      '/campaigns': 'landing/campaigns.html',
+      '/campaigns.html': 'landing/campaigns.html',
       '/architecture': 'landing/architecture.html',
       '/architecture.html': 'landing/architecture.html',
       '/brands.html': 'landing/brands.html',

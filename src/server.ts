@@ -17,6 +17,7 @@
  * `bun run src/server.ts` is the whole deployment story on Cloud Run.
  */
 
+import { encodeEvent } from './campaign/events';
 import {
   budgetSnapshot,
   createDemoWorld,
@@ -471,8 +472,14 @@ const server = Bun.serve({
     // exporting invented rows, and in production exported an empty one, which
     // is worse than having no endpoint.
     if (url.pathname === '/api/ledger.jsonl') {
+      // Through the log's own encoder, not JSON.stringify. Snapshots carry
+      // `views` as a bigint and payouts carry Decimals; stringify throws on
+      // the first bigint it meets, which turned this endpoint into a 500.
+      // Re-parsing the encoded form collapses it back to one line per event.
       const envelopes = await campaigns.log.replay();
-      const body = envelopes.map((e) => JSON.stringify(e)).join('\n');
+      const body = envelopes
+        .map((e) => JSON.stringify(JSON.parse(encodeEvent(e))))
+        .join('\n');
       return new Response(body ? `${body}\n` : '', {
         headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
       });

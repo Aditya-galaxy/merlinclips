@@ -64,11 +64,29 @@ describe('X', () => {
 });
 
 describe('refusing rather than guessing', () => {
-  test('a platform we cannot verify is not accepted', () => {
-    // Instagram and TikTok need app review we do not have. Accepting the URL
-    // would promise a check we cannot perform.
-    expect(parsePostUrl('https://www.instagram.com/reel/Cabc123/')).toBeUndefined();
+  test('a platform with no reader at all is not parsed', () => {
+    // TikTok has no oracle and no route to one, so there is no shortcode worth
+    // extracting. Accepting the URL would promise a check we cannot perform.
     expect(parsePostUrl('https://www.tiktok.com/@a/video/7200000000000000000')).toBeUndefined();
+    expect(parsePostUrl('https://www.facebook.com/watch/?v=123456789')).toBeUndefined();
+  });
+
+  test('Instagram parses, which is not the same as being accepted', () => {
+    // The oracle needs the shortcode, so the parser has to produce one. Whether
+    // a clip is taken is decided where token availability is known —
+    // `previewClip` refuses Instagram unless the deployment enables it. Keeping
+    // that in the parser would mean the oracle could not read the URLs it
+    // exists to read.
+    expect(parsePostUrl('https://www.instagram.com/reel/Cabc123/'))
+      .toEqual({ platform: 'instagram', postId: 'Cabc123' });
+    expect(parsePostUrl('https://www.instagram.com/p/Cabc123/'))
+      .toEqual({ platform: 'instagram', postId: 'Cabc123' });
+    expect(parsePostUrl('https://www.instagram.com/thecreator/reel/Cabc123/'))
+      .toEqual({ platform: 'instagram', postId: 'Cabc123' });
+  });
+
+  test('an Instagram profile is not a post', () => {
+    expect(parsePostUrl('https://www.instagram.com/thecreator/')).toBeUndefined();
   });
 
   test('http is refused — a downgrade or a typo, never resolved silently', () => {

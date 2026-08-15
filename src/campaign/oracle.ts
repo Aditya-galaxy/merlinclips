@@ -14,6 +14,7 @@
 
 import type { PostRef } from './postref';
 import type { CountOracle } from './verify';
+import { instagramFromEnv } from './instagram';
 import { CircleCliPayer, XMarketplaceOracle } from './xoracle';
 import type { ViewOracle } from './tick';
 import type { Submission } from './types';
@@ -208,6 +209,10 @@ export function oracleFromEnv(
   return new PlatformOracle({
     youtube: new YouTubeOracle({ apiKey: key, fetchImpl }),
     x,
+    // Unavailable unless INSTAGRAM_TESTER_TOKENS names at least one
+    // authorising account. Instagram insights are first-party only, so there
+    // is no key that reads the whole platform the way the YouTube one does.
+    instagram: instagramFromEnv(env, fetchImpl),
   });
 }
 

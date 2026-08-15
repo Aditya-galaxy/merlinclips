@@ -31,7 +31,7 @@ import { EventLog } from './eventlog';
 import { MultiAgentClusterManager } from './cluster';
 import { CampaignStore } from './store';
 import { apply as applyEvent } from './eventlog';
-import { MemoryTrackingStore, previewClip, verifyClip } from './verify';
+import { ALWAYS_ENABLED, MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
 import { analyticsFromEnv } from '../telemetry/analytics';
@@ -48,7 +48,7 @@ import { meets } from './eligibility';
 import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
 import { isLaunched } from './types';
-import type { Campaign, CampaignStatus } from './types';
+import type { Campaign, CampaignStatus, Platform } from './types';
 import type { CreatorAccount } from './types';
 import { oracleFromEnv } from './oracle';
 import { verifierFromEnv } from './verifier';
@@ -103,6 +103,23 @@ export function signableWallets(
       .map((a) => a.trim().toLowerCase())
       .filter((a) => a.length > 0),
   );
+}
+
+/**
+ * Platforms this deployment can confirm views on.
+ *
+ * Instagram is added by the same variable that builds its oracle. Two switches
+ * would allow the two states that are each wrong in their own way: a platform
+ * open for submissions with nothing able to count it, and a reader for a
+ * platform nobody is allowed to submit.
+ */
+export function enabledPlatforms(
+  env: Record<string, string | undefined> = Bun.env,
+): ReadonlySet<Platform> {
+  const enabled = new Set<Platform>(ALWAYS_ENABLED);
+  const tokens = (env.INSTAGRAM_TESTER_TOKENS ?? '').split(',').filter((t) => t.trim());
+  if (tokens.length > 0) enabled.add('instagram');
+  return enabled;
 }
 
 export function chooseBlobStore(env: Record<string, string | undefined> = Bun.env): BlobStore {
@@ -198,6 +215,16 @@ export class CampaignRuntime {
    */
   private readonly signable: ReadonlySet<string>;
 
+  /**
+   * Platforms this deployment can confirm views on.
+   *
+   * The same flag that builds the Instagram oracle decides this, because the
+   * two must not disagree: an enabled platform with no reader accepts clips
+   * that can never accrue, and a reader for a platform nobody may submit is
+   * dead weight. One source, so the pair cannot drift.
+   */
+  private readonly enabledPlatforms: ReadonlySet<Platform>;
+
   /** Two-phase budget reservation engine for enterprise campaign payouts. */
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
@@ -222,6 +249,7 @@ export class CampaignRuntime {
   constructor(options: CampaignRuntimeOptions = {}) {
     this.env = options.env ?? Bun.env;
     this.signable = signableWallets(this.env);
+    this.enabledPlatforms = enabledPlatforms(this.env);
     this.webhooks = options.webhooks ?? webhookFromEnv(this.env);
     this.blobs = options.blobs ?? chooseBlobStore(this.env);
     this.log = new EventLog(this.blobs);
@@ -624,7 +652,7 @@ export class CampaignRuntime {
     return Response.json(
       previewClip(
         { url: target, dwellHours: Number.isFinite(dwell) && dwell > 0 ? dwell : undefined },
-        { tracking: this.tracking },
+        { tracking: this.tracking, enabled: this.enabledPlatforms },
       ),
     );
   }
@@ -1377,7 +1405,7 @@ export class CampaignRuntime {
     await this.ready();
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const result = openCampaign({ ...body, selfServe: true });
+    const result = openCampaign({ ...body, selfServe: true }, new Date(), this.enabledPlatforms);
     if (!result.ok) {
       return Response.json({ error: result.error, field: result.field }, { status: 400 });
     }
@@ -1431,7 +1459,7 @@ export class CampaignRuntime {
     await this.ready();
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const result = openCampaign(body);
+    const result = openCampaign(body, new Date(), this.enabledPlatforms);
     if (!result.ok) {
       return Response.json({ error: result.error, field: result.field }, { status: 400 });
     }

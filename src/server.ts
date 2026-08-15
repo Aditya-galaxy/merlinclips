@@ -40,7 +40,8 @@ import { runJob } from './business/loop';
 import { MARKETPLACE } from './business/tools';
 import { telemetry } from './telemetry/metrics';
 import { Decimal, USDC } from './decimal';
-import { encodePayment, paymentRequiredBody, verifyPayment } from './x402';
+import { encodePayment, paymentRequiredBody, USDC_BASE_SEPOLIA, verifyPaid, verifyPayment } from './x402';
+import { OnChainPaymentVerifier } from './x402onchain';
 import { CampaignRuntime } from './campaign/runtime';
 
 /**
@@ -100,6 +101,21 @@ const verifyX402Config = () => ({
  */
 const RECEIVING_WALLET =
   process.env['AGENT_WALLET_ADDRESS'] ?? '0xAgentWalletNotYetProvisioned000000000000';
+
+/**
+ * Reads the chain to confirm a claimed payment arrived.
+ *
+ * Absent when there is no receiving wallet, because there is then nothing a
+ * payment could have been made to and `verifyPaid` refuses before reaching
+ * here. Present otherwise, always — it is not optional and not configurable,
+ * since the configurable version of this was the bug.
+ */
+const onchain = /^0x[0-9a-fA-F]{40}$/.test(RECEIVING_WALLET)
+  ? new OnChainPaymentVerifier({
+      endpoint: process.env['BASE_SEPOLIA_RPC'] ?? 'https://sepolia.base.org',
+      asset: USDC_BASE_SEPOLIA,
+    })
+  : undefined;
 
 const x402Config = () => ({
   payTo: RECEIVING_WALLET,
@@ -538,7 +554,7 @@ const server = Bun.serve({
 
     // Counts only. Same handshake, a tenth of the price, because no model runs.
     if (url.pathname === '/api/views' && request.method === 'POST') {
-      const paid = verifyPayment(request.headers.get('X-PAYMENT'), viewsX402Config());
+      const paid = await verifyPaid(request.headers.get('X-PAYMENT'), viewsX402Config(), onchain);
       if (!paid.ok) {
         return new Response(JSON.stringify(paymentRequiredBody(viewsX402Config()), null, 2), {
           status: 402,
@@ -559,7 +575,7 @@ const server = Bun.serve({
     // What we sell to other agents. Paywalled with the same x402 handshake the
     // marketplace expects: a buying agent needs no account here and no API key.
     if (url.pathname === '/api/verify' && request.method === 'POST') {
-      const paid = verifyPayment(request.headers.get('X-PAYMENT'), verifyX402Config());
+      const paid = await verifyPaid(request.headers.get('X-PAYMENT'), verifyX402Config(), onchain);
       if (!paid.ok) {
         return new Response(JSON.stringify(paymentRequiredBody(verifyX402Config()), null, 2), {
           status: 402,

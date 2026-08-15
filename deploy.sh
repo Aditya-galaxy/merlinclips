@@ -133,6 +133,12 @@ print(next((e.get('value', '') for e in envs if e.get('name') == '$1'), ''))
 # nothing said so until a payout was attempted. Unset is the honest state for a
 # deployment that has not been told: it settles nothing rather than settling
 # from an address nobody checked.
+# Where x402 revenue lands. Advertised in the 402 challenge as `payTo`, so a
+# placeholder here is not a harmless default — a well-behaved client would send
+# USDC to a string that is not an address and destroy it. Unset means the
+# priced endpoints refuse to quote at all, which is the safe reading.
+AGENT_WALLET_ADDRESS="${AGENT_WALLET_ADDRESS:-$(deployed_env AGENT_WALLET_ADDRESS)}"
+
 SETTLEMENT_WALLETS="${SETTLEMENT_WALLETS:-$(deployed_env SETTLEMENT_WALLETS)}"
 MAINNET_SETTLEMENT_WALLETS="${MAINNET_SETTLEMENT_WALLETS:-$(deployed_env MAINNET_SETTLEMENT_WALLETS)}"
 
@@ -184,7 +190,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 60s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # The scheduler holds the tick secret in a header, so the two can drift apart
 # and the only symptom is a 401 an hour into a log nobody is reading — which is

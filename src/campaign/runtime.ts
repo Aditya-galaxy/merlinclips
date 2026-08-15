@@ -31,6 +31,7 @@ import { EventLog } from './eventlog';
 import { MultiAgentClusterManager } from './cluster';
 import { CampaignStore } from './store';
 import { apply as applyEvent } from './eventlog';
+import { apiKeysFromEnv, type ApiKey } from '../mcpauth';
 import { ALWAYS_ENABLED, MemoryTrackingStore, previewClip, verifyClip } from './verify';
 import type { ClipVerifier, CountOracle } from './verify';
 import { CircleCliExecutor } from './executor';
@@ -225,6 +226,17 @@ export class CampaignRuntime {
    */
   private readonly enabledPlatforms: ReadonlySet<Platform>;
 
+  /**
+   * Keys that may open a campaign through MCP.
+   *
+   * Held here rather than read from `Bun.env` at the call site so the runtime
+   * has one environment, not two. The executor learned this the hard way: it
+   * read the process env for its broadcast gate while the runtime read the
+   * injected object for everything else, so a runtime told BROADCAST=true
+   * still estimated and no test could express the case.
+   */
+  public readonly mcpKeys: readonly ApiKey[];
+
   /** Two-phase budget reservation engine for enterprise campaign payouts. */
   public readonly reservations = new ReservationEngine();
   /** Per-campaign distributed lock manager for mutual exclusion. */
@@ -250,6 +262,7 @@ export class CampaignRuntime {
     this.env = options.env ?? Bun.env;
     this.signable = signableWallets(this.env);
     this.enabledPlatforms = enabledPlatforms(this.env);
+    this.mcpKeys = apiKeysFromEnv(this.env);
     this.webhooks = options.webhooks ?? webhookFromEnv(this.env);
     this.blobs = options.blobs ?? chooseBlobStore(this.env);
     this.log = new EventLog(this.blobs);

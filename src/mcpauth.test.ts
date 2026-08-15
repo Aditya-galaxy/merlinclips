@@ -130,3 +130,70 @@ describe('reading the configured keys', () => {
       .toBe(true);
   });
 });
+
+/**
+ * Every tool call is counted, not only the ones that throw.
+ *
+ * `captureException` was the sole analytics call on this path, so the funnel
+ * showed what broke and never what worked — a tool nobody could complete and a
+ * tool nobody tried looked identical, which is the wrong way round for
+ * deciding whether an integration is landing.
+ */
+describe('what MCP reports to analytics', () => {
+  const runtimeWith = async (env: Record<string, string | undefined> = {}) => {
+    const { CampaignRuntime } = await import('./campaign/runtime');
+    const { MemoryBlobStore } = await import('./campaign/persistence');
+    const rt = new CampaignRuntime({
+      blobs: new MemoryBlobStore(),
+      env: { SESSION_SECRET: 's'.repeat(32), ...env },
+    });
+    await rt.ready();
+    const seen: Array<{ event: string; distinctId: string; properties?: Record<string, unknown> }> = [];
+    rt.analytics.capture = (async (e) => { seen.push(e); return true; }) as typeof rt.analytics.capture;
+    return { rt, seen };
+  };
+
+  const call = (tool: string, headers: Record<string, string> = {}) =>
+    new Request('http://x/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool, arguments: {} } }),
+    });
+
+  test('a successful read is counted', async () => {
+    const { handleMcp } = await import('./mcp');
+    const { rt, seen } = await runtimeWith();
+    await handleMcp(call('explain_payout_rules'), rt);
+    const e = seen.find((x) => x.event === 'mcp_tool_called');
+    expect(e?.properties?.tool).toBe('explain_payout_rules');
+    expect(e?.properties?.outcome).toBe('ok');
+    expect(e?.properties?.authenticated).toBe(false);
+  });
+
+  test('a refusal is counted, because it is an agent that could not integrate', async () => {
+    const { handleMcp } = await import('./mcp');
+    const { rt, seen } = await runtimeWith({ MCP_API_KEYS: `${hashKey('k')}:owner` });
+    await handleMcp(call('create_campaign'), rt);
+    const e = seen.find((x) => x.event === 'mcp_tool_refused');
+    expect(e?.properties).toMatchObject({ tool: 'create_campaign', status: 401 });
+  });
+
+  test('an authorised call is attributed to the key owner, not to the caller', async () => {
+    const { handleMcp } = await import('./mcp');
+    const { rt, seen } = await runtimeWith({ MCP_API_KEYS: `${hashKey('k')}:acme` });
+    await handleMcp(call('create_campaign', { authorization: 'Bearer k' }), rt);
+    const e = seen.find((x) => x.event === 'mcp_tool_called');
+    expect(e?.distinctId).toBe('mcp:acme');
+    expect(e?.properties?.authenticated).toBe(true);
+  });
+
+  test('anonymous callers share one subject rather than inventing identities', async () => {
+    // Per-request or per-IP ids would report a population we have not observed.
+    const { handleMcp } = await import('./mcp');
+    const { rt, seen } = await runtimeWith();
+    await handleMcp(call('get_ledger'), rt);
+    await handleMcp(call('explain_payout_rules'), rt);
+    const ids = seen.filter((x) => x.event === 'mcp_tool_called').map((x) => x.distinctId);
+    expect(new Set(ids)).toEqual(new Set(['mcp:anonymous']));
+  });
+});

@@ -14,6 +14,7 @@
 
 import type { PostRef } from './postref';
 import type { CountOracle } from './verify';
+import { CircleCliPayer, XMarketplaceOracle } from './xoracle';
 import type { ViewOracle } from './tick';
 import type { Submission } from './types';
 
@@ -193,9 +194,20 @@ export function oracleFromEnv(
 ): PlatformOracle | undefined {
   const key = env.YOUTUBE_API_KEY?.trim();
   if (!key) return undefined;
+
+  // X view counts are bought per call from the Circle Agent Marketplace,
+  // because X's own API cannot answer for someone else's tweet at any tier.
+  // Off unless a wallet is configured to pay from: an oracle that cannot pay
+  // reports "not observed" for every post, which is correct but expensive to
+  // discover at settlement time.
+  const payFrom = env.CAMPAIGN_WALLET?.trim();
+  const x = payFrom && env.X_ORACLE !== 'off'
+    ? new XMarketplaceOracle({ payer: new CircleCliPayer(payFrom) })
+    : new XOracleUnavailable();
+
   return new PlatformOracle({
     youtube: new YouTubeOracle({ apiKey: key, fetchImpl }),
-    x: new XOracleUnavailable(),
+    x,
   });
 }
 

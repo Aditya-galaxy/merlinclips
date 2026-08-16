@@ -95,8 +95,16 @@ export class ChallengeStore {
   }
 
   private forgetExpired(): void {
+    // `<=`, not `<`. With a zero TTL the two timestamps land in the same
+    // millisecond and a strict comparison says "not expired yet", which made
+    // the expiry test pass or fail depending on clock granularity. A flaky
+    // test on the path that decides whether a signature is still valid is
+    // worse than no test — it teaches you to re-run rather than to look.
+    //
+    // The real TTL is unaffected: a challenge issued now is not older than
+    // now-minus-five-minutes.
     const cutoff = Date.now() - this.ttlMs;
-    for (const [nonce, c] of this.live) if (c.issuedAt < cutoff) this.live.delete(nonce);
+    for (const [nonce, c] of this.live) if (c.issuedAt <= cutoff) this.live.delete(nonce);
   }
 }
 

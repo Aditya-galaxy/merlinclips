@@ -169,6 +169,19 @@ for real, list the addresses the settling Circle session holds:
 NOWALLET
 fi
 
+# The deploy above is one long backslash-continued command, and a mistake in it
+# can drop flags without failing. Assert the result rather than trusting it.
+MISSING=""
+for key in TICK_SECRET OPERATOR_SECRET SETTLEMENT_WALLETS AGENT_WALLET_ADDRESS; do
+  [ -z "$(deployed_env "$key")" ] && MISSING="$MISSING $key"
+done
+if [ -n "$MISSING" ]; then
+  echo "DEPLOY INCOMPLETE — these are unset on the running service:$MISSING" >&2
+  echo "The deploy command likely lost flags. Check for a comment inside it." >&2
+  exit 1
+fi
+echo "Config: every required variable is set on the running service"
+
 if [ -z "$MCP_API_KEYS" ]; then
   cat <<'NOKEYS'
 Note: MCP_API_KEYS is unset, so create_campaign refuses with 503. Reads and
@@ -200,6 +213,18 @@ OPERATOR_SECRET="${OPERATOR_SECRET:-$(openssl rand -hex 24)}"
 GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID:-868655245369-njpp3v17gd79ab3b85ttcg768ncu2bu4.apps.googleusercontent.com}"
 GOOGLE_OAUTH_REDIRECT_URI="${GOOGLE_OAUTH_REDIRECT_URI:-https://merlinclips.com/auth/google/callback}"
 
+# --timeout is 300s, not 60s. The tick verifies every unjudged clip with Gemini
+# and reads the view oracle for each, so its latency grows with the number of
+# live clips — it was running 17-39s against a 60s ceiling and had begun
+# returning 504, which the scheduler retried three times and which did no work
+# at all. The scheduler's own attemptDeadline is 300s; matching it means the
+# container is not what gives up first.
+#
+# Note for anyone editing the command below: a `#` comment between the
+# backslash-continued lines ends the command there. That happened, and every
+# flag after it — including --set-env-vars — silently ran as its own shell
+# command. Nothing broke only because Cloud Run keeps the existing environment
+# when the flag is absent. Comments go above, never inside.
 gcloud run deploy "$SERVICE" \
   --source . \
   --project "$PROJECT" \
@@ -211,12 +236,6 @@ gcloud run deploy "$SERVICE" \
   --memory 512Mi \
   --min-instances 0 \
   --max-instances 4 \
-  # 300s, not 60s. The tick verifies every unjudged clip with Gemini and reads
-  # the view oracle for each one, so its latency grows with the number of live
-  # clips — it was already running 17-39s against a 60s ceiling and had begun
-  # returning 504, which the scheduler retried three times and which did no
-  # work at all. The scheduler's own attemptDeadline is 300s; matching it means
-  # the container is not the thing that gives up first.
   --timeout 300s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
   --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},MCP_API_KEYS=${MCP_API_KEYS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"

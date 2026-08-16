@@ -99,9 +99,9 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .cq-said.no { background:#FCEEEC; color:#B02A20; }
 
 .cq-note { font-size:12.5px; color:var(--muted); margin-top:10px; }
-.empty { border:1px dashed var(--line-hi); border-radius:14px; padding:44px 28px;
+.cq-empty { border:1px dashed var(--line-hi); border-radius:14px; padding:44px 28px;
          text-align:center; color:var(--text-2); }
-.empty h3 { font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 8px; color:var(--text); }
+.cq-empty h3 { font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 8px; color:var(--text); }
 .cq-foot { border-top:1px solid var(--line); padding:26px 0 60px; font-size:13px; color:var(--muted); }
 .cq-foot a { color:var(--text-2); }
 @media (max-width:640px) {
@@ -115,6 +115,15 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .cq-by { font-size:12.5px; font-weight:650; letter-spacing:.02em;
          text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
 .cq-spec { font-size:13.5px; color:var(--text-2); margin:6px 0 8px; }
+
+.cq-tabs { display:flex; gap:6px; padding:26px 0 0; }
+.cq-tab { font:inherit; font-size:14px; font-weight:600; padding:7px 15px; cursor:pointer;
+          border:1px solid var(--line); background:transparent; color:var(--text-2);
+          border-radius:99px; }
+.cq-tab:hover { color:var(--text); }
+.cq-tab.on { background:var(--text); border-color:var(--text); color:var(--bg); }
+.camp.is-ended { opacity:.72; }
+.cq-badge.done { background:var(--surface-2); color:var(--text-2); }
 </style>
 </head>
 <body>
@@ -132,10 +141,11 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 
 <section class="cq-hero">
   <div class="cq-wrap">
-    <h1>Post the clip.<br>Get paid in USDC.</h1>
-    <p>Every campaign below has USDC confirmed on-chain behind it before it appears here.
-       Pick one, post your clip, and paste the link. Your wallet address is your account —
-       there is nothing to sign up for.</p>
+    <h1>Open campaigns</h1>
+    <p>Every campaign here has USDC confirmed on-chain behind it before it is listed.
+       Pick one, post your clip, and paste the link — submitting needs only your wallet
+       address. <a href="/signup">Sign in</a> if you want a studio that tracks what each
+       clip has earned.</p>
     <div class="cq-rule">
       <span><b>Paid per 1,000 views</b> that survive the hold</span>
       <span><b>Terms freeze</b> when your clip is accepted</span>
@@ -145,6 +155,11 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 </section>
 
 <main class="cq-wrap">
+  <div class="cq-tabs" role="tablist" aria-label="Campaign status">
+    <button class="cq-tab on" data-show="active" role="tab" aria-selected="true">Active</button>
+    <button class="cq-tab" data-show="all" role="tab" aria-selected="false">All</button>
+    <button class="cq-tab" data-show="ended" role="tab" aria-selected="false">Ended</button>
+  </div>
   <div class="cq-list" id="list">
     <div class="empty"><h3>Loading campaigns…</h3></div>
   </div>
@@ -193,12 +208,15 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
     /* Said plainly rather than hidden. A creator deciding whether to spend an
        evening editing is entitled to know whether the money is actually there,
        and "covered" is a fact about the chain rather than a promise from us. */
-    var badge = cov === 'covered'
-      ? '<span class="cq-badge ok">USDC confirmed on-chain</span>'
-      : '<span class="cq-badge part">Partly funded — ' + esc(cov) + '</span>';
+    var ended = c.status === 'ended';
+    var badge = ended
+      ? '<span class="cq-badge done">Ended — no longer accepting clips</span>'
+      : cov === 'covered'
+        ? '<span class="cq-badge ok">USDC confirmed on-chain</span>'
+        : '<span class="cq-badge part">Partly funded — ' + esc(cov) + '</span>';
 
     return ''
-      + '<article class="camp" data-id="' + esc(c.campaignId) + '">'
+      + '<article class="camp' + (ended ? ' is-ended' : '') + '" data-id="' + esc(c.campaignId) + '">'
       +   '<img class="cq-art" src="/campaign-art/v2/'
       +     encodeURIComponent(c.brandName || c.campaignId) + '.svg" alt="" loading="lazy" />'
       +   '<div class="row1">'
@@ -221,7 +239,10 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
             ? '<span>Approval <b>—</b> <em style="font-style:normal;color:var(--muted)">no clips judged yet</em></span>'
             : '<span>Approval <b>' + c.approvalRate + '%</b> of ' + c.judged + ' judged</span>')
       +   '</div>'
-      +   '<details class="open">'
+      +   (ended
+            ? '<p class="cq-note">Clips already accepted keep their frozen terms and settle '
+              + 'as their views survive. Nothing new is taken.</p>'
+            : '<details class="open">')
       +     '<summary>Submit a clip</summary>'
       +     '<div class="form">'
       +       '<div><label for="u-' + esc(c.campaignId) + '">Your clip URL</label>'
@@ -233,7 +254,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       +       '<p class="cq-note">Submitting freezes ' + usd(c.cpmUsdc) + ' per 1,000 views and the '
       +         esc(c.dwellHours) + '-hour hold onto your clip. The brand cannot lower them afterwards.</p>'
       +     '</div>'
-      +   '</details>'
+      +   (ended ? '' : '</details>')
       + '</article>';
   }
 
@@ -293,32 +314,62 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
   fetch('/api/campaign', { headers: { accept: 'application/json' } })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
-      var open = ((d && d.campaigns) || []).filter(function (c) { return c.status === 'active'; });
+      var launched = (d && d.campaigns) || [];
+      var open = launched.filter(function (c) { return c.status === 'active'; });
       var list = $('list');
 
       if (!open.length) {
         /* An empty shelf, said as an empty shelf. Inventing a placeholder
            campaign here would be the single most damaging thing this page
            could do — a clipper would spend an evening on it. */
-        list.innerHTML = '<div class="empty"><h3>No campaigns are open right now</h3>'
+        list.innerHTML = '<div class="cq-empty"><h3>No campaigns are open right now</h3>'
           + 'A campaign appears the moment a brand\'s USDC confirms on-chain. '
           + 'Nothing is listed before then, so what you see here is always real work.</div>';
         track('campaign_viewed', { open: 0 });
         return;
       }
 
-      list.innerHTML = open.map(card).join('');
-      open.forEach(function (c) {
-        var el = list.querySelector('[data-id="' + CSS.escape(c.campaignId) + '"]');
-        if (el) wire(el, c);
+      var render = function (show) {
+        var rows = launched.filter(function (c) {
+          return show === 'all' ? true
+               : show === 'ended' ? c.status === 'ended'
+               : c.status === 'active';
+        });
+        if (!rows.length) {
+          list.innerHTML = '<div class="cq-empty"><h3>Nothing here yet</h3>'
+            + (show === 'ended'
+                ? 'No campaign has finished yet.'
+                : 'No campaigns are open right now. One appears the moment a brand\'s USDC '
+                  + 'confirms on-chain — nothing is listed before then.') + '</div>';
+          return;
+        }
+        list.innerHTML = rows.map(card).join('');
+        rows.forEach(function (c) {
+          if (c.status === 'ended') return;
+          var el = list.querySelector('[data-id="' + CSS.escape(c.campaignId) + '"]');
+          if (el) wire(el, c);
+        });
+      };
+
+      Array.prototype.forEach.call(document.querySelectorAll('.cq-tab'), function (btn) {
+        btn.addEventListener('click', function () {
+          Array.prototype.forEach.call(document.querySelectorAll('.cq-tab'), function (b) {
+            b.classList.toggle('on', b === btn);
+            b.setAttribute('aria-selected', String(b === btn));
+          });
+          render(btn.getAttribute('data-show'));
+          track('campaign_tab_selected', { tab: btn.getAttribute('data-show') });
+        });
       });
+
+      render('active');
       track('campaign_viewed', {
         open: open.length,
         totalRemainingUsdc: open.reduce(function (t, c) { return t + Number(c.remainingUsdc || 0); }, 0)
       });
     })
     .catch(function () {
-      $('list').innerHTML = '<div class="empty"><h3>Could not load campaigns</h3>'
+      $('list').innerHTML = '<div class="cq-empty"><h3>Could not load campaigns</h3>'
         + 'That is us, not you. Refresh in a moment.</div>';
     });
 })();

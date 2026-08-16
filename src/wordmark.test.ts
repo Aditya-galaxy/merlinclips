@@ -9,50 +9,44 @@
 
 import { describe, expect, test } from 'bun:test';
 
-import { initialsOf, wordmarkSvg } from './wordmark';
+import { wordmarkSvg } from './wordmark';
 
 describe('the same name always draws the same mark', () => {
   test('two calls agree', () => {
     expect(wordmarkSvg('Merlin Clips')).toBe(wordmarkSvg('Merlin Clips'));
   });
 
-  test('case and surrounding space do not change the art', () => {
+  test('case and surrounding space do not change the colour', () => {
     // A brand typing "  merlin clips " must not get a different colour from
-    // one typing "Merlin Clips", or their own campaigns stop matching.
-    //
-    // The art, not the whole file: aria-label carries the name as written,
-    // which is right — a screen reader should hear what the brand called
-    // itself, not a normalised version of it.
-    const art = (svg: string) => svg.replace(/aria-label="[^"]*"/, '');
-    expect(art(wordmarkSvg('  merlin clips '))).toBe(art(wordmarkSvg('Merlin Clips')));
+    // one typing "Merlin Clips", or their own campaigns stop matching. The
+    // drawn text does differ, and should: the card shows the name as written.
+    const colour = (svg: string) => /stop-color="([^"]+)"/.exec(svg)?.[1];
+    expect(colour(wordmarkSvg('  merlin clips '))).toBe(colour(wordmarkSvg('Merlin Clips')));
   });
 
-  test('different names get different colours', () => {
-    const hue = (svg: string) => /hsl\((\d+)/.exec(svg)?.[1];
-    expect(hue(wordmarkSvg('Boxabl'))).not.toBe(hue(wordmarkSvg('Lovable')));
-  });
-});
-
-describe('initials', () => {
-  test('two words give one letter each', () => {
-    expect(initialsOf('Merlin Clips')).toBe('MC');
-  });
-
-  test('one word gives two letters, not one enormous one', () => {
-    // A single huge letter reads as a missing image rather than as a mark.
-    expect(initialsOf('Lovable')).toBe('LO');
+  test('colours come from the site palette, not an arbitrary hue', () => {
+    // A free hue put "Merlin Clips" in forest green, which belongs to no part
+    // of this palette. Four accents the stylesheet already defines.
+    const PALETTE = ['#6D28D9', '#0E8FA8', '#0F7B4F', '#4D7C0F'];
+    for (const name of ['Boxabl', 'Lovable', 'CapCut', 'Merlin Clips', 'Topps']) {
+      const c = /stop-color="([^"]+)"/.exec(wordmarkSvg(name))?.[1] ?? '';
+      expect(PALETTE).toContain(c);
+    }
   });
 
-  test('punctuation and handles are ignored', () => {
-    expect(initialsOf('@boxabl')).toBe('BO');
-    expect(initialsOf('clip-farm')).toBe('CF');
+  test('the name is drawn, not its initials', () => {
+    // A clipper scanning a list reads "Merlin Clips" faster than they decode
+    // "MC", and a wide strip is a wordmark's natural shape.
+    expect(wordmarkSvg('Merlin Clips')).toContain('>Merlin Clips</text>');
   });
 
-  test('a name with no letters still produces something drawable', () => {
-    // Never empty: an empty <text> renders as a blank rectangle, which looks
-    // like the image failed to load.
-    expect(initialsOf('')).toBe('?');
-    expect(initialsOf('123 456')).toBe('?');
+  test('a long name is scaled down rather than overflowing', () => {
+    const size = (svg: string) => Number(/font-size="(\d+)"/.exec(svg)?.[1]);
+    expect(size(wordmarkSvg('A Very Long Brand Name Here'))).toBeLessThan(size(wordmarkSvg('Topps')));
+  });
+
+  test('an empty name still draws something', () => {
+    expect(wordmarkSvg('')).toContain('>Campaign</text>');
   });
 });
 

@@ -571,7 +571,19 @@ export class CampaignRuntime {
       // campaign shown here invites an evening of editing against a brief that
       // will refuse the submission.
       campaigns: await Promise.all(state.campaigns
-        .filter((c) => isLaunched(c.status) && c.status !== 'ended')
+        // Launched, including ended.
+        //
+        // Ended used to be excluded here, and the reasoning was right for what
+        // this list then was: a bare listing of ended campaigns invites an
+        // evening of editing against a brief that will refuse the submission.
+        // The listing now has tabs, and a card for an ended campaign carries
+        // no submit form — so the protection lives where it belongs, next to
+        // the thing it protects, rather than by hiding the record.
+        //
+        // Every consumer already filters to 'active' for its live view, so
+        // including these adds a tab without changing what anyone shows by
+        // default.
+        .filter((c) => isLaunched(c.status))
         .map(async (c) => {
         // What a creator wants before committing an evening: is anyone else
         // here, is this campaign actually paying, and how much is left. All

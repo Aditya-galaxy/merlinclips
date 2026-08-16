@@ -35,36 +35,6 @@ function hash(input: string): number {
 }
 
 /**
- * Up to two initials.
- *
- * Word initials when the name has words — "Merlin Clips" is MC. A single word
- * gives its first two letters, because one enormous letter reads as a generic
- * placeholder rather than as a mark. Non-letters are dropped so "@brand" and
- * "brand" produce the same thing.
- */
-/**
- * Bumped whenever the drawing changes.
- *
- * The art is served `immutable` for a year, which is right for a URL whose
- * content is fixed — and a lie for one whose content depends on a generator we
- * edit. Changing the type size shipped a fix that could not reach anyone who
- * had already loaded a card. The version is part of the path, so a change to
- * the generator is a change to the URL and every cache misses exactly once.
- */
-export const WORDMARK_VERSION = 2;
-
-export function initialsOf(name: string): string {
-  const words = name
-    .split(/[^A-Za-z0-9]+/)
-    .filter(Boolean)
-    .filter((w) => /[A-Za-z]/.test(w[0]!));
-
-  if (words.length === 0) return '?';
-  if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
-  return (words[0]![0]! + words[1]![0]!).toUpperCase();
-}
-
-/**
  * The card art for a name.
  *
  * Hue comes from the hash; saturation and lightness are fixed and low, so
@@ -83,29 +53,56 @@ export function wordmarkSvg(name: string, options: { width?: number; height?: nu
   const w = options.width ?? 960;
   const h = options.height ?? 240;
   const seed = hash(name.trim().toLowerCase() || 'merlin');
-  const hue = seed % 360;
-  // A second hue a fixed distance away, so the wash has direction without
-  // becoming a two-colour gradient that fights the type.
-  const hue2 = (hue + 38) % 360;
-  const initials = initialsOf(name);
+
+  // Drawn from the site's own accents rather than from an arbitrary hue.
+  //
+  // A free hue meant a campaign could land on any colour in the wheel —
+  // "Merlin Clips" came out forest green, which belongs to no part of this
+  // palette. These are the four accents styles.css already defines, each with
+  // a darker partner for the gradient, so a card looks like it came from the
+  // same place as the page around it while still distinguishing brands.
+  const PALETTE = [
+    ['#6D28D9', '#4C1D95'], // pop, the brand purple
+    ['#0E8FA8', '#0B5F70'], // accent, teal
+    ['#0F7B4F', '#0A5235'], // ok, green
+    ['#4D7C0F', '#33520A'], // lime
+  ] as const;
+  const [from, to] = PALETTE[seed % PALETTE.length]!;
   const id = `g${seed.toString(36)}`;
 
   // Escaped because the name is brand-supplied and this is rendered as markup.
   const label = name.replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 
+  // The name itself, not its initials.
+  //
+  // Initials are what you draw when the canvas is square and small. This one
+  // is a wide strip across the top of a card, which is a wordmark's natural
+  // shape — and a clipper scanning a list reads "Merlin Clips" faster than
+  // they decode "MC".
+  //
+  // Sized to fit rather than at a fixed size: a long name at one size either
+  // overflows or forces every short name to be tiny. The divisor is the
+  // longer of the name's length and a floor, so short names stop growing
+  // before they become absurd.
+  const shown = name.trim().slice(0, 28) || 'Campaign';
+  const fontSize = Math.round(Math.min(h * 0.30, (w * 0.86) / Math.max(shown.length, 7) * 1.75));
+
+  const esc = (v: string) => v.replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">
   <defs>
     <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="hsl(${hue} 42% 34%)"/>
-      <stop offset="1" stop-color="hsl(${hue2} 46% 22%)"/>
+      <stop offset="0" stop-color="${from}"/>
+      <stop offset="1" stop-color="${to}"/>
     </linearGradient>
   </defs>
   <rect width="${w}" height="${h}" fill="url(#${id})"/>
-  <circle cx="${w * 0.82}" cy="${h * 0.22}" r="${h * 0.42}" fill="hsl(${hue2} 60% 60%)" opacity="0.13"/>
+  <circle cx="${w * 0.86}" cy="${h * 0.18}" r="${h * 0.46}" fill="#FAF8F5" opacity="0.07"/>
   <text x="${w * 0.5}" y="${h * 0.5}" text-anchor="middle" dominant-baseline="central"
         font-family="ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif"
-        font-size="${Math.round(h * 0.24)}" font-weight="600" letter-spacing="${-h * 0.008}"
-        fill="#FAF8F5">${initials}</text>
+        font-size="${fontSize}" font-weight="600" letter-spacing="${-fontSize * 0.02}"
+        fill="#FAF8F5">${esc(shown)}</text>
 </svg>`;
 }

@@ -613,6 +613,10 @@ const server = Bun.serve({
     // Who has signed up. Operator-gated and read-only — it carries creator
     // emails, which is the reason it is gated and the reason it is its own
     // route rather than a field added to something already public.
+    if (url.pathname === '/api/operator/unlink-wallet' && request.method === 'POST') {
+      return campaigns.handleOperatorUnlinkWallet(request);
+    }
+
     if (url.pathname === '/api/operator/signups') {
       return campaigns.handleOperatorSignups(request);
     }

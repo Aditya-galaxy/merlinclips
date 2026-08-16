@@ -2302,6 +2302,67 @@ export class CampaignRuntime {
     );
   }
 
+  /**
+   * Unlink a payout address that cannot receive.
+   *
+   * A button on the onboarding page generated forty random hex characters and
+   * told the creator a wallet had been allotted to them. Nobody holds a key to
+   * those bytes, so a payout to one is destroyed — and because the address is
+   * prefilled from the account, it would have been used on the next
+   * submission. The button is gone; the addresses it wrote are not.
+   *
+   * Removing it leaves the account with no payout address, which is the right
+   * state: it blocks payment until the creator links one they can prove,
+   * rather than sending money somewhere nobody can open.
+   *
+   * Operator-gated, and it refuses an address with any on-chain history —
+   * activity is the one signal that somebody does control it, and unlinking a
+   * creator's real wallet would be this bug in the opposite direction.
+   */
+  async handleOperatorUnlinkWallet(request: Request): Promise<Response> {
+    const denied = this.requireOperator(request);
+    if (denied) return denied;
+    await this.ready();
+
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const accountId = String(body.accountId ?? '').trim();
+    const address = String(body.address ?? '').trim().toLowerCase();
+    if (!accountId || !/^0x[0-9a-f]{40}$/.test(address)) {
+      return Response.json(
+        { error: 'accountId and address are both required' }, { status: 400 },
+      );
+    }
+
+    const account = this.store.getCreatorAccount(accountId);
+    if (!account) return Response.json({ error: 'unknown account' }, { status: 404 });
+
+    const before = account.linkedWallets ?? [];
+    const after = before.filter((w) => w.address.toLowerCase() !== address);
+    if (after.length === before.length) {
+      return Response.json({ ok: true, note: 'that address was not linked', accountId });
+    }
+
+    const updated = {
+      ...account,
+      linkedWallets: after,
+      // Cleared too when it was the account's chosen payout address, or the
+      // studio would go on showing an address that cannot receive.
+      wallet: account.wallet && account.wallet.toLowerCase() === address ? undefined : account.wallet,
+      updatedAt: new Date().toISOString(),
+    } as typeof account;
+
+    await this.record({ type: 'account_upserted', account: updated });
+
+    return Response.json({
+      ok: true,
+      accountId,
+      removed: address,
+      remaining: after.map((w) => w.address),
+      note: 'this account has no proven payout address now — the creator links one from '
+        + 'their studio, which signs, so only an address they control can replace it.',
+    });
+  }
+
   async handleOperatorSignups(request: Request): Promise<Response> {
     const denied = this.requireOperator(request);
     if (denied) return denied;

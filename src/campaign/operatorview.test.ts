@@ -131,3 +131,56 @@ describe('signing in records the account', () => {
     expect(body.creators[0]!.name).toBe('Ada');
   });
 });
+
+/**
+ * Removing a payout address that cannot receive.
+ *
+ * A button on the onboarding page generated forty random hex characters and
+ * told the creator a wallet had been allotted to them. The button is gone; the
+ * addresses it wrote were not, and the address is prefilled from the account —
+ * so the next submission would have carried it, and the payout would have been
+ * destroyed.
+ */
+describe('unlinking an unusable payout address', () => {
+  const seed = async () => {
+    const rt = runtime();
+    await rt.ready();
+    await rt.recordSignIn({ accountId: 'acct-1', googleSub: 's', name: 'Ada', email: 'a@x.test' });
+    const { linkWallet } = await import('./accounts');
+    const acc = linkWallet(rt.store, 'acct-1', '0x' + 'a'.repeat(40));
+    await rt.record({ type: 'account_upserted', account: acc });
+    return rt;
+  };
+
+  const unlink = (rt: CampaignRuntime, body: unknown, secret = SECRET) =>
+    rt.handleOperatorUnlinkWallet(new Request('http://x/api/operator/unlink-wallet', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-operator-secret': secret },
+      body: JSON.stringify(body),
+    }));
+
+  test('the address is removed', async () => {
+    const rt = await seed();
+    const res = await unlink(rt, { accountId: 'acct-1', address: '0x' + 'a'.repeat(40) });
+    expect((await res.json() as { removed?: string }).removed).toBe('0x' + 'a'.repeat(40));
+  });
+
+  test('an address on a different account is refused, not silently removed', async () => {
+    // Exactly the mistake I made operating this by hand: right address, wrong
+    // account. Reporting "not linked" rather than removing something else is
+    // what made that safe.
+    const rt = await seed();
+    const res = await unlink(rt, { accountId: 'acct-1', address: '0x' + 'b'.repeat(40) });
+    expect((await res.json() as { note?: string }).note).toContain('not linked');
+  });
+
+  test('it needs the operator secret', async () => {
+    const rt = await seed();
+    expect((await unlink(rt, { accountId: 'acct-1', address: '0x' + 'a'.repeat(40) }, 'wrong')).status).toBe(401);
+  });
+
+  test('an unknown account is a 404, not a silent success', async () => {
+    const rt = await seed();
+    expect((await unlink(rt, { accountId: 'nobody', address: '0x' + 'a'.repeat(40) })).status).toBe(404);
+  });
+});

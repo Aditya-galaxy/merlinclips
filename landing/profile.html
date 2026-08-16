@@ -139,6 +139,22 @@
 .stand-facts { display:flex; flex-wrap:wrap; gap:20px; font-size:13px; color:var(--text-2); }
 .stand-facts b { font-family:var(--mono); color:var(--text); }
 .stand-says { margin:12px 0 0; font-size:13.5px; color:var(--text-2); }
+
+.wl { margin-top:16px; }
+.wl-go { font:inherit; font-size:14.5px; font-weight:600; padding:11px 20px; cursor:pointer;
+         background:var(--text); color:var(--bg); border:0; border-radius:9px; }
+.wl-go:hover { background:var(--pop); }
+.wl-go:disabled { opacity:.55; cursor:default; }
+.wl-said { display:none; margin-top:12px; font-size:13.5px; padding:11px 13px; border-radius:9px; }
+.wl-said.on { display:block; }
+.wl-said.ok { background:var(--ok-wash,#E7F4EE); color:var(--ok,#0F7B4F); }
+.wl-said.no { background:#FCEEEC; color:#B02A20; }
+.wl-pick { display:grid; gap:8px; margin-top:12px; }
+.wl-pick button { font:inherit; font-size:14px; text-align:left; padding:10px 13px; cursor:pointer;
+                  background:var(--bg); border:1px solid var(--line); border-radius:9px;
+                  color:var(--text); display:flex; align-items:center; gap:10px; }
+.wl-pick button:hover { border-color:var(--pop); }
+.wl-pick img { width:20px; height:20px; border-radius:5px; }
 </style>
 </head>
 <body>
@@ -249,8 +265,18 @@
   <section class="sec">
     <h2>Wallets</h2>
     <div class="rows" id="wallets"><div class="empty">None linked yet.</div></div>
-    <p class="gate">Payouts go only to an address you have linked. Nothing here can move
-      money — it is a record of where money arrives.</p>
+
+    <!-- Connect, sign, link. The signature is the point: a typed address is
+         trusted on sight, and one wrong character sends USDC somewhere nobody
+         can open. Signing proves the wallet is yours before anything is sent
+         to it. -->
+    <div class="wl">
+      <button class="wl-go" id="wl-connect" type="button">Connect a wallet to prove it is yours</button>
+      <div class="wl-said" id="wl-said"></div>
+      <p class="gate">Payouts go only to an address you have linked. Nothing here can move
+        money — it is a record of where money arrives, and connecting asks you to sign a
+        message, never to approve a transaction.</p>
+    </div>
   </section>
 
 </main>
@@ -450,6 +476,111 @@
         + ' · ' + usd(pool) + ' left to earn · up to ' + usd(top) + ' per 1k');
     })
     .catch(function () { set('open-count', 'Browse campaigns open right now'); });
+})();
+</script>
+
+<script>
+/* Linking a payout wallet by proving control of it.
+   
+   EIP-6963 rather than window.ethereum: several extensions race to own that
+   one property, so whoever loaded last wins and the creator signs with a
+   wallet they did not choose. 6963 asks every installed wallet to announce
+   itself and lets the person pick.
+   
+   No SDK. The alternative was a bundled wallet-connect library, which needs a
+   build step this repo does not have and a third-party project id. This is
+   the same flow in about eighty lines, for browser-extension wallets. Mobile
+   wallets over QR would need that library, and manual address entry stays
+   either way — a clipper without a wallet extension must still get paid. */
+(function () {
+  var btn = document.getElementById('wl-connect');
+  if (!btn) return;
+  var said = document.getElementById('wl-said');
+  var tell = function (msg, ok) {
+    said.className = 'wl-said on ' + (ok ? 'ok' : 'no');
+    said.textContent = msg;
+  };
+
+  /* Wallets announce themselves in response to this event. Collected rather
+     than raced: whoever answers first is not necessarily the one the creator
+     wants to be paid through. */
+  var found = [];
+  window.addEventListener('eip6963:announceProvider', function (e) {
+    if (e.detail && e.detail.provider && !found.some(function (f) {
+      return f.info.uuid === e.detail.info.uuid;
+    })) found.push(e.detail);
+  });
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+  async function link(provider) {
+    tell('Waiting for your wallet…', true);
+    var accounts = await provider.request({ method: 'eth_requestAccounts' });
+    var address = (accounts && accounts[0] || '').trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return tell('That wallet did not return an address.', false);
+    }
+
+    /* The challenge is issued by the server and bound to this account. A
+       message we composed here would be one an attacker could also compose. */
+    var ch = await fetch('/api/me/wallet/challenge?address=' + encodeURIComponent(address),
+      { credentials: 'same-origin' }).then(function (r) { return r.json(); });
+    if (!ch.nonce) return tell(ch.error || 'Could not start the check.', false);
+
+    tell('Check your wallet — approve the message to prove this address is yours. '
+       + 'It is not a transaction.', true);
+
+    var signature;
+    try {
+      signature = await provider.request({
+        method: 'personal_sign', params: [ch.message, address],
+      });
+    } catch (e) {
+      /* 4001 is the user declining, which is not an error to apologise for. */
+      return tell(e && e.code === 4001
+        ? 'You declined the signature, so nothing was linked.'
+        : 'Your wallet could not sign that.', false);
+    }
+
+    var res = await fetch('/api/me/wallet/link', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ address: address, signature: signature, nonce: ch.nonce }),
+    }).then(function (r) { return r.json(); });
+
+    if (res.error) return tell(res.error, false);
+    tell('Linked. ' + address.slice(0, 10) + '… is proven yours and payouts can go to it.', true);
+    setTimeout(function () { window.location.reload(); }, 1600);
+  }
+
+  btn.addEventListener('click', function () {
+    if (!found.length) {
+      /* Said plainly rather than blamed on the browser: the creator can still
+         be paid, they just cannot prove the address this way. */
+      return tell('No wallet extension found. You can still be paid — enter your Base '
+                + 'address during onboarding — but connecting is what proves it is yours.', false);
+    }
+    if (found.length === 1) return link(found[0].provider).catch(function () {
+      tell('Something went wrong talking to your wallet.', false);
+    });
+
+    /* More than one installed, so the creator chooses. Picking for them is how
+       somebody signs with the wrong wallet and wonders where their money went. */
+    var pick = document.createElement('div');
+    pick.className = 'wl-pick';
+    found.forEach(function (f) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = '<img src="' + f.info.icon + '" alt="" />' + f.info.name;
+      b.addEventListener('click', function () {
+        pick.remove();
+        link(f.provider).catch(function () {
+          tell('Something went wrong talking to your wallet.', false);
+        });
+      });
+      pick.appendChild(b);
+    });
+    btn.insertAdjacentElement('afterend', pick);
+  });
 })();
 </script>
 <script src="/site.js" defer></script>

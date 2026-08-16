@@ -122,8 +122,28 @@ describe('the tick is gated by its own secret', () => {
   });
 });
 
-describe('submitting stays public, because that is the point', () => {
-  test('a creator needs no secret to be paid', async () => {
+describe('submitting requires identity', () => {
+  test('a signed-out submission is refused, and says where to sign in', async () => {
+    // Reversed deliberately. Keyless submission was the original design — the
+    // payout address was the identity — and it was traded for standing that
+    // follows a person, a studio worth signing into, and a way to reach a
+    // creator whose clip was refused. Enforced here rather than in the page,
+    // because the endpoint is public and takes JSON.
+    const rt = runtime();
+    const res = await rt.handleSubmit(new Request('http://localhost/api/submissions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        campaignId: 'camp-1',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        payoutAddress: '0x' + '2'.repeat(40),
+      }),
+    }));
+    expect(res.status).toBe(401);
+    expect((await res.json() as { signInUrl?: string }).signInUrl).toBe('/auth/google');
+  });
+
+  test('an MCP caller with a named owner is identity enough', async () => {
     const rt = runtime({ OPERATOR_SECRET: OPERATOR });
     // A funded chain, so the campaign can be carried the whole way from opened
     // to live — which is what a creator has to be able to submit against.
@@ -143,7 +163,7 @@ describe('submitting stays public, because that is the point', () => {
 
     const submit = new Request('http://localhost/api/submissions', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-mcp-owner': 'test-operator' },
       body: JSON.stringify({
         campaignId,
         payoutAddress: '0x' + 'a'.repeat(40),
@@ -157,7 +177,7 @@ describe('submitting stays public, because that is the point', () => {
   test('a submission naming an unknown campaign is refused, not invented', async () => {
     const submit = new Request('http://localhost/api/submissions', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-mcp-owner': 'test-operator' },
       body: JSON.stringify({
         campaignId: 'does-not-exist',
         payoutAddress: '0x' + 'a'.repeat(40),

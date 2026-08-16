@@ -26,10 +26,13 @@ describe('what a key is needed for', () => {
     expect(authorise('create_campaign', null, KEYS).ok).toBe(false);
   });
 
-  test('submitting a clip does not — the payout address is the identity', () => {
-    // Gating this would mean every clipper had to be onboarded by an operator
-    // before they could earn, which is the friction this product removes.
-    expect(authorise('submit_clip', null, KEYS)).toEqual({ ok: true, owner: 'public' });
+  test('submitting a clip needs one too, now that the website requires sign-in', () => {
+    // This was deliberately open — the payout address was the identity, and
+    // gating it put an operator between a clipper and getting paid. That trade
+    // was reversed for standing that follows a person and a way to reach a
+    // creator whose clip was refused. A gate the MCP layer walks around is not
+    // a gate, so this door closed with it.
+    expect(authorise('submit_clip', null, KEYS).ok).toBe(false);
   });
 
   test('reading needs nothing, because reading is the audit surface', () => {

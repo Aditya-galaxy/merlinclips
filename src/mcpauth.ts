@@ -38,19 +38,17 @@ import { createHash, timingSafeEqual } from 'node:crypto';
  * that its arithmetic can be checked by anyone, and a transparency surface
  * behind an API key is not one.
  *
- * `submit_clip` is open for a different reason: the payout address is the
- * identity. A creator should not need credentials from us to get paid, and
- * requiring a key would mean every clipper had to be onboarded by an operator
- * before they could earn — which is the friction this product exists to
- * remove. It writes to the log, so it is rate limited, and a junk submission
- * costs a log entry rather than money: verification runs in the tick, and no
- * clip pays before its views survive the hold.
+ * `submit_clip` was open on the same principle, and is not any more. The
+ * website now requires a creator to sign in before submitting — a deliberate
+ * trade of friction for identity, so standing follows a person rather than an
+ * address and a refused clip has someone to tell. A gate the MCP layer walks
+ * around is not a gate, so this door closed with it.
  *
- * `create_campaign` is different in kind. It binds a funding wallet, creates
- * an obligation to creators, and is the tool whose abuse fills the log with
- * campaigns nobody funds.
+ * `create_campaign` binds a funding wallet and creates an obligation to
+ * creators, and is the tool whose abuse fills the log with campaigns nobody
+ * funds.
  */
-export const WRITE_TOOLS = new Set(['create_campaign']);
+export const WRITE_TOOLS = new Set(['create_campaign', 'submit_clip']);
 
 export interface ApiKey {
   /** SHA-256 of the key, hex. */

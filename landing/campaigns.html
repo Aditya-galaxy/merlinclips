@@ -124,6 +124,11 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .cq-tab.on { background:var(--text); border-color:var(--text); color:var(--bg); }
 .camp.is-ended { opacity:.72; }
 .cq-badge.done { background:var(--surface-2); color:var(--text-2); }
+
+.cq-signin { display:inline-flex; align-items:center; gap:8px; margin-top:16px;
+             padding:11px 20px; font-size:14.5px; font-weight:600; text-decoration:none;
+             background:var(--text); color:var(--bg); border-radius:9px; }
+.cq-signin:hover { background:var(--pop); }
 </style>
 </head>
 <body>
@@ -143,9 +148,8 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
   <div class="cq-wrap">
     <h1>Open campaigns</h1>
     <p>Every campaign here has USDC confirmed on-chain behind it before it is listed.
-       Pick one, post your clip, and paste the link — submitting needs only your wallet
-       address. <a href="/signup">Sign in</a> if you want a studio that tracks what each
-       clip has earned.</p>
+       Pick one, post your clip, and paste the link. Submitting needs a signed-in account —
+       it is what links a payout to you and what your standing is built on.</p>
     <div class="cq-rule">
       <span><b>Paid per 1,000 views</b> that survive the hold</span>
       <span><b>Terms freeze</b> when your clip is accepted</span>
@@ -242,7 +246,12 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       +   (ended
             ? '<p class="cq-note">Clips already accepted keep their frozen terms and settle '
               + 'as their views survive. Nothing new is taken.</p>'
-            : '<details class="open">')
+            : !signedIn
+              ? '<a class="cq-signin" href="/auth/google?next=/campaigns">'
+                + 'Sign in with Google to submit &rarr;</a>'
+                + '<p class="cq-note">Your account is what links a payout to you, and what '
+                + 'your standing is built on. You come straight back here.</p>'
+              : '<details class="open">')
       +     '<summary>Submit a clip</summary>'
       +     '<div class="form">'
       +       '<div><label for="u-' + esc(c.campaignId) + '">Your clip URL</label>'
@@ -254,7 +263,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       +       '<p class="cq-note">Submitting freezes ' + usd(c.cpmUsdc) + ' per 1,000 views and the '
       +         esc(c.dwellHours) + '-hour hold onto your clip. The brand cannot lower them afterwards.</p>'
       +     '</div>'
-      +   (ended ? '' : '</details>')
+      +   (ended || !signedIn ? '' : '</details>')
       + '</article>';
   }
 
@@ -311,6 +320,16 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
     });
   }
 
+  /* Whether this visitor has an account, asked once. The submit panel is
+     shaped from it: a signed-out creator is offered sign-in rather than a form
+     that will be refused by the server after they have filled it in. */
+  var signedIn = false;
+
+  Promise.resolve(
+    fetch('/api/me/profile', { credentials: 'same-origin' })
+      .then(function (r) { signedIn = r.ok; })
+      .catch(function () { signedIn = false; })
+  ).then(function () {
   fetch('/api/campaign', { headers: { accept: 'application/json' } })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
@@ -345,7 +364,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
         }
         list.innerHTML = rows.map(card).join('');
         rows.forEach(function (c) {
-          if (c.status === 'ended') return;
+          if (c.status === 'ended' || !signedIn) return;
           var el = list.querySelector('[data-id="' + CSS.escape(c.campaignId) + '"]');
           if (el) wire(el, c);
         });
@@ -372,6 +391,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       $('list').innerHTML = '<div class="cq-empty"><h3>Could not load campaigns</h3>'
         + 'That is us, not you. Refresh in a moment.</div>';
     });
+  });
 })();
 </script>
 <script src="/site.js" defer></script>

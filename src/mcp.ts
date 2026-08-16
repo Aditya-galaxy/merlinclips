@@ -67,6 +67,22 @@ export const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
+        brandName: {
+          type: 'string',
+          description: 'Who is paying, shown on the card beside the campaign. Also becomes the '
+            + 'card art, so give the name you want creators to see.',
+        },
+        title: {
+          type: 'string',
+          description: 'What to call the campaign. Omit and we use "<brandName> Clipping", '
+            + 'which is the convention creators already read.',
+        },
+        category: {
+          type: 'string',
+          enum: ['entertainment', 'technology', 'gaming', 'finance', 'education', 'product', 'other'],
+          description: 'Used to filter the campaigns page. Anything unrecognised becomes "other" '
+            + 'rather than failing the call.',
+        },
         brief: {
           type: 'string',
           description: 'What the clip must show, in plain language — this is the whole spec and '
@@ -95,9 +111,11 @@ export const TOOLS = [
         },
         platforms: {
           type: 'array',
-          items: { type: 'string', enum: ['youtube', 'x'] },
-          description: 'Where clips may be posted. YouTube and X only — the others need '
-            + 'platform app review we do not hold. Default ["youtube"].',
+          items: { type: 'string', enum: ['youtube', 'x', 'instagram'] },
+          description: 'Where clips may be posted. YouTube is counted for any public video. '
+            + 'X is accepted and never accrues, because no API answers for someone else\'s post. '
+            + 'Instagram is counted only where a creator has authorised this deployment, so it '
+            + 'is refused unless that is configured — the call tells you which. Default ["youtube"].',
         },
         minCpmUsdc: {
           type: 'string',
@@ -131,9 +149,11 @@ export const TOOLS = [
   {
     name: 'submit_clip',
     description:
-      'Submit a clip to a campaign. Public and keyless: the payout address is the identity. '
+      'Submit a clip to a campaign. Requires an operator-issued key — send it as '
+      + '`Authorization: Bearer <key>` — because a creator must be identified before a clip '
+      + 'is accepted, and the website enforces the same thing through sign-in. '
       + 'Accepting the clip freezes the rate, hold and per-creator cap onto it, so a brand '
-      + 'cannot lower them afterwards. YouTube and X only.',
+      + 'cannot lower them afterwards. YouTube, and Instagram where configured.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -333,9 +353,12 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
         }
 
         case 'submit_clip': {
+          // The key's owner, forwarded so the runtime can tell an authorised
+          // agent from an anonymous POST. Submitting now needs an account on
+          // the website, and a gate the MCP layer walks around is not a gate.
           const res = await campaigns.handleSubmit(new Request('http://mcp/api/submissions', {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: { 'content-type': 'application/json', 'x-mcp-owner': auth.owner },
             body: JSON.stringify(args),
           }));
           return ok(id, text(await res.json()));

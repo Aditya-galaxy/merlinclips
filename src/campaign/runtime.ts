@@ -1586,10 +1586,55 @@ export class CampaignRuntime {
    * thing that receives money; requiring a signup before someone can be paid
    * is the friction this product exists to remove.
    */
+  /**
+   * Whether this request carries identity that is not a browser session.
+   *
+   * The MCP layer authorises its own callers with an API key naming an owner,
+   * and sets this header once it has. Without it, a signed-out POST to
+   * /api/submissions is refused — which is the point of the gate, since the
+   * endpoint is public and an agent could otherwise walk around the sign-in
+   * by speaking JSON-RPC instead of HTML.
+   */
+  private submitBypass(request: Request): boolean {
+    const owner = request.headers.get('x-mcp-owner');
+    // 'public' is what the MCP layer reports for a tool needing no key, so
+    // accepting it here would have let an anonymous JSON-RPC call walk through
+    // the gate the website enforces. Only a named owner counts as identity.
+    return owner !== null && owner !== 'public';
+  }
+
   async handleSubmit(request: Request): Promise<Response> {
     await this.ready();
 
     const accountId = await this.accountFor(request);
+
+    // Submitting requires an account.
+    //
+    // This was keyless on purpose for a long time, and the reasoning was good:
+    // the payout address is the identity, so requiring credentials put an
+    // operator between a clipper and getting paid. What it cost was everything
+    // downstream of knowing who someone is — standing that follows a person
+    // rather than an address, a studio worth signing into, and any way to
+    // reach a creator whose clip was refused.
+    //
+    // The trade was made deliberately. It is enforced here rather than in the
+    // page, because a gate that only exists in the browser is not a gate: the
+    // endpoint is public and takes JSON.
+    //
+    // `bypass` is the MCP path, which carries its own identity — an API key
+    // naming an owner — and is checked before this is called.
+    if (!accountId && !this.submitBypass(request)) {
+      telemetry.recordHttpRequest('/api/submissions', 401);
+      return Response.json(
+        {
+          error: 'Sign in before submitting a clip. Your account is what links a payout to you, '
+            + 'and what your standing is built on.',
+          field: 'auth',
+          signInUrl: '/auth/google',
+        },
+        { status: 401 },
+      );
+    }
 
     const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
     if (!this.rateLimiter.consume(clientIp)) {

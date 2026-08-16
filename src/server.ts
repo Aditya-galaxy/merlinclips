@@ -248,6 +248,12 @@ const server = Bun.serve({
           cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));
         return new Response(null, { status: 302, headers });
       }
+      // Where to send them back to. Stored in a cookie rather than round-tripped
+      // through Google, and validated as a local path so the parameter cannot
+      // be used to bounce someone off our domain after they authenticate.
+      const wanted = url.searchParams.get('next') ?? '';
+      const nextPath = /^\/[A-Za-z0-9/_-]*$/.test(wanted) ? wanted : '';
+
       const state = randomToken();
       const nonce = randomToken();
       const oauthConfig = {
@@ -257,6 +263,9 @@ const server = Bun.serve({
       const headers = new Headers({ location: authorizeUrl(oauthConfig, state, nonce) });
       headers.append('set-cookie',
         cookie(STATE_COOKIE, `${state}.${nonce}`, 600, SECURE_COOKIES));
+      if (nextPath) {
+        headers.append('set-cookie', cookie('mc_next', nextPath, 600, SECURE_COOKIES));
+      }
       return new Response(null, { status: 302, headers });
     }
 
@@ -301,10 +310,25 @@ const server = Bun.serve({
       // Smart Redirect: If creator is already registered, go straight to /profile
       await campaigns.ready();
       const existingAcc = campaigns.store.getCreatorAccount(creatorId);
-      const targetLocation = (existingAcc && existingAcc.wallet) ? '/profile' : '/onboarding?signin=ok';
+      // Back to where they were, when they came from somewhere. A creator who
+      // clicked a campaign and was asked to sign in should land on that
+      // campaign, not on a dashboard with no memory of what they wanted.
+      //
+      // Re-validated here as well as when it was written: a cookie is client
+      // storage, and a value that was a local path going in should still be
+      // one coming out.
+      const wanted = /(?:^|;\s*)mc_next=([^;]*)/.exec(request.headers.get('cookie') ?? '')?.[1];
+      const back = wanted ? decodeURIComponent(wanted) : '';
+      const returnTo = /^\/[A-Za-z0-9/_-]*$/.test(back) ? back : '';
+
+      const onboarded = existingAcc && existingAcc.wallet;
+      const targetLocation = returnTo && onboarded
+        ? returnTo
+        : onboarded ? '/profile' : '/onboarding?signin=ok';
 
       const headers = new Headers({ location: targetLocation });
       headers.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));
+      headers.append('set-cookie', clearCookie('mc_next', SECURE_COOKIES));
       headers.append('set-cookie',
         cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, SECURE_COOKIES));
       return new Response(null, { status: 302, headers });

@@ -41,7 +41,7 @@ const campaign: Campaign = {
 const submit = (url = 'https://youtube.com/shorts/abc123XYZ_1') =>
   new Request('http://x/api/submissions', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'x-mcp-owner': 'test-operator' },
     body: JSON.stringify({ campaignId: 'camp-pay', payoutAddress: WALLET, url }),
   });
 

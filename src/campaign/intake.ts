@@ -27,7 +27,8 @@ import { eligible } from './eligibility';
 import { acceptSubmission, DEFAULT_SETTLEMENT_WINDOW_MS } from './terms';
 import { MIN_DWELL_HOURS } from './views';
 
-import type { Campaign, Creator, Platform, Submission } from './types';
+import { CAMPAIGN_CATEGORIES } from './types';
+import type { Campaign, CampaignCategory, Creator, Platform, Submission } from './types';
 
 export { MIN_DWELL_HOURS };
 
@@ -45,6 +46,9 @@ export interface OpenCampaignInput {
   dwellHours?: unknown;
   settlementDays?: unknown;
   platforms?: unknown;
+  brandName?: unknown;
+  title?: unknown;
+  category?: unknown;
   chain?: unknown;
   fundingWallet?: unknown;
   endsAt?: unknown;
@@ -129,6 +133,23 @@ export function openCampaign(
   now: Date = new Date(),
   enabled: ReadonlySet<Platform> = PLATFORMS,
 ): Result<Campaign> {
+  const brandName = typeof input.brandName === 'string' ? input.brandName.trim().slice(0, 60) : '';
+
+  const rawCategory = typeof input.category === 'string' ? input.category.trim().toLowerCase() : '';
+  // An unrecognised category becomes 'other' rather than an error. It is a
+  // filter label, and refusing a funded campaign over one would be the wrong
+  // trade — but silently keeping the unknown string would break the filter it
+  // exists for.
+  const category = (CAMPAIGN_CATEGORIES as readonly string[]).includes(rawCategory)
+    ? (rawCategory as CampaignCategory)
+    : rawCategory ? 'other' : undefined;
+
+  // Derived when absent, in the convention the whole category already uses:
+  // "<Brand> Clipping". One less field for a brand to fill, and a card with a
+  // consistent name beats one with an empty slot or a repeated brief.
+  const rawTitle = typeof input.title === 'string' ? input.title.trim().slice(0, 80) : '';
+  const title = rawTitle || (brandName ? `${brandName} Clipping` : undefined);
+
   const brief = typeof input.brief === 'string' ? input.brief.trim() : '';
   if (brief.length < 10) {
     return bad('brief must be at least 10 characters — it is what the agent judges against', 'brief');
@@ -265,6 +286,9 @@ export function openCampaign(
     ok: true,
     value: {
       campaignId: (input.campaignId ?? `camp-${crypto.randomUUID().slice(0, 8)}`).trim(),
+      ...(brandName ? { brandName } : {}),
+      ...(title ? { title } : {}),
+      ...(category ? { category } : {}),
       brief,
       poolUsdc: pool.value,
       cpmUsdc: cpm.value,

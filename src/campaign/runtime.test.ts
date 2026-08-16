@@ -16,7 +16,27 @@ import { termsFor } from './terms';
 import { DryRunExecutor } from './tick';
 import type { Campaign } from './types';
 
-const NOW = new Date('2026-08-05T12:00:00.000Z');
+/**
+ * Anchored to the clock, not to the calendar.
+ *
+ * These were fixed dates in August 2026, chosen so the clip had dwelled and
+ * was inside its 14-day settlement window. That window closed at midnight on
+ * 2026-08-16 and the suite went red — not because anything regressed, but
+ * because the gate correctly refused a clip whose terms had expired while the
+ * fixture went on asserting it would pay.
+ *
+ * A test that passes only until a particular date is a gate that stops
+ * guarding on that date, and the failure looks exactly like a real one.
+ * Offsets from now keep the relationships the test is actually about: clip
+ * accepted well inside the window, verdict after it, snapshot old enough to
+ * have dwelled.
+ */
+const day = 86_400_000;
+const ago = (days: number) => new Date(Date.now() - days * day);
+const NOW = ago(0);
+const ACCEPTED_AT = ago(4);
+const VERDICT_AT = ago(3);
+const SNAPSHOT_AT = ago(2);
 
 const campaign: Campaign = {
   campaignId: 'camp-1',
@@ -30,8 +50,8 @@ const campaign: Campaign = {
   platforms: ['youtube'],
   chain: 'base-sepolia',
   status: 'active',
-  startsAt: '2026-08-01T00:00:00.000Z',
-  endsAt: '2026-09-01T00:00:00.000Z',
+  startsAt: ago(10).toISOString(),
+  endsAt: new Date(Date.now() + 20 * day).toISOString(),
 };
 
 async function runtime(env: Record<string, string | undefined> = {}) {
@@ -58,22 +78,22 @@ async function runtime(env: Record<string, string | undefined> = {}) {
       platform: 'youtube',
       postId: 'p',
       url: 'https://youtube.com/shorts/p',
-      submittedAt: '2026-08-02T00:00:00.000Z',
-      acceptedTerms: termsFor(campaign, new Date('2026-08-02T00:00:00.000Z')),
+      submittedAt: ACCEPTED_AT.toISOString(),
+      acceptedTerms: termsFor(campaign, ACCEPTED_AT),
     },
   });
   await rt.record({
     type: 'verdict_recorded',
     verdict: {
       verdictId: 'v-1', submissionId: 'sub-1', pass: true, reasons: ['ok'],
-      confidence: 1, model: 'test', at: '2026-08-03T00:00:00.000Z',
+      confidence: 1, model: 'test', at: VERDICT_AT.toISOString(),
     },
   });
   await rt.record({
     type: 'snapshot_taken',
     snapshot: {
       submissionId: 'sub-1', views: 2_000n,
-      fetchedAt: '2026-08-04T00:00:00.000Z', source: 'youtube',
+      fetchedAt: SNAPSHOT_AT.toISOString(), source: 'youtube',
     },
   });
   rt.mandates.put(

@@ -590,6 +590,15 @@ const server = Bun.serve({
       return campaigns.handleTickStatus();
     }
 
+    // Proving a creator controls the address their USDC goes to. Signed-in
+    // only, because the challenge is bound to an account.
+    if (url.pathname === '/api/me/wallet/challenge') {
+      return campaigns.handleWalletChallenge(request);
+    }
+    if (url.pathname === '/api/me/wallet/link' && request.method === 'POST') {
+      return campaigns.handleWalletLink(request);
+    }
+
     // Who has signed up. Operator-gated and read-only — it carries creator
     // emails, which is the reason it is gated and the reason it is its own
     // route rather than a field added to something already public.

@@ -47,6 +47,7 @@ import { RpcBalanceReader } from './balances';
 import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
 import { bothFormsOf, creatorIdsFor, linkWallet, walletsFor } from './accounts';
+import { ChallengeStore, challengeMessage, verifyLink } from './walletlink';
 import { approveBrand, brandFor } from './brands';
 import { isLaunched } from './types';
 import type { Campaign, CampaignStatus, Platform } from './types';
@@ -215,6 +216,16 @@ export class CampaignRuntime {
    * we cannot keep.
    */
   private readonly signable: ReadonlySet<string>;
+
+  /**
+   * Live wallet-link challenges.
+   *
+   * On the runtime rather than module scope so a test gets its own, and so two
+   * deployments never share one. In memory and short-lived by design — a
+   * challenge that survives a restart is one that could be spent twice, and an
+   * instance that has forgotten simply asks the creator for another.
+   */
+  public readonly walletChallenges = new ChallengeStore();
 
   /**
    * Platforms this deployment can confirm views on.
@@ -2164,6 +2175,70 @@ export class CampaignRuntime {
    * why it is a separate route rather than a field added to an existing one —
    * so the decision to expose it is visible in one place.
    */
+  /**
+   * Ask for a challenge to sign.
+   *
+   * Signed-in only: the challenge is bound to the account, so an anonymous
+   * caller has no account to bind it to and nothing to prove.
+   */
+  async handleWalletChallenge(request: Request): Promise<Response> {
+    await this.ready();
+    const accountId = await this.accountFor(request);
+    if (!accountId) {
+      return Response.json({ error: 'sign in before linking a wallet' }, { status: 401 });
+    }
+    const address = String(new URL(request.url).searchParams.get('address') ?? '').trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+      return Response.json({ error: 'address is required', field: 'address' }, { status: 400 });
+    }
+    const { nonce } = this.walletChallenges.issue(accountId);
+    return Response.json(
+      { nonce, message: challengeMessage({ nonce, address, host: 'merlinclips.com' }) },
+      { headers: { 'cache-control': 'private, no-store, max-age=0' } },
+    );
+  }
+
+  /**
+   * Link a wallet whose control has been proven.
+   *
+   * The address was previously whatever a creator typed, so a typo sent USDC
+   * to a wallet nobody holds. A linked address is one somebody signed for.
+   */
+  async handleWalletLink(request: Request): Promise<Response> {
+    await this.ready();
+    const accountId = await this.accountFor(request);
+    if (!accountId) {
+      return Response.json({ error: 'sign in before linking a wallet' }, { status: 401 });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const result = await verifyLink({
+      accountId,
+      address: body.address,
+      signature: body.signature,
+      nonce: body.nonce,
+      host: 'merlinclips.com',
+      challenges: this.walletChallenges,
+    });
+    if (!result.ok) {
+      return Response.json({ error: result.reason, field: 'signature' }, { status: 400 });
+    }
+
+    const account = linkWallet(this.store, accountId, result.address);
+    await this.record({ type: 'account_upserted', account });
+
+    void this.analytics.capture({
+      event: 'wallet_linked',
+      distinctId: accountId,
+      properties: { proven: true },
+    });
+
+    return Response.json(
+      { ok: true, address: result.address, wallets: (account.linkedWallets ?? []).map((w) => w.address) },
+      { headers: { 'cache-control': 'private, no-store, max-age=0' } },
+    );
+  }
+
   async handleOperatorSignups(request: Request): Promise<Response> {
     const denied = this.requireOperator(request);
     if (denied) return denied;

@@ -87,3 +87,47 @@ describe('what it reports', () => {
     expect(body.creators[0]).toHaveProperty('earnedUsdc');
   });
 });
+
+/**
+ * An account exists from the first sign-in, not the first completed form.
+ *
+ * `account_upserted` was only written by onboarding, so a creator who signed
+ * in with Google and stopped was a session and nothing else — invisible to the
+ * operator view, with the name and email Google had just supplied discarded
+ * until they filled in a form. Two Google accounts were also hard to tell
+ * apart from the outside, because the second one left no record at all.
+ */
+describe('signing in records the account', () => {
+  test('a first sign-in creates one, with what Google told us', async () => {
+    const rt = runtime();
+    await rt.recordSignIn({ accountId: 'cre-g-aaa', googleSub: 'sub-a', name: 'Ada', email: 'ada@x.test' });
+    const body = await (await ask(rt, { 'x-operator-secret': SECRET })).json() as
+      { creators: Array<Record<string, unknown>> };
+    expect(body.creators).toHaveLength(1);
+    expect(body.creators[0]).toMatchObject({ name: 'Ada', email: 'ada@x.test' });
+  });
+
+  test('two Google accounts are two creators, not one', async () => {
+    // The symptom that surfaced this: signing out and in as somebody else
+    // changed nothing anyone could see.
+    const rt = runtime();
+    await rt.recordSignIn({ accountId: 'cre-g-aaa', googleSub: 'sub-a', name: 'Ada', email: 'ada@x.test' });
+    await rt.recordSignIn({ accountId: 'cre-g-bbb', googleSub: 'sub-b', name: 'Bo', email: 'bo@x.test' });
+    const body = await (await ask(rt, { 'x-operator-secret': SECRET })).json() as
+      { creators: Array<Record<string, unknown>>; totals: Record<string, number> };
+    expect(body.totals.creators).toBe(2);
+    expect(body.creators.map((c) => c.email).sort()).toEqual(['ada@x.test', 'bo@x.test']);
+  });
+
+  test('signing in again does not overwrite what a creator set themselves', async () => {
+    // A returning creator's handle and chosen name are theirs. Google's answer
+    // fills a gap; it does not win an argument.
+    const rt = runtime();
+    await rt.recordSignIn({ accountId: 'cre-g-aaa', googleSub: 'sub-a', name: 'Ada', email: 'ada@x.test' });
+    await rt.recordSignIn({ accountId: 'cre-g-aaa', googleSub: 'sub-a', name: 'Renamed By Google', email: 'ada@x.test' });
+    const body = await (await ask(rt, { 'x-operator-secret': SECRET })).json() as
+      { creators: Array<Record<string, unknown>> };
+    expect(body.creators).toHaveLength(1);
+    expect(body.creators[0]!.name).toBe('Ada');
+  });
+});

@@ -319,6 +319,17 @@ const server = Bun.serve({
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
       }, SESSION_SECRET);
 
+      // An account exists from the first sign-in, not from the first completed
+      // form. Google has just told us who this is; discarding that until
+      // onboarding made a signed-in creator invisible to the operator view and
+      // gave the studio nothing of theirs to show.
+      await campaigns.recordSignIn({
+        accountId: creatorId,
+        googleSub: identity.sub,
+        name: identity.name,
+        email: identity.email,
+      });
+
       // Smart Redirect: If creator is already registered, go straight to /profile
       await campaigns.ready();
       const existingAcc = campaigns.store.getCreatorAccount(creatorId);

@@ -2181,6 +2181,48 @@ export class CampaignRuntime {
    * Signed-in only: the challenge is bound to the account, so an anonymous
    * caller has no account to bind it to and nothing to prove.
    */
+  /**
+   * Record that somebody signed in, the moment they do.
+   *
+   * An account record was only written by onboarding, so a creator who signed
+   * in with Google and stopped existed as a session and nothing else. They
+   * were invisible to the operator view, their name and email — which Google
+   * had just told us — were discarded until they finished a form, and the
+   * studio had no account to show them.
+   *
+   * It also made two Google accounts hard to tell apart from the outside: the
+   * second one had no record, so nothing about the page changed to reflect
+   * that somebody else had arrived.
+   *
+   * Idempotent. An existing account keeps everything it has — a returning
+   * creator's handle, wallets and bio are theirs, not Google's to overwrite —
+   * and only gains a name or email if it had none.
+   */
+  async recordSignIn(input: {
+    accountId: string; googleSub: string; name?: string; email?: string;
+  }): Promise<void> {
+    await this.ready();
+    const existing = this.store.getCreatorAccount(input.accountId);
+
+    const account = {
+      ...(existing ?? {
+        accountId: input.accountId,
+        joinedAt: new Date().toISOString(),
+        linkedWallets: [],
+      }),
+      googleSub: input.googleSub,
+      // Google's answer only fills a gap; it never overwrites what a creator
+      // set themselves.
+      name: existing?.name || input.name || 'Creator',
+      email: existing?.email || input.email || '',
+      updatedAt: new Date().toISOString(),
+    } as Parameters<typeof this.store.putCreatorAccount>[0];
+
+    // `record` writes through the log, and the event is content-addressed, so
+    // a returning creator whose details have not changed writes nothing.
+    await this.record({ type: 'account_upserted', account });
+  }
+
   async handleWalletChallenge(request: Request): Promise<Response> {
     await this.ready();
     const accountId = await this.accountFor(request);

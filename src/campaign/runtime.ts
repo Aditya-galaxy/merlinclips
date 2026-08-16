@@ -2096,6 +2096,83 @@ export class CampaignRuntime {
    * read its balance, we do not hold it — so ending simply stops us reading it,
    * and the money is already where it started.
    */
+  /**
+   * Overturn a verdict on appeal.
+   *
+   * A clip is judged once and never re-judged — deliberately, because a verdict
+   * that changes between runs is a verdict nobody can rely on. The cost of that
+   * determinism was that a model refusing good work ended it: `verdict_failed`
+   * is terminal, and there was no route back. A clipper who did exactly what
+   * the brief asked and was misread lost the evening, with the reason shown to
+   * them and nothing they could do about it.
+   *
+   * This is the way back, and its shape matters. It does not re-run the model —
+   * that would spend another call to roll the same dice, and could return a
+   * third answer. It records a *new* verdict, by a named human, citing the one
+   * it supersedes. `latestVerdict` picks by time, so the payout gate reads this
+   * one and the clip settles on its next pass.
+   *
+   * The original verdict is not deleted. Both stay in `verdictHistory`, so the
+   * record shows a model refused and a person disagreed, rather than showing
+   * the refusal never happened. An override nobody can see is worse than a
+   * refusal nobody can appeal.
+   */
+  async handleAppeal(request: Request, submissionId: string): Promise<Response> {
+    const denied = this.requireOperator(request);
+    if (denied) return denied;
+    await this.ready();
+
+    const submission = this.store.submission(submissionId);
+    if (!submission) return Response.json({ error: 'unknown submission' }, { status: 404 });
+
+    const previous = this.store.latestVerdict(submissionId);
+    if (previous?.pass) {
+      // Nothing to overturn. Reported rather than written, so an accidental
+      // double-call does not stack verdicts on a clip that already passed.
+      return Response.json({ ok: true, note: 'this clip already passed', submissionId });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as { reason?: unknown };
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    if (reason.length < 10) {
+      // A reason is required because this is the one place a human overrides
+      // the gate, and "why" is the only thing that makes that auditable.
+      return Response.json(
+        { error: 'a reason of at least 10 characters is required — it is the record of why '
+          + 'the model was overruled', field: 'reason' },
+        { status: 400 },
+      );
+    }
+
+    await this.record({
+      type: 'verdict_recorded',
+      verdict: {
+        verdictId: `vdt-appeal-${crypto.randomUUID().slice(0, 8)}`,
+        submissionId,
+        pass: true,
+        reasons: [reason],
+        confidence: 1,
+        model: 'operator-review',
+        at: new Date().toISOString(),
+        ...(previous ? { supersedes: previous.verdictId } : {}),
+      },
+    });
+
+    void this.analytics.capture({
+      event: 'verdict_appealed',
+      distinctId: `creator:${submission.creatorId}`,
+      properties: { campaignId: submission.campaignId, hadVerdict: Boolean(previous) },
+    });
+
+    return Response.json({
+      ok: true,
+      submissionId,
+      supersedes: previous?.verdictId ?? null,
+      note: 'the clip passes from now and settles on the next pass. The model\'s original '
+        + 'verdict stays in the record beside this one.',
+    });
+  }
+
   async handleEndCampaign(request: Request, campaignId: string): Promise<Response> {
     const guard = this.requireOperator(request);
     if (guard) return guard;

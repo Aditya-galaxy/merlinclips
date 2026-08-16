@@ -560,6 +560,16 @@ const server = Bun.serve({
       return campaigns.handleTickStatus();
     }
 
+    // A clipper's correct work, when the model got it wrong.
+    //
+    // Operator-gated, and it records a *superseding* verdict rather than
+    // deleting the model's — the history shows a machine refused and a person
+    // disagreed, which is the only version of an override worth having.
+    const appealMatch = url.pathname.match(/^\/api\/submissions\/([A-Za-z0-9._-]+)\/appeal$/);
+    if (appealMatch && request.method === 'POST') {
+      return campaigns.handleAppeal(request, appealMatch[1]!);
+    }
+
     // Take a published campaign down. Operator-gated: it is a moderation lever.
     const endMatch = url.pathname.match(/^\/api\/campaigns\/([A-Za-z0-9._-]+)\/end$/);
     if (endMatch && request.method === 'POST') {

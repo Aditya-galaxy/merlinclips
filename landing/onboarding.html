@@ -508,19 +508,10 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
               <button type="button" class="btn-sm connect-row-btn" data-plat="x">Connect</button>
             </div>
 
-            <!-- Facebook -->
-            <div class="social-row" id="row-facebook">
-              <div class="social-left">
-                <div class="social-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                </div>
-                <span>Facebook <small style="display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px;">No route to view counts — clips are not accepted</small></span>
-              </div>
-              <!-- Was a Connect button with no caveat. Facebook is not in the
-                   platform type at all, so a creator could connect an account
-                   and never be able to submit anything with it. -->
-              <span class="btn-sm" style="opacity:.45;cursor:not-allowed;" aria-disabled="true">Unavailable</span>
-            </div>
+            <!-- Facebook removed. No API returns view counts for another
+                 account's post, so a clip there could be accepted and never paid.
+                 Offering the row implied otherwise. -->
+
           </div>
         </div>
 
@@ -532,10 +523,16 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
           <div class="form-group">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
               <label class="form-label" for="in-wallet" style="margin:0;">Base EVM Wallet Address (USDC)</label>
-              <button type="button" class="btn-sm" id="btn-gen-wallet" style="font-size:12px;padding:5px 12px;background:var(--orange-wash);color:var(--orange);border-color:rgba(255,80,0,0.3);font-weight:600;">⚡ Generate Free Base Wallet</button>
+              <!-- A "Generate Free Base Wallet" button stood here. It produced forty
+                   random hex characters, told the creator a "Dedicated Circle Agent
+                   Wallet" had been allotted, and made the field read-only so they
+                   could not correct it. Nobody holds the key to those bytes, so every
+                   payout to that address would have been destroyed — permanently, and
+                   only discovered after the clips had earned. cluster.ts already
+                   refuses to do this server-side for exactly this reason. -->
             </div>
-            <input class="input-field" id="in-wallet" value="" placeholder="0x... (paste your EVM wallet address or click generate)" spellcheck="false" />
-            <span class="counter-text" id="gen-wallet-status">Paste an existing EVM address or click Generate for a free Base payout wallet.</span>
+            <input class="input-field" id="in-wallet" value="" placeholder="0x… your Base address" spellcheck="false" />
+            <span class="counter-text" id="gen-wallet-status">Paste the Base address you want USDC sent to. On your studio page you can connect a wallet and prove it is yours, which is safer than typing it.</span>
           </div>
 
           <div style="padding:16px;border-radius:14px;background:var(--orange-wash);border:1px solid rgba(255,80,0,0.25);margin-top:16px;">
@@ -699,12 +696,7 @@ window.mcAfterOnboarding = function () {
           walletInput.value = existingW;
           walletInput.readOnly = true;
         }
-        var genBtn = document.getElementById('btn-gen-wallet');
-        if (genBtn) {
-          genBtn.disabled = true;
-          genBtn.style.opacity = '0.6';
-          genBtn.textContent = '✓ Base Wallet Linked';
-        }
+        // (no generator button to disable any more)
         var statusEl = document.getElementById('gen-wallet-status');
         if (statusEl) {
           statusEl.textContent = '✓ Primary Base EVM Wallet Linked: ' + existingW;
@@ -858,30 +850,8 @@ window.mcAfterOnboarding = function () {
     });
   }
 
-  // Auto-Generate Base Wallet
-  var genBtn = document.getElementById('btn-gen-wallet');
-  if (genBtn) {
-    genBtn.addEventListener('click', function() {
-      if (genBtn.disabled) return;
-      var chars = '0123456789abcdefABCDEF';
-      var addr = '0x';
-      for (var i = 0; i < 40; i++) addr += chars.charAt(Math.floor(Math.random() * chars.length));
-      var walletInput = document.getElementById('in-wallet');
-      walletInput.value = addr;
-      walletInput.readOnly = true;
-
-      genBtn.disabled = true;
-      genBtn.style.opacity = '0.6';
-      genBtn.textContent = '✓ Base Wallet Allotted';
-
-      var statusEl = document.getElementById('gen-wallet-status');
-      if (statusEl) {
-        statusEl.textContent = '✓ Dedicated Circle Agent Wallet allotted: ' + addr;
-        statusEl.style.color = 'var(--orange)';
-        statusEl.style.fontWeight = '600';
-      }
-    });
-  }
+  // The address generator that lived here is gone. It produced forty random
+  // hex characters and called them a wallet; see the note where its button was.
 
   function showStep(step) {
     for (var i = 1; i <= totalSteps; i++) {

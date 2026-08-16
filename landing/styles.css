@@ -345,6 +345,13 @@ footer a:hover{color:var(--pop);text-decoration:underline}
 .wcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:820px){.wcards{grid-template-columns:1fr}.wcards .wc:nth-child(n+3){display:none}}
 .wc{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:16px 17px 14px}
+/* The showcase renders real campaigns now, so a card is a link to the page
+   that lists them. A campaign a creator cannot open is a poster. */
+a.wc{text-decoration:none;color:inherit;display:block;
+     transition:transform .15s ease,border-color .15s ease}
+a.wc:hover{transform:translateY(-2px);border-color:var(--pop)}
+.wc-empty{grid-column:1/-1;padding:34px 22px;text-align:center;color:var(--muted);
+          font-size:14px;border:1px dashed var(--line);border-radius:12px}
 .wc .tags{display:flex;align-items:center;gap:7px;margin-bottom:11px}
 .wtag{font-size:10.5px;font-weight:650;padding:3px 8px;border-radius:5px;letter-spacing:.02em}
 .wtag.v{background:#EEE7FD;color:#5B21B6}

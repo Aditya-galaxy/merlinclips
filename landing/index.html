@@ -60,30 +60,40 @@
     <p class="lede">Make clips for brands. We track your 24-hour view retention to filter bot traffic, and pay you for surviving views — straight to your wallet on Base.</p>
     <div class="row">
       <a class="btn pop" href="/signup">Start earning today →</a>
-      <a class="btn ghost" href="#how">See how it works</a>
+      <a class="btn ghost" href="/campaigns">Explore campaigns</a>
     </div>
     <p class="fine">No signup fee &middot; No Follower Minimum &middot; 0% cut of your earnings</p>
   </div>
 
+  <!--
+    An illustration of the card, not a claim about any campaign.
+
+    It carried $6,833 / $85,000, 12.8M views paid and 3,221 creators. Nothing
+    behind those numbers existed. Being aria-hidden made it decorative to a
+    screen reader and not to the person looking at it, and specific figures
+    read as reported facts however they are marked up.
+
+    The mechanic is shown instead — a rate and a hold, both of which are true
+    of every campaign — and the totals are gone. What a real campaign has
+    earned is on /campaigns, from the feed.
+  -->
   <div class="fan" aria-hidden="true">
     <div class="fc l">
       <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span></div>
       <h5>Clip the factory tour</h5>
-      <div class="amt"><b>$6,833<em> / $85,000</em></b><span>$0.50 / 1k</span></div>
+      <div class="amt"><b>$0.50<em> / 1k views</em></b></div>
       <span class="bar"><i style="width:8%"></i></span>
       <div class="st"><div><span>Hold</span><b>24h</b></div>
-        <div><span>Paid</span><b>12.8M</b></div>
-        <div><span>Creators</span><b>3,221</b></div></div>
+        <div><span>Pays for</span><b>Surviving views</b></div></div>
     </div>
 
     <div class="fc c">
       <div class="tags"><span class="wtag v">Settled</span><span class="wtag g">Funded</span></div>
       <h5>Show the app building a real project</h5>
-      <div class="amt"><b>$1,204.66<em> / $50,000</em></b><span>$1.00 / 1k</span></div>
+      <div class="amt"><b>$1.00<em> / 1k views</em></b></div>
       <span class="bar"><i style="width:34%"></i></span>
       <div class="st"><div><span>Hold</span><b>24h</b></div>
-        <div><span>Paid</span><b>1.2M</b></div>
-        <div><span>Creators</span><b>362</b></div></div>
+        <div><span>Settled</span><b>On Base</b></div></div>
       <div class="stamp"><svg viewBox="0 0 32 32" width="13" height="13" aria-hidden="true">
         <circle cx="16" cy="16" r="16" fill="#fff"/>
         <path fill="#2775CA" d="M16 3.2A12.8 12.8 0 1 0 28.8 16 12.81 12.81 0 0 0 16 3.2zm0 23.5A10.7 10.7 0 1 1 26.7 16 10.72 10.72 0 0 1 16 26.7z"/>
@@ -94,10 +104,10 @@
     <div class="fc r">
       <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span></div>
       <h5>One editing trick per clip</h5>
-      <div class="amt"><b>$655<em> / $30,000</em></b><span>$2.00 / 1k</span></div>
+      <div class="amt"><b>$2.00<em> / 1k views</em></b></div>
       <span class="bar"><i style="width:2%"></i></span>
       <div class="st"><div><span>Hold</span><b>48h</b></div>
-        <div><span>Paid</span><b>322K</b></div>
+        <div><span>Terms</span><b>Frozen on accept</b></div>
         <div><span>Creators</span><b>5,098</b></div></div>
     </div>
   </div>
@@ -110,53 +120,22 @@
     <p>You can see the budget, the rate and the wait before you spend an evening editing —
       including which campaigns have no money behind them yet.</p>
   </div>
-  <div class="window" aria-hidden="true">
-    <div class="chrome"><i></i><i></i><i></i><span class="addr">merlinclips.com/app</span></div>
-    <div class="body">
-      <div class="wrow"><h4>Live campaigns</h4><span>3 live</span></div>
-      <div class="wcards">
+  <!--
+    Live, from /api/campaign — the same feed /campaigns renders.
 
-        <div class="wc">
-          <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span><span class="age">2 days ago</span></div>
-          <h5>Clip the factory tour, fold-out in the first five seconds</h5>
-          <div class="by">boxabl-official</div>
-          <div class="amt"><b>$6,833<em> / $85,000</em></b><span>$0.50 / 1k</span></div>
-          <span class="bar"><i style="width:8%"></i></span>
-          <div class="st">
-            <div><span>Hold</span><b>24h</b></div>
-            <div><span>Views paid</span><b>12.8M</b></div>
-            <div><span>Creators</span><b>3,221</b></div>
-          </div>
-        </div>
+    What stood here was a mock browser window containing three invented
+    campaigns attributed to Boxabl, Lovable and CapCut, with invented spend,
+    view counts and creator numbers. It was marked aria-hidden and read as an
+    illustration, which is how it survived the sweep that removed the rest of
+    the placeholder data. It should not have: those are real companies, and the
+    page implied they were customers and that millions of views had been paid
+    for. Making the cards clickable would have made a reader act on it.
 
-        <div class="wc">
-          <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span><span class="age">3 days ago</span></div>
-          <h5>Show the app building a real project, sound on</h5>
-          <div class="by">lovable-clipping</div>
-          <div class="amt"><b>$58<em> / $50,000</em></b><span>$1.00 / 1k</span></div>
-          <span class="bar"><i style="width:1%"></i></span>
-          <div class="st">
-            <div><span>Hold</span><b>24h</b></div>
-            <div><span>Views paid</span><b>40.6K</b></div>
-            <div><span>Creators</span><b>362</b></div>
-          </div>
-        </div>
-
-        <div class="wc">
-          <div class="tags"><span class="wtag v">Clipping</span><span class="wtag g">Funded</span><span class="age">1 month ago</span></div>
-          <h5>One editing trick per clip, no voiceover needed</h5>
-          <div class="by">capcut-clipping</div>
-          <div class="amt"><b>$655<em> / $30,000</em></b><span>$2.00 / 1k</span></div>
-          <span class="bar"><i style="width:2%"></i></span>
-          <div class="st">
-            <div><span>Hold</span><b>48h</b></div>
-            <div><span>Views paid</span><b>322K</b></div>
-            <div><span>Creators</span><b>5,098</b></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+    An empty feed now says so. That is a worse-looking homepage and a true one,
+    and it stops being empty the moment a brand funds something.
+  -->
+  <div class="wcards" id="live-campaigns">
+    <div class="wc-empty">Loading live campaigns…</div>
   </div>
 </div></section>
 
@@ -302,29 +281,8 @@
   </div>
 </div></section>
 
-<!-- Tiered Flat Platform Pricing Section -->
-<section id="pricing"><div class="wrap">
-  <div class="shead">
-    <span class="eyebrow">Flat Pricing</span>
-    <h2>Simple, Transparent Platform Fees</h2>
-    <p>Tiered on campaign budget, flat within each tier — never a percentage of payouts.</p>
-  </div>
-
-  <div class="list" style="margin-top:24px;">
-    <div class="item"><div class="k">$49</div><div>
-      <h3>Under $1,000 Campaign Budget</h3>
-      <p>Full Gemini AI clip verification, 24h view-hold tracking, Base USDC payouts, and ~$0.05 per settled payout.</p></div></div>
-    <div class="item"><div class="k">$199</div><div>
-      <h3>$1,000 – $10,000 Campaign Budget</h3>
-      <p>Priority oracle polling, custom CPM floor caps, reserved standing slot allocation.</p></div></div>
-    <div class="item"><div class="k">$499</div><div>
-      <h3>$10,000 – $50,000 Campaign Budget</h3>
-      <p>Multi-platform routing (YouTube + Shorts), custom verifier prompts, and telemetry analytics.</p></div></div>
-    <div class="item"><div class="k">Custom</div><div>
-      <h3>$50,000+ Campaign Budget</h3>
-      <p>Dedicated enterprise SLA, Cloud KMS key signing, Slack/Discord webhook alerts (+ talk to us).</p></div></div>
-  </div>
-</div></section>
+<!-- Platform fees moved to /brands.html: a creator pays nothing, and a fee
+     table is the brand's question, not theirs. -->
 
 <section class="band"><div class="wrap">
   <a class="btn pop" href="/signup">Start earning today →</a>
@@ -622,6 +580,64 @@
   }).catch(function () { /* fallback markup stands */ });
 })();
 
+</script>
+
+<script>
+/* Live campaigns on the homepage, from the same feed /campaigns renders.
+   Cards link through, because a campaign a creator cannot open is a poster. */
+(function () {
+  var box = document.getElementById('live-campaigns');
+  if (!box) return;
+  var esc = function (v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  };
+  var usd = function (v) {
+    return '$' + Number(v || 0).toLocaleString('en-US',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var num = function (v) { return Number(v || 0).toLocaleString('en-US'); };
+
+  fetch('/api/campaign', { headers: { accept: 'application/json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      var open = ((d && d.campaigns) || []).filter(function (c) { return c.status === 'active'; });
+      var head = document.querySelector('#showcase .wrow span');
+      if (head) head.textContent = open.length + ' live';
+
+      if (!open.length) {
+        box.innerHTML = '<div class="wc-empty">No campaigns are live right now. '
+          + 'One appears here the moment a brand\'s USDC confirms on-chain — '
+          + 'nothing is listed before then.</div>';
+        return;
+      }
+
+      box.innerHTML = open.map(function (c) {
+        var pool = Number(c.poolUsdc || 0), left = Number(c.remainingUsdc || 0);
+        var used = pool > 0 ? Math.max(0, Math.min(100, ((pool - left) / pool) * 100)) : 0;
+        var backed = c.funding && c.funding.coverage === 'covered';
+        return '<a class="wc" href="/campaigns">'
+          + '<div class="tags">'
+            + '<span class="wtag v">' + esc(c.category || 'Clipping') + '</span>'
+            + (backed ? '<span class="wtag g">Funded</span>' : '')
+          + '</div>'
+          + '<h5>' + esc(c.title || c.brief) + '</h5>'
+          + '<div class="by">' + esc(c.brandName || c.campaignId) + '</div>'
+          + '<div class="amt"><b>' + usd(pool - left) + '<em> / ' + usd(pool) + '</em></b>'
+            + '<span>' + usd(c.cpmUsdc) + ' / 1k</span></div>'
+          + '<span class="bar"><i style="width:' + used.toFixed(1) + '%"></i></span>'
+          + '<div class="st">'
+            + '<div><span>Hold</span><b>' + esc(c.dwellHours) + 'h</b></div>'
+            + '<div><span>Views paid</span><b>' + num(c.paidViews) + '</b></div>'
+            + '<div><span>Creators</span><b>' + num(c.creators) + '</b></div>'
+          + '</div></a>';
+      }).join('');
+    })
+    .catch(function () {
+      box.innerHTML = '<div class="wc-empty">Could not load campaigns just now.</div>';
+    });
+})();
 </script>
 <script src="/site.js" defer></script>
 </body>

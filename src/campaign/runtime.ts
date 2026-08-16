@@ -1373,6 +1373,10 @@ export class CampaignRuntime {
     const challenge = await this.turnstile.check(
       body.turnstileToken ?? body['cf-turnstile-response'],
       clientIp === 'anonymous' ? undefined : clientIp.split(',')[0]?.trim(),
+      // Must match data-action on the widget in launch.html. A token minted on
+      // any other surface — including a copy of our public sitekey embedded
+      // elsewhere — carries a different action and is refused.
+      'brand-enquiry',
     );
     if (!challenge.ok) {
       return Response.json(

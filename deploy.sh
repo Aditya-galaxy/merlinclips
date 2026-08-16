@@ -136,6 +136,18 @@ AGENT_WALLET_ADDRESS="${AGENT_WALLET_ADDRESS:-$(deployed_env AGENT_WALLET_ADDRES
 # would reopen the endpoint to anyone.
 MCP_API_KEYS="${MCP_API_KEYS:-$(deployed_env MCP_API_KEYS)}"
 
+# Turnstile guards the brand enquiry form, which is public, unauthenticated,
+# and fans out to Slack and Discord on every submission.
+#
+# All three matter. The sitekey is public and goes to the browser. The secret
+# never leaves the server. TURNSTILE_HOSTNAMES pins which domains may issue a
+# token — without it the public sitekey can be hosted anywhere and the tokens
+# forwarded here, which is the one attack the other two do not stop. It must
+# not contain localhost on a production deployment.
+TURNSTILE_SITE_KEY="${TURNSTILE_SITE_KEY:-$(deployed_env TURNSTILE_SITE_KEY)}"
+TURNSTILE_SECRET="${TURNSTILE_SECRET:-$(deployed_env TURNSTILE_SECRET)}"
+TURNSTILE_HOSTNAMES="${TURNSTILE_HOSTNAMES:-$(deployed_env TURNSTILE_HOSTNAMES)}"
+
 POSTHOG_KEY="${POSTHOG_KEY:-$(deployed_env POSTHOG_KEY)}"
 POSTHOG_HOST="${POSTHOG_HOST:-$(deployed_env POSTHOG_HOST)}"
 POSTHOG_INCLUDE_WALLETS="${POSTHOG_INCLUDE_WALLETS:-$(deployed_env POSTHOG_INCLUDE_WALLETS)}"
@@ -181,6 +193,17 @@ if [ -n "$MISSING" ]; then
   exit 1
 fi
 echo "Config: every required variable is set on the running service"
+
+if [ -n "$TURNSTILE_SITE_KEY" ] && [ -z "$TURNSTILE_SECRET" ]; then
+  cat <<'NOSECRET'
+Note: TURNSTILE_SITE_KEY is set but TURNSTILE_SECRET is not, so the widget will
+render and nothing will verify the token it produces. The secret is on the same
+Cloudflare dashboard page as the sitekey.
+
+  TURNSTILE_SECRET="0x4AAA..." ./deploy.sh
+
+NOSECRET
+fi
 
 if [ -z "$MCP_API_KEYS" ]; then
   cat <<'NOKEYS'
@@ -238,7 +261,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --timeout 300s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
-  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},MCP_API_KEYS=${MCP_API_KEYS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
+  --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},MCP_API_KEYS=${MCP_API_KEYS},TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY},TURNSTILE_SECRET=${TURNSTILE_SECRET},TURNSTILE_HOSTNAMES=${TURNSTILE_HOSTNAMES},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 
 # The scheduler holds the tick secret in a header, so the two can drift apart
 # and the only symptom is a 401 an hour into a log nobody is reading — which is

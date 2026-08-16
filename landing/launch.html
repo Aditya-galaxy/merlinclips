@@ -173,7 +173,10 @@
          missing token as unchallenged rather than refusing the enquiry, so an
          unconfigured deployment still hears from brands. -->
     <div class="ff wide" id="e-turnstile-slot" hidden>
-      <div class="cf-turnstile" data-sitekey="" data-theme="auto" data-size="flexible"></div>
+      <!-- data-action is verified server-side against the same string, so a token
+           minted on another surface cannot be replayed into this form. -->
+      <div class="cf-turnstile" data-sitekey="" data-action="brand-enquiry"
+           data-theme="auto" data-size="flexible"></div>
     </div>
 
     <div class="ff wide">

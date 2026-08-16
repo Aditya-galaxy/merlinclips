@@ -42,6 +42,7 @@ import { telemetry } from './telemetry/metrics';
 import { Decimal, USDC } from './decimal';
 import { encodePayment, paymentRequiredBody, USDC_BASE_SEPOLIA, verifyPaid, verifyPayment } from './x402';
 import { OnChainPaymentVerifier } from './x402onchain';
+import { wordmarkSvg } from './wordmark';
 import { CampaignRuntime } from './campaign/runtime';
 
 /**
@@ -356,6 +357,24 @@ const server = Bun.serve({
      * and the path is rebuilt rather than passed through, so this cannot be
      * driven as an open proxy.
      */
+    // Campaign card art, derived from the brand name in the path.
+    //
+    // A route rather than inline SVG in each page, so the homepage and
+    // /campaigns render the same mark from one implementation, and so the
+    // browser caches it. Immutable: the same name always produces the same
+    // image, which is the property the whole thing is built on.
+    if (url.pathname.startsWith('/campaign-art/')) {
+      const name = decodeURIComponent(url.pathname.slice('/campaign-art/'.length))
+        .replace(/\.svg$/, '')
+        .slice(0, 60);
+      return new Response(wordmarkSvg(name), {
+        headers: {
+          'content-type': 'image/svg+xml; charset=utf-8',
+          'cache-control': 'public, max-age=31536000, immutable',
+        },
+      });
+    }
+
     if (url.pathname === '/ingest' || url.pathname.startsWith('/ingest/')) {
       const host = (process.env['POSTHOG_HOST'] ?? 'https://eu.i.posthog.com').replace(/\/+$/, '');
       const rest = url.pathname.slice('/ingest'.length) || '/';

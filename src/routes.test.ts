@@ -57,6 +57,18 @@ describe('the creator path from the front door', () => {
   });
 });
 
+describe('a creator can always reach the work', () => {
+  // Every page a signed-in creator lands on has to offer a way back to the
+  // campaigns. The studio nav offered the public ledger, the brand page and
+  // the architecture doc — all written for somebody else — and no link to the
+  // one page it exists to report on.
+  for (const page of ['landing/profile.html', 'landing/index.html', 'landing/campaigns.html']) {
+    test(`${page.split('/')[1]} links to /campaigns`, () => {
+      expect(readFileSync(page, 'utf8')).toContain('href="/campaigns"');
+    });
+  }
+});
+
 describe('the campaigns page reads the API it is served', () => {
   const page = readFileSync('landing/campaigns.html', 'utf8');
 

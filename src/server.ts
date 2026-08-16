@@ -519,12 +519,30 @@ const server = Bun.serve({
     // Open on purpose: a brand must be able to reach us without credentials.
     // Everything one account has earned, across every wallet it has used.
 
-    if (url.pathname === '/api/me/profile') {
-      return campaigns.handleProfile(request);
-    }
-
-    if (url.pathname === '/api/me/onboarding' && request.method === 'POST') {
-      return campaigns.handleSaveOnboarding(request);
+    // Never cached, and never cached by anything shared.
+    //
+    // These carry one signed-in creator's name, email, wallets and earnings,
+    // and they were returning 200 with no cache-control at all. A browser is
+    // entitled to keep that response — so signing out, signing in as somebody
+    // else, and loading the studio replayed the *previous* account's profile
+    // from cache. One person's identity and earnings shown to another, on the
+    // page whose entire job is to be personal.
+    //
+    // `private` keeps it out of any proxy, `no-store` stops the browser
+    // keeping it at all, and `Vary: Cookie` means anything that does cache
+    // keys on the session rather than the URL.
+    if (url.pathname.startsWith('/api/me')) {
+      const res = url.pathname === '/api/me/profile'
+        ? await campaigns.handleProfile(request)
+        : url.pathname === '/api/me/onboarding' && request.method === 'POST'
+          ? await campaigns.handleSaveOnboarding(request)
+          : undefined;
+      if (res) {
+        const headers = new Headers(res.headers);
+        headers.set('cache-control', 'private, no-store, max-age=0');
+        headers.set('vary', 'Cookie');
+        return new Response(res.body, { status: res.status, headers });
+      }
     }
 
     // Operator-gated: approving a brand is the decision manual approval exists for.

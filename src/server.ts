@@ -590,6 +590,13 @@ const server = Bun.serve({
       return campaigns.handleTickStatus();
     }
 
+    // Who has signed up. Operator-gated and read-only — it carries creator
+    // emails, which is the reason it is gated and the reason it is its own
+    // route rather than a field added to something already public.
+    if (url.pathname === '/api/operator/signups') {
+      return campaigns.handleOperatorSignups(request);
+    }
+
     // A clipper's correct work, when the model got it wrong.
     //
     // Operator-gated, and it records a *superseding* verdict rather than

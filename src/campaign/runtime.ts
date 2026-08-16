@@ -2146,6 +2146,99 @@ export class CampaignRuntime {
    * the refusal never happened. An override nobody can see is worse than a
    * refusal nobody can appeal.
    */
+  /**
+   * Who has signed up, for the person running this.
+   *
+   * There was no way to see it. A creator sees their own studio and a brand
+   * sees their own dashboard, and the operator — the only party who can
+   * approve a brand, end a campaign or overturn a verdict — had nothing but
+   * the storage bucket. Reading `accounts/` with gcloud is inspecting a
+   * database, not operating a product, and it does not join an account to what
+   * that person has actually done.
+   *
+   * Operator-gated and read-only. It reports; nothing here changes anything.
+   *
+   * Emails are included deliberately and are the reason this is gated: an
+   * operator needs to reach a creator whose clip was refused, and a marketplace
+   * that cannot contact the people it owes money to is not one. That is also
+   * why it is a separate route rather than a field added to an existing one —
+   * so the decision to expose it is visible in one place.
+   */
+  async handleOperatorSignups(request: Request): Promise<Response> {
+    const denied = this.requireOperator(request);
+    if (denied) return denied;
+    await this.ready();
+
+    const state = this.store.exportState();
+
+    const creators = state.accounts.map((acc) => {
+      const ids = new Set(creatorIdsFor(acc));
+      const mine = state.submissions.filter((x) => ids.has(x.creatorId));
+      const paid = state.payouts.filter((p) => ids.has(p.creatorId));
+      const earnedMicro = paid.reduce((t, p) => t + p.amountUsdc.micro, 0n);
+      // Same call the studio and the eligibility check use, so an operator
+      // sees the standing the gate would actually apply.
+      const record = standingFor(acc.accountId, mine, this.store);
+      return {
+        accountId: acc.accountId,
+        name: acc.name,
+        email: acc.email,
+        handle: acc.handle ?? null,
+        creatorType: acc.creatorType ?? null,
+        joinedAt: acc.joinedAt,
+        // Every address they have linked, not just the current one — a payout
+        // went to whichever was linked at the time.
+        wallets: (acc.linkedWallets ?? []).map((w) => w.address),
+        standing: record.standing,
+        clipsSubmitted: mine.length,
+        clipsJudged: record.judged,
+        payouts: paid.length,
+        earnedUsdc: (Number(earnedMicro) / 1_000_000).toFixed(2),
+      };
+    });
+
+    // Brands live in their own blobs rather than in the event log, so they are
+    // listed rather than replayed.
+    const brandKeys = await this.blobs.list('brands/');
+    const brands = (await Promise.all(brandKeys.map(async (key) => {
+      const raw = await this.blobs.get(key);
+      if (!raw) return undefined;
+      try {
+        const b = JSON.parse(raw) as {
+          brandId: string; email: string; company: string; website?: string;
+          approvedBy?: string; approvedAt?: string; fromEnquiry?: string;
+        };
+        const theirs = state.campaigns.filter((c) => c.ownerId === b.brandId);
+        return {
+          brandId: b.brandId,
+          company: b.company,
+          email: b.email,
+          website: b.website ?? null,
+          approvedBy: b.approvedBy ?? null,
+          approvedAt: b.approvedAt ?? null,
+          fromEnquiry: b.fromEnquiry ?? null,
+          campaigns: theirs.length,
+          liveCampaigns: theirs.filter((c) => c.status === 'active').length,
+        };
+      } catch {
+        // One unreadable record must not hide every other brand.
+        return undefined;
+      }
+    }))).filter((b): b is NonNullable<typeof b> => b !== undefined);
+
+    return Response.json({
+      creators: creators.sort((a, b) => b.joinedAt.localeCompare(a.joinedAt)),
+      brands,
+      totals: {
+        creators: creators.length,
+        creatorsWithAWallet: creators.filter((c) => c.wallets.length > 0).length,
+        creatorsWhoSubmitted: creators.filter((c) => c.clipsSubmitted > 0).length,
+        creatorsPaid: creators.filter((c) => c.payouts > 0).length,
+        brands: brands.length,
+      },
+    }, { headers: { 'cache-control': 'private, no-store, max-age=0' } });
+  }
+
   async handleAppeal(request: Request, submissionId: string): Promise<Response> {
     const denied = this.requireOperator(request);
     if (denied) return denied;

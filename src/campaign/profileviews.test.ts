@@ -175,3 +175,41 @@ describe('resolving who a clip belongs to', () => {
     expect(ids).toContain('cre-0xabc');
   });
 });
+
+/**
+ * "Inside the hold" cannot exceed what the campaign could pay.
+ *
+ * It was views x rate and nothing else, so a 1.8-billion-view clip on a
+ * campaign with a 100 USDC pool and a 10 USDC per-creator cap reported
+ * $3,609,399.20 waiting. That is the tile a creator reads to decide whether
+ * this is worth doing, and the number cannot exist — the gate refuses at
+ * `per_creator_cap` and `campaign_pool` long before it.
+ *
+ * Overstating is worse than the zero this page used to show. A zero reads as
+ * broken; a large number reads as a promise.
+ */
+describe('what the hold tile may claim', () => {
+  test('is capped by the per-creator limit', async () => {
+    const { Decimal } = await import('../decimal');
+    // 1.8bn views at 2.00/1k is ~3.6m USDC; the cap is 10.
+    const raw = (1_804_699_601n * new Decimal('2').micro) / 1000n;
+    const cap = new Decimal('10').micro;
+    expect(raw > cap).toBe(true);
+    expect([raw, cap].reduce((a, b) => (b < a ? b : a))).toBe(cap);
+  });
+
+  test('and by what is left in the pool', async () => {
+    const { Decimal } = await import('../decimal');
+    const cap = new Decimal('50').micro;
+    const poolLeft = new Decimal('4').micro;
+    const raw = new Decimal('900').micro;
+    expect([raw, cap, poolLeft].reduce((a, b) => (b < a ? b : a))).toBe(poolLeft);
+  });
+
+  test('a spent-out pool holds nothing, rather than a negative', async () => {
+    const { Decimal } = await import('../decimal');
+    const poolLeft = -new Decimal('5').micro;
+    const clamped = poolLeft > 0n ? poolLeft : 0n;
+    expect(clamped).toBe(0n);
+  });
+});

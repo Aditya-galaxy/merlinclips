@@ -946,8 +946,37 @@ export class CampaignRuntime {
         st = 'waiting';
         const unserved = peakViews - paidViews;
         if (unserved > 0n) {
-          const micro = (unserved * x.acceptedTerms.cpmUsdc.micro) / 1000n;
-          holdingMicro += micro;
+          // Bounded by what the campaign could actually pay, not by the raw
+          // view count.
+          //
+          // This multiplied views by the rate and stopped. A 1.8-billion-view
+          // clip on a campaign with a 100 USDC pool and a 10 USDC per-creator
+          // cap showed "$3,609,399.20 inside the hold" — money that cannot
+          // exist, on the tile a creator reads to decide whether this is worth
+          // doing. Overstating what is owed is worse than the zero this page
+          // used to show: the zero was visibly broken, and this reads as a
+          // promise.
+          //
+          // The gate applies both limits at settlement (`per_creator_cap`,
+          // `campaign_pool`). This is the same arithmetic, shown before the
+          // creator waits a day to find out.
+          const raw = (unserved * x.acceptedTerms.cpmUsdc.micro) / 1000n;
+
+          const campaign = this.store.campaign(x.campaignId);
+          const capLeft = campaign
+            ? campaign.perCreatorCapUsdc.micro
+              - this.store.spentOnCreator(x.campaignId, x.creatorId).micro
+            : raw;
+          const poolLeft = campaign
+            ? campaign.poolUsdc.micro - this.store.spentOnCampaign(x.campaignId).micro
+            : raw;
+
+          const payable = [raw, capLeft > 0n ? capLeft : 0n, poolLeft > 0n ? poolLeft : 0n]
+            .reduce((a, b) => (b < a ? b : a));
+
+          holdingMicro += payable;
+          // Views stay as observed — the count is a fact, and clipping it to
+          // match a capped amount would misreport what the platform reported.
           holdingViews += unserved;
         }
       }

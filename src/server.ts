@@ -620,7 +620,7 @@ const server = Bun.serve({
     if (url.pathname === '/api/views' && request.method === 'POST') {
       const paid = await verifyPaid(request.headers.get('X-PAYMENT'), viewsX402Config(), onchain);
       if (!paid.ok) {
-        return new Response(JSON.stringify(paymentRequiredBody(viewsX402Config()), null, 2), {
+        return new Response(JSON.stringify(paymentRequiredBody(viewsX402Config(), paid.reason), null, 2), {
           status: 402,
           headers: { 'content-type': 'application/json; charset=utf-8' },
         });
@@ -641,7 +641,7 @@ const server = Bun.serve({
     if (url.pathname === '/api/verify' && request.method === 'POST') {
       const paid = await verifyPaid(request.headers.get('X-PAYMENT'), verifyX402Config(), onchain);
       if (!paid.ok) {
-        return new Response(JSON.stringify(paymentRequiredBody(verifyX402Config()), null, 2), {
+        return new Response(JSON.stringify(paymentRequiredBody(verifyX402Config(), paid.reason), null, 2), {
           status: 402,
           headers: { 'content-type': 'application/json; charset=utf-8' },
         });

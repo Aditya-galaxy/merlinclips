@@ -72,10 +72,20 @@ export function paymentRequirements(config: X402Config): PaymentRequirements {
  * The 402 body. Shaped to x402's `accepts` array so a standard client — or
  * Circle's `circle services pay` — can consume it without special-casing us.
  */
-export function paymentRequiredBody(config: X402Config): Record<string, unknown> {
+export function paymentRequiredBody(
+  config: X402Config,
+  reason?: string,
+): Record<string, unknown> {
   return {
     x402Version: 1,
-    error: 'X-PAYMENT header is required',
+    // Why *this* request was refused, not a fixed string.
+    //
+    // Every 402 said "X-PAYMENT header is required", including the ones where
+    // the header was present and the payment was underpaid, replayed, on the
+    // wrong network, or unreadable on chain. An agent debugging that is told
+    // to add a header it already sent, so it retries the same call forever
+    // instead of fixing the thing that is actually wrong.
+    error: reason ?? 'X-PAYMENT header is required',
     accepts: [paymentRequirements(config)],
   };
 }

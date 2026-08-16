@@ -35,6 +35,21 @@ function hash(input: string): number {
 }
 
 /**
+ * Bumped whenever the drawing changes.
+ *
+ * The art is served `immutable` for a year, which is right for a URL whose
+ * content is fixed and a lie for one whose content comes from a generator we
+ * edit. Two fixes have already failed to reach a loaded card because of it.
+ *
+ * The version is part of the path, so a change here is a change to the URL and
+ * every cache misses exactly once. `wordmark.test.ts` asserts the pages
+ * request this number — without that, bumping the constant and bumping the
+ * pages are two edits nothing checks agree, which is how v2 shipped a redrawn
+ * mark that nobody saw.
+ */
+export const WORDMARK_VERSION = 3;
+
+/**
  * The card art for a name.
  *
  * Hue comes from the hash; saturation and lightness are fixed and low, so

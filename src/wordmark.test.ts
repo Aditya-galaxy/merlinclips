@@ -9,7 +9,9 @@
 
 import { describe, expect, test } from 'bun:test';
 
-import { wordmarkSvg } from './wordmark';
+import { readFileSync } from 'node:fs';
+
+import { WORDMARK_VERSION, wordmarkSvg } from './wordmark';
 
 describe('the same name always draws the same mark', () => {
   test('two calls agree', () => {
@@ -83,5 +85,38 @@ describe('the shape it draws', () => {
     // one campaign.
     const idOf = (svg: string) => /id="(g[a-z0-9]+)"/.exec(svg)?.[1];
     expect(idOf(wordmarkSvg('Boxabl'))).not.toBe(idOf(wordmarkSvg('Lovable')));
+  });
+});
+
+/**
+ * The version in the path has to match the version in the code.
+ *
+ * The art is cached `immutable` for a year, so a change to the drawing only
+ * reaches anyone if the URL changes with it. That happened twice: the type
+ * size was fixed and could not reach a loaded card, and then the whole mark
+ * was redrawn and still served the old one, because bumping the constant and
+ * bumping the pages are two separate edits and nothing checked they agreed.
+ *
+ * WORDMARK_VERSION was a comment pretending to be a mechanism until this
+ * asserted it.
+ */
+describe('the cache-busting version is real', () => {
+  const pages = ['landing/campaigns.html', 'landing/index.html'];
+
+  test('every page requests the current version', () => {
+    for (const page of pages) {
+      const html = readFileSync(page, 'utf8');
+      const used = [...html.matchAll(/\/campaign-art\/v(\d+)\//g)].map((m) => Number(m[1]));
+      expect(used.length).toBeGreaterThan(0);
+      for (const v of used) expect(v).toBe(WORDMARK_VERSION);
+    }
+  });
+
+  test('no page requests art without a version', () => {
+    // An unversioned URL still renders, so this would not fail visibly — it
+    // would just never update again.
+    for (const page of pages) {
+      expect(readFileSync(page, 'utf8')).not.toMatch(/\/campaign-art\/(?!v\d+\/)/);
+    }
   });
 });

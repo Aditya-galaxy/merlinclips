@@ -24,6 +24,7 @@
  * there is no second implementation to drift.
  */
 
+import { bothFormsOf } from './campaign/accounts';
 import { authorise } from './mcpauth';
 import type { CampaignRuntime } from './campaign/runtime';
 
@@ -378,7 +379,11 @@ export async function handleMcp(request: Request, campaigns: CampaignRuntime): P
           await campaigns.ready();
           const wallet = String(args['payoutAddress'] ?? '').toLowerCase();
           const state = campaigns.store.exportState();
-          const mine = state.submissions.filter((x) => x.creatorId.toLowerCase() === wallet);
+          // Against the stored form. Comparing to the bare address returned
+          // "no clips, no earnings" to creators who had both — the most
+          // alarming possible wrong answer on a payouts product.
+          const ids = bothFormsOf(wallet);
+          const mine = state.submissions.filter((x) => ids.includes(x.creatorId.toLowerCase()));
           const paid = campaigns.publicPayoutsFor(wallet);
           return ok(id, text({
             payoutAddress: wallet,

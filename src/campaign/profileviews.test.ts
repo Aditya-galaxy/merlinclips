@@ -132,3 +132,46 @@ describe('a clip paid twice is not counted twice', () => {
     expect(p.totals.earnedUsdc).toBe('0.00');
   });
 });
+
+/**
+ * A creator sees their own clips.
+ *
+ * They did not, for as long as this page has existed. Submissions are stored
+ * against `cre-<address>` by intake, and every lookup compared against the
+ * bare address — so `ids.has(submission.creatorId)` asked whether a set of
+ * addresses contained a prefixed string, and the answer was always no.
+ *
+ * The dashboard therefore read zero for everyone: no clips, no earnings, no
+ * campaign history, whatever they had actually done. It looked like an empty
+ * account rather than a broken query, which is why nobody caught it — and it
+ * would have meant a creator paid real USDC on mainnet opening their studio to
+ * be told they had earned nothing.
+ */
+describe('resolving who a clip belongs to', () => {
+  test('the prefixed form is found', async () => {
+    const { bothFormsOf } = await import('./accounts');
+    expect(bothFormsOf('0xABC')).toContain('cre-0xabc');
+  });
+
+  test('the bare form is still found', async () => {
+    // Both spellings exist in real data. A payouts lookup that matched one and
+    // missed the other would tell someone they had earned nothing.
+    const { bothFormsOf } = await import('./accounts');
+    expect(bothFormsOf('0xABC')).toContain('0xabc');
+  });
+
+  test('case does not decide whether someone is paid', async () => {
+    const { bothFormsOf } = await import('./accounts');
+    expect(bothFormsOf('0xAbC')).toEqual(bothFormsOf('0xabc'));
+  });
+
+  test('creatorIdsFor covers both, so an account matches either way', async () => {
+    const { creatorIdsFor } = await import('./accounts');
+    const ids = creatorIdsFor({
+      accountId: 'a', name: 'n', email: 'e', joinedAt: 'now',
+      linkedWallets: [{ address: '0xABC', chain: 'base', firstSeenAt: 'now' }],
+    } as never);
+    expect(ids).toContain('0xabc');
+    expect(ids).toContain('cre-0xabc');
+  });
+});

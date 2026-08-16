@@ -46,7 +46,7 @@ import { fundingFor, type BalanceReader } from './funding';
 import { RpcBalanceReader } from './balances';
 import { enquiryKey, parseEnquiry } from './enquiry';
 import { meets } from './eligibility';
-import { creatorIdsFor, linkWallet, walletsFor } from './accounts';
+import { bothFormsOf, creatorIdsFor, linkWallet, walletsFor } from './accounts';
 import { approveBrand, brandFor } from './brands';
 import { isLaunched } from './types';
 import type { Campaign, CampaignStatus, Platform } from './types';
@@ -869,7 +869,9 @@ export class CampaignRuntime {
 
     const acc = this.store.getCreatorAccount(accountId);
     const walletAddrs = acc ? walletsFor(acc) : [];
-    const ids = new Set(walletAddrs);
+    // Creator ids, not addresses. Submissions and payouts are stored against
+    // `cre-<address>`; matching on the bare address found nothing, ever.
+    const ids = new Set(acc ? creatorIdsFor(acc) : []);
     const state = this.store.exportState();
     const mine = state.submissions.filter((x) => ids.has(x.creatorId));
 
@@ -2138,7 +2140,7 @@ export class CampaignRuntime {
     const wallet = payoutAddress.trim().toLowerCase();
     return this.store
       .exportState()
-      .payouts.filter((p) => p.creatorId.toLowerCase() === wallet)
+      .payouts.filter((p) => bothFormsOf(wallet).includes(p.creatorId.toLowerCase()))
       .map((p) => ({
         campaignId: p.campaignId,
         submissionId: p.submissionId,

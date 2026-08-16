@@ -1009,7 +1009,13 @@ export class CampaignRuntime {
         bio: acc?.bio || '',
         language: acc?.language || 'English',
         creatorType: acc?.creatorType || 'Clipper',
-        wallet: acc?.wallet || walletAddrs[0] || '0x0003a59858f44451be2a5b486ee612b4139700f0',
+        // Null when there isn't one. This fell back to a hardcoded address —
+        // the operator's own treasury — so a creator who had linked no wallet
+        // was shown our address as theirs. Nothing pays it to them, and the
+        // number beside it is their earnings, so the page read as "your money
+        // arrives here" about a wallet they do not hold. Same defaulting
+        // pattern that had to be removed from the console and the executor.
+        wallet: acc?.wallet || walletAddrs[0] || null,
         joinedAt: acc?.joinedAt || new Date().toISOString(),
       },
       linkedWallets,
@@ -1336,8 +1342,20 @@ export class CampaignRuntime {
         brandId: brand.brandId,
         company: brand.company,
         contactEmail: brand.email,
-        ownerAddress: '0x0003a59858f44451be2a5b486ee612b4139700f0',
-        verified: true,
+        // The wallet this brand's own campaigns are funded to, not a constant.
+        // This was hardcoded to the operator's treasury, so every brand was
+        // shown our address as theirs — beside their spend figures, which
+        // makes it read as the account their money sits in.
+        //
+        // Null when they have opened no funded campaign yet, because then
+        // there genuinely is no such address.
+        ownerAddress: mine.find((c) => c.fundingWallet)?.fundingWallet ?? null,
+        // A brand exists in this store only by operator approval — `approvedBy`
+        // and `approvedAt` are on the record. That is what the badge means, so
+        // it is read rather than asserted; `true` was true by construction and
+        // would have stayed true if approval ever stopped being required.
+        verified: Boolean(brand.approvedAt),
+        website: brand.website,
         joinedAt: brand.approvedAt,
       },
       campaigns,

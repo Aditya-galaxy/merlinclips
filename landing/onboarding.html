@@ -574,6 +574,24 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
 </div>
 
 <script>
+/* Where to go when onboarding is done.
+   
+   The sign-in that sent a creator here may have come from a campaign, in which
+   case the callback forwarded ?next. Landing them on /profile instead loses
+   the clip they came to submit — and that is the whole journey the sign-in
+   gate was added to protect.
+   
+   Validated as a local path, same as the server does on both sides of the
+   OAuth round trip: a redirect target read from a query string is attacker
+   input wherever it is read. */
+window.mcAfterOnboarding = function () {
+  try {
+    var next = new URLSearchParams(window.location.search).get('next') || '';
+    return /^\/[A-Za-z0-9\/_-]*$/.test(next) && next ? next : '/profile';
+  } catch (e) { return '/profile'; }
+};
+</script>
+<script>
 (function() {
   var currentStep = 1;
   var totalSteps = 5;
@@ -661,7 +679,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(p) {
       if (p && p.wallets && p.wallets.length && window.location.search.indexOf('edit=1') === -1) {
-        window.location.href = '/profile';
+        window.location.href = window.mcAfterOnboarding();
         return;
       }
       if (p && p.wallets && p.wallets.length) {
@@ -938,7 +956,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); co
         return;
       }
 
-      window.location.href = '/profile';
+      window.location.href = window.mcAfterOnboarding();
     }
   });
 

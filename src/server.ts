@@ -321,10 +321,19 @@ const server = Bun.serve({
       const back = wanted ? decodeURIComponent(wanted) : '';
       const returnTo = /^\/[A-Za-z0-9/_-]*$/.test(back) ? back : '';
 
+      // A creator who has onboarded goes where they were headed. One who has
+      // not still has to onboard — they have no wallet, so nothing could pay
+      // them — but the destination is carried through rather than dropped.
+      //
+      // Dropping it was the first version of this, and it failed for exactly
+      // the people the sign-in gate exists for: a returning creator kept their
+      // place and a brand-new one, who had just been sent to sign in *from a
+      // campaign*, finished onboarding on a dashboard with no memory of the
+      // clip they came to submit.
       const onboarded = existingAcc && existingAcc.wallet;
-      const targetLocation = returnTo && onboarded
-        ? returnTo
-        : onboarded ? '/profile' : '/onboarding?signin=ok';
+      const targetLocation = onboarded
+        ? (returnTo || '/profile')
+        : `/onboarding?signin=ok${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ''}`;
 
       const headers = new Headers({ location: targetLocation });
       headers.append('set-cookie', clearCookie(STATE_COOKIE, SECURE_COOKIES));

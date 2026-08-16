@@ -59,7 +59,22 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 .cq-hero .cq-rule b { color:var(--text-2); font-weight:600; }
 
 /* ── list ───────────────────────────────────────────────────────────────── */
-.cq-list { padding:34px 0 80px; display:grid; gap:16px; }
+/* One rule, every count — a single campaign centres, two make a centred pair,
+   three fill the row. No special case for `length === 1`, which is a rule that
+   would exist only until the second campaign arrived.
+   
+   Two details, both of which I got wrong first.
+   
+   `auto-fit`, not `auto-fill`. auto-fill creates the empty tracks that would
+   fit and justify-content then centres the whole set *including* them, so one
+   card sat in column one of two and read as left-aligned. auto-fit collapses
+   the empties, leaving the real track to be centred.
+   
+   And the track is bounded rather than `1fr`: a stretching column has nothing
+   left for justify-content to distribute, so a lone card would go full-width
+   again — which is what it was doing before any of this. */
+.cq-list { padding:34px 0 80px; display:grid; justify-content:center;
+           grid-template-columns:repeat(auto-fit, minmax(300px, 420px)); gap:18px; }
 .camp { background:var(--surface); border:1px solid var(--line); border-radius:14px;
         padding:22px 24px; }
 .camp .row1 { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }

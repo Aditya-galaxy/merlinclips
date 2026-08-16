@@ -125,6 +125,20 @@
   .cs-next { flex-wrap:wrap; gap:6px 14px; }
   .cs-next-s { flex-basis:100%; order:3; }
 }
+
+/* Standing, and the bar toward the next level — both already returned by
+   /api/me/profile and both previously discarded by this page. */
+.stand { border:1px solid var(--line); border-radius:13px; padding:18px 20px; }
+.stand-top { display:flex; align-items:baseline; justify-content:space-between; gap:14px; }
+.stand-lvl { font-size:19px; font-weight:650; letter-spacing:-.01em; text-transform:capitalize; }
+.stand-next { font-size:12.5px; color:var(--muted); }
+.stand-bar { height:6px; background:var(--surface-2, #F4F1EC); border-radius:99px;
+             margin:14px 0 10px; overflow:hidden; }
+.stand-bar i { display:block; height:100%; background:var(--pop); border-radius:99px;
+               transition:width .4s ease; }
+.stand-facts { display:flex; flex-wrap:wrap; gap:20px; font-size:13px; color:var(--text-2); }
+.stand-facts b { font-family:var(--mono); color:var(--text); }
+.stand-says { margin:12px 0 0; font-size:13.5px; color:var(--text-2); }
 </style>
 </head>
 <body>
@@ -215,6 +229,19 @@
   </section>
 
   <section class="sec">
+    <h2>Your standing</h2>
+    <p class="lede">Standing is built from clips that were judged, and from how many of their
+      views survived the hold. It is the same number a campaign checks when it sets a floor.</p>
+    <div id="standing"><div class="empty">Sign in to see this.</div></div>
+  </section>
+
+  <section class="sec">
+    <h2>Campaigns you have clipped</h2>
+    <p class="lede">What each one has paid you, and how much of it came from which clips.</p>
+    <div class="rows" id="bycampaign"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section class="sec">
     <h2>Wallets</h2>
     <div class="rows" id="wallets"><div class="empty">None linked yet.</div></div>
     <p class="gate">Payouts go only to an address you have linked. Nothing here can move
@@ -263,6 +290,8 @@
           + '<a class="go" style="display:inline-block;width:auto;margin-top:14px;padding:10px 22px;'
           + 'text-decoration:none;" href="/signup.html">Sign in with Google</a>'));
         fill('payouts', empty('Settlements appear here once you have signed in and been paid.'));
+        fill('standing', empty('Sign in and your standing appears here.'));
+        fill('bycampaign', empty('Sign in to see which campaigns have paid you.'));
         fill('wallets', empty('Sign in to link the address your USDC arrives at.'));
         return;
       }
@@ -318,6 +347,44 @@
           + (s.refusalReason ? '<div class="why">' + esc(s.refusalReason) + '</div>' : '')
         + '</div>';
       }).join('') : empty('No clips yet. Pick a campaign and submit one.'));
+
+      /* ── standing, and the distance to the next level ─────────────────── */
+      if (st.level) {
+        var pct = Number(st.nextLevelProgress || 0);
+        var atMax = !st.nextLevelName || st.nextLevelName === 'Max Level';
+        fill('standing',
+          '<div class="stand">'
+          + '<div class="stand-top">'
+            + '<span class="stand-lvl">' + esc(st.level) + '</span>'
+            + '<span class="stand-next">' + (atMax
+                ? 'Highest level reached'
+                : pct + '% of the way to ' + esc(st.nextLevelName)) + '</span>'
+          + '</div>'
+          + (atMax ? '' : '<div class="stand-bar"><i style="width:' + pct + '%"></i></div>')
+          + '<div class="stand-facts">'
+            + '<span>Clips judged <b>' + num(st.clipsJudged) + '</b></span>'
+            + '<span>Views observed <b>' + num(st.observedViews) + '</b></span>'
+            + '<span>Views survived <b>' + num(st.survivedViews) + '</b></span>'
+            + '<span>Survival rate <b>'
+              + (st.survivalRate == null ? '—' : Math.round(Number(st.survivalRate) * 100) + '%')
+              + '</b></span>'
+          + '</div>'
+          + (st.says ? '<p class="stand-says">' + esc(st.says) + '</p>' : '')
+          + '</div>');
+      }
+
+      /* ── what each campaign has paid ──────────────────────────────────── */
+      var byC = p.campaignsBreakdown || [];
+      fill('bycampaign', byC.length ? byC.map(function (c) {
+        return '<div class="row">'
+          + '<div class="head">' + esc(c.campaignId) + '</div>'
+          + '<div class="amt">' + usd(c.earnedUsdc) + '</div>'
+          + '<div class="meta">'
+            + '<span>' + num(c.submissionsCount)
+              + (Number(c.submissionsCount) === 1 ? ' clip' : ' clips') + '</span>'
+            + '<span>' + num(c.viewsPaid) + ' views paid</span>'
+          + '</div></div>';
+      }).join('') : empty('No campaigns yet. <a href="/campaigns">Find one</a> and submit a clip.'));
 
       /* ── settlements ─────────────────────────────────────────────────── */
       var pays = p.payouts || [];

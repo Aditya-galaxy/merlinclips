@@ -16,7 +16,7 @@ what works is marketing.
 flowchart TB
     subgraph doors["Two doors, deliberately asymmetric"]
         B["Brand<br/><i>operator secret</i>"] -->|"POST /api/campaigns"| OC["openCampaign"]
-        C["Creator<br/><i>no account</i>"] -->|"POST /api/submissions"| SC["submitClip"]
+        C["Creator<br/><i>Google session</i>"] -->|"POST /api/submissions"| SC["submitClip"]
     end
 
     OC --> FUND{"Budget<br/>funded?"}
@@ -490,3 +490,122 @@ Everything sophisticated in this system — the model watching a video, the
 platform APIs, the x402 handshake, the chain settlement — sits *outside* that
 boundary, where it can fail, be manipulated, or be replaced without touching
 the code that decides whether money moves.
+
+---
+
+## 8. Who calls, and how they prove it
+
+Four kinds of caller reach four different parts of the system, and none of them
+shares a credential with another. The operator and tick secrets are deliberately
+*different values*: Cloud Scheduler holds the tick secret, and whatever can
+trigger a payout pass must not also be able to commit money by opening a
+campaign.
+
+| Caller | Enters at | Proves identity with | Can |
+|---|---|---|---|
+| Clipper | `merlinclips.com` | Google session cookie | Browse, submit a clip, read their studio |
+| Brand | `/launch` | Enquiry form + Turnstile | Ask for a campaign; an operator opens it |
+| Agent | `/mcp` | `Authorization: Bearer <key>` | Open and fund campaigns, submit clips |
+| Buying agent | `/api/verify` | **A USDC payment on Base** | Buy one verification. No account at all |
+| Operator | `/api/campaigns/…` | `x-operator-secret` | Approve, end, overturn a verdict |
+| Scheduler | `/api/tick` | `x-tick-secret` | Run the hourly pass |
+
+Submitting a clip required no account for most of this system's life — the payout
+address was the identity. That was traded deliberately for standing that follows
+a person rather than an address, a studio worth signing into, and a way to reach
+a creator whose clip was refused. It is enforced in the runtime rather than the
+page, because a gate that exists only in the browser is not a gate, and closed on
+the MCP side at the same time: a gate the agent layer walks around is not one
+either.
+
+### 8.1 Paying by curl
+
+The paid endpoints have no accounts, no keys and no signup. The payment *is* the
+authentication.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Buying agent
+    participant M as merlinclips
+    participant B as Base
+    A->>M: POST /api/verify
+    M-->>A: 402 + price, payTo, asset, network
+    A->>B: transfer USDC to payTo
+    B-->>A: tx hash
+    A->>M: POST /api/verify + X-PAYMENT (tx hash)
+    M->>B: eth_getTransactionReceipt
+    B-->>M: logs
+    Note over M: succeeded? recent? USDC?<br/>>= price? to us?
+    M-->>A: 200 + verdict and view counts
+```
+
+Every field in the `X-PAYMENT` header is written by the caller. Only `txHash` is
+taken at face value, and that is safe *because* everything deciding the outcome
+is then read from the chain the hash points into — the amount recorded is the
+chain's, never the caller's. This was not true until recently: the checks ran
+against caller-supplied fields alone, so a forged header bought a real model call
+and was booked as revenue received.
+
+**Bounded, and worth stating.** Spent hashes are held in memory, so replay is
+refused within an instance and within a ten-minute freshness window, not across a
+cold start. Cloud Run recycles instances freely. Do not describe this as
+replay-proof.
+
+### 8.2 The gate, in the order it runs
+
+First match wins, and it fails closed. A clip stops at the first line it cannot
+pass, and the creator is told which one.
+
+| # | Control | Meaning |
+|---|---|---|
+| 1 | `unknown_entity` | No such campaign, creator or submission |
+| 2 | `terms_expired` | The settlement window closed. The brand was bound until then, and is not after |
+| 3 | `campaign_inactive` | Not live, or never launched |
+| 4 | `no_verdict` | Not yet judged. **Every X clip stops here permanently** |
+| 5 | `verdict_failed` | Gemini read it against the brief and refused. Reversible on appeal |
+| 6 | `dwell_unmet` | Inside the hold. Waiting, not rejected |
+| 7 | `nothing_payable` | No new surviving views since the last payment |
+| 8 | `below_minimum` | Under 1 USDC. Not lost — it rolls into the next payment |
+| 9 | `campaign_pool` | The pool has less left than this payment needs |
+| 10 | `per_creator_cap` | This creator has reached the campaign's per-creator limit |
+| → | `auto_pay` | Every line passed and a mandate authorises the amount |
+
+The minimum exists because Base charges gas per transfer: settling a one-cent
+payout would spend a meaningful fraction of it on the transfer, so small amounts
+accumulate rather than trickling.
+
+### 8.3 When the model is wrong
+
+A clip is judged once and never re-judged — a verdict that changes between runs
+is a verdict nobody can rely on. The cost of that determinism was that
+`verdict_failed` was terminal, and a clipper who did exactly what the brief asked
+and was misread lost the evening with no recourse.
+
+```
+POST /api/submissions/<id>/appeal      x-operator-secret
+{"reason": "at least ten characters, and it is the record"}
+```
+
+It does **not** re-run the model — that spends another call to roll the same dice
+and can return a third answer. It records a *new* verdict, by a named human,
+citing the one it supersedes. `latestVerdict` picks by time, so the payout gate
+reads the appeal and the clip settles on the next pass.
+
+The original verdict is not deleted. Both stay in `verdictHistory`, so the record
+shows a machine refused and a person disagreed, rather than showing the refusal
+never happened. An override nobody can see is worse than a refusal nobody can
+appeal.
+
+### 8.4 What each platform can actually do
+
+| Platform | Counts views | Result for a clipper |
+|---|---|---|
+| YouTube | yes | Judged, counted, paid. Any public video, one API key |
+| Instagram | per creator | Only inside an account that authorised us — which also means nobody can claim someone else's reel. Off unless configured |
+| X | **no** | Accepted, then stuck at `no_verdict` forever. No API answers view counts for another account's post at any tier |
+| TikTok, Facebook | no route | Not offered. Listing them would sell a payout that cannot be computed |
+
+X is worth being blunt about internally: a clip submitted there freezes terms, is
+never judged, never accrues and never pays. That is a missing data source rather
+than an unfinished feature, and no work on our side produces it.

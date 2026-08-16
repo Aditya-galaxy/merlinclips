@@ -254,6 +254,8 @@ Merlin Clips exports an **MCP server** at [`https://merlinclips.com/mcp`](https:
 | `get_ledger` | Every settlement with its transaction hash. |
 | `explain_payout_rules` | The dwell arithmetic and the gate order, in full. |
 
+Every caller, credential and gate is laid out in [ARCHITECTURE.md §8](ARCHITECTURE.md#8-who-calls-and-how-they-prove-it) — including the x402 curl handshake, the ten payout controls in the order they run, and the appeal route.
+
 **Authentication.** `create_campaign` requires an operator-issued key, sent as `Authorization: Bearer <key>`. Mint one with `./scripts/mcp-key.sh <owner>`; only the SHA-256 goes into `MCP_API_KEYS`, so a leaked environment reveals nothing presentable, and each key names an owner that gets recorded on the campaigns it opens — which is the point of keys over one shared secret, since a shared secret cannot be revoked for one caller without revoking it for all of them. A deployment with no keys configured refuses `create_campaign` rather than permitting it.
 
 Everything else is open, for two different reasons. The reads are the audit surface — the ledger, the payout rules, a clip's status, a creator's earnings — and this system's claim is that its arithmetic can be checked by anyone, which a key would contradict. `submit_clip` is open because the payout address *is* the creator's identity: requiring credentials from us would put an operator between a clipper and getting paid. It is rate limited, and a junk submission costs a log entry rather than money, since verification runs in the tick and nothing pays before its views survive the hold.

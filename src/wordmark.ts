@@ -63,8 +63,14 @@ export function initialsOf(name: string): string {
  * at random.
  */
 export function wordmarkSvg(name: string, options: { width?: number; height?: number } = {}): string {
-  const w = options.width ?? 480;
-  const h = options.height ?? 270;
+  // Wide by default, and the type sized to survive a crop.
+  //
+  // A card's art strip is far wider than it is tall, and `object-fit: cover`
+  // on a 16:9 source cut the top and bottom off the initials. The source is
+  // 4:1 now and the type is a quarter of the height rather than a third, so
+  // the mark stays whole at the aspect ratios a card actually uses.
+  const w = options.width ?? 960;
+  const h = options.height ?? 240;
   const seed = hash(name.trim().toLowerCase() || 'merlin');
   const hue = seed % 360;
   // A second hue a fixed distance away, so the wash has direction without
@@ -88,7 +94,7 @@ export function wordmarkSvg(name: string, options: { width?: number; height?: nu
   <circle cx="${w * 0.82}" cy="${h * 0.22}" r="${h * 0.42}" fill="hsl(${hue2} 60% 60%)" opacity="0.13"/>
   <text x="${w * 0.5}" y="${h * 0.5}" text-anchor="middle" dominant-baseline="central"
         font-family="ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif"
-        font-size="${Math.round(h * 0.34)}" font-weight="600" letter-spacing="${-h * 0.012}"
+        font-size="${Math.round(h * 0.24)}" font-weight="600" letter-spacing="${-h * 0.008}"
         fill="#FAF8F5">${initials}</text>
 </svg>`;
 }

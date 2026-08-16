@@ -77,6 +77,12 @@ describe('the shape it draws', () => {
     expect(svg).toContain('viewBox="0 0 480 270"');
   });
 
+  test('the default is wide, because a card art strip is', () => {
+    // 16:9 cropped by object-fit on a card cut the initials in half.
+    const svg = wordmarkSvg('Merlin Clips');
+    expect(svg).toContain('viewBox="0 0 960 240"');
+  });
+
   test('gradient ids are per-name, so two marks on one page cannot collide', () => {
     // Two <defs> sharing an id means the second card renders with the first
     // card's colours — a bug that only appears once a page lists more than

@@ -237,7 +237,7 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
     return ''
       + '<article class="camp' + (ended ? ' is-ended' : '') + '" data-id="' + esc(c.campaignId) + '">'
       +   '<img class="cq-art" src="/campaign-art/v3/'
-      +     encodeURIComponent(c.brandName || c.campaignId) + '.svg" alt="" loading="lazy" />'
+      +     encodeURIComponent(c.brandName || c.title || 'Campaign') + '.svg" alt="" loading="lazy" />'
       +   '<div class="row1">'
       +     '<div>'
       +       (c.brandName ? '<div class="cq-by">' + esc(c.brandName) + '</div>' : '')

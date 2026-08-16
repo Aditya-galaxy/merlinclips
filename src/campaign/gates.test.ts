@@ -188,3 +188,59 @@ describe('submitting requires identity', () => {
     expect(r.status).toBe(400);
   });
 });
+
+/**
+ * The same clip may enter two campaigns, and must actually enter both.
+ *
+ * The submission id was `sub-<platform>-<post>-<address>` with no campaign in
+ * it, so a creator offering one clip to a second campaign produced the same id
+ * as the first. The log refuses a duplicate id, so the second submission was
+ * dropped — while the caller received a success response carrying the *first*
+ * campaign's frozen terms.
+ *
+ * A creator picked a campaign, was told they were in, and were not. Their clip
+ * sat against a different brief, and nothing said so. Found by red-teaming the
+ * live service, not by reading the code.
+ */
+describe('one clip, two campaigns', () => {
+  test('the id is scoped to the campaign, so both submissions are distinct', async () => {
+    const { submitClip } = await import('./intake');
+    const base = {
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      payoutAddress: '0x' + '3'.repeat(40),
+    };
+    const { openCampaign } = await import('./intake');
+    const live = (id: string) => {
+      const r = openCampaign({ ...campaign, campaignId: id });
+      if (!r.ok) throw new Error(r.error);
+      return { ...r.value, status: 'active' as const };
+    };
+
+    const a = submitClip(live('camp-one'), base, new Date());
+    const b = submitClip(live('camp-two'), base, new Date());
+    expect(a.ok && b.ok).toBe(true);
+    if (a.ok && b.ok) {
+      expect(a.value.submission.submissionId).not.toBe(b.value.submission.submissionId);
+      expect(a.value.submission.submissionId).toContain('camp-one');
+      expect(b.value.submission.submissionId).toContain('camp-two');
+    }
+  });
+
+  test('the same clip twice in one campaign still collides, which is the point', async () => {
+    // Idempotency is what the id was for: a creator clicking submit twice must
+    // not create two claims on the same pool.
+    const { submitClip } = await import('./intake');
+    const base = {
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      payoutAddress: '0x' + '3'.repeat(40),
+    };
+    const { openCampaign } = await import('./intake');
+    const opened = openCampaign({ ...campaign, campaignId: 'camp-same' });
+    if (!opened.ok) throw new Error(opened.error);
+    const live = { ...opened.value, status: 'active' as const };
+    const a = submitClip(live, base, new Date());
+    const b = submitClip(live, base, new Date());
+    expect(a.ok && b.ok).toBe(true);
+    if (a.ok && b.ok) expect(a.value.submission.submissionId).toBe(b.value.submission.submissionId);
+  });
+});

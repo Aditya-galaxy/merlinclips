@@ -321,7 +321,7 @@ tr:last-child td { border-bottom: 0; }
 
   <!-- Live On-Chain Payout Ledger -->
   <div class="section-title">
-    <span>Base Mainnet Settlement Ledger</span>
+    <span id="ledger-title">Settlement Ledger</span>
     <span style="font-size:13px;font-weight:600;color:var(--muted);">Every payout, or none</span>
   </div>
 
@@ -392,6 +392,28 @@ tr:last-child td { border-bottom: 0; }
       var campaigns = d.campaigns || [];
       var payouts = d.payouts || [];
 
+      /* Name the network from the settlements themselves.
+         
+         The heading said "Base Mainnet Settlement Ledger" while every payout
+         on it had settled on Base Sepolia. Hardcoding a network means the
+         page is wrong on whichever one it is not, so it is read off the
+         explorer URLs the payouts carry — and if a deployment ever settles on
+         both, it says both rather than picking one. */
+      (function () {
+        var el = document.getElementById('ledger-title');
+        if (!el) return;
+        var nets = {};
+        payouts.forEach(function (p) {
+          var u = p.explorerUrl || '';
+          if (u.indexOf('sepolia') !== -1) nets['Base Sepolia'] = 1;
+          else if (u.indexOf('basescan.org') !== -1) nets['Base Mainnet'] = 1;
+        });
+        var names = Object.keys(nets);
+        el.textContent = names.length
+          ? names.join(' and ') + ' Settlement Ledger'
+          : 'Settlement Ledger';
+      })();
+
       /* Summary. Settled is the sum of what actually moved, not a target. */
       var settled = payouts.reduce(function (t, p) { return t + Number(p.amountUsdc || 0); }, 0);
 
@@ -452,7 +474,11 @@ tr:last-child td { border-bottom: 0; }
       $('tbl-ledger').innerHTML = payouts.length
         ? payouts.map(function (p) {
             var tx = p.txHash
-              ? '<a href="' + esc(p.explorerUrl || ('https://basescan.org/tx/' + p.txHash)) + '" target="_blank" rel="noopener" class="tx-link">'
+              /* The explorer the payout actually settled on. Composing
+                 basescan.org by hand sent every Sepolia settlement to the
+                 mainnet explorer, where the transaction does not exist — the
+                 one link whose job is to prove a creator was paid. */
+              ? '<a href="' + esc(p.explorerUrl || ('https://sepolia.basescan.org/tx/' + p.txHash)) + '" target="_blank" rel="noopener" class="tx-link">'
                   + esc(p.txHash.slice(0, 10)) + '…' + esc(p.txHash.slice(-6)) + ' ↗</a>'
               : '<span style="font-size:12px;color:var(--muted);">Recorded, not broadcast</span>';
             return row([

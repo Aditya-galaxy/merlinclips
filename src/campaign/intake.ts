@@ -431,7 +431,20 @@ export function submitClip(
   const accepted = acceptSubmission(
     campaign,
     {
-      submissionId: `sub-${ref.platform}-${ref.postId}-${creatorId.slice(4, 14)}`,
+      // Scoped to the campaign it was submitted to.
+      //
+      // This was `sub-<platform>-<post>-<addr>` with no campaign in it, so the
+      // same clip offered to a second campaign produced the *same* id as the
+      // first. The log refuses a duplicate id, so the second submission was
+      // silently dropped — and the caller still got a success response
+      // carrying the first campaign's frozen terms.
+      //
+      // A creator picked a campaign, was told they were in, and were not. The
+      // clip sat against a different brief entirely, and nothing anywhere said
+      // so. Resubmitting the same clip to the *same* campaign still collides,
+      // which is the idempotency this id was for.
+      submissionId:
+        `sub-${campaign.campaignId}-${ref.platform}-${ref.postId}-${creatorId.slice(4, 14)}`,
       creatorId,
       platform: ref.platform,
       postId: ref.postId,

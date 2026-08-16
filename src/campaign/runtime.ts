@@ -584,6 +584,12 @@ export class CampaignRuntime {
         const spent = this.store.spentOnCampaign(c.campaignId);
         return {
           campaignId: c.campaignId,
+          // Who is paying and what to call it. Absent on campaigns opened
+          // before these existed, which is why every consumer falls back to
+          // the brief rather than rendering a blank card.
+          brandName: c.brandName,
+          title: c.title,
+          category: c.category,
           brief: c.brief,
           status: c.status,
           cpmUsdc: c.cpmUsdc.toString(),

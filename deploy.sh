@@ -211,7 +211,13 @@ gcloud run deploy "$SERVICE" \
   --memory 512Mi \
   --min-instances 0 \
   --max-instances 4 \
-  --timeout 60s \
+  # 300s, not 60s. The tick verifies every unjudged clip with Gemini and reads
+  # the view oracle for each one, so its latency grows with the number of live
+  # clips — it was already running 17-39s against a 60s ceiling and had begun
+  # returning 504, which the scheduler retried three times and which did no
+  # work at all. The scheduler's own attemptDeadline is 300s; matching it means
+  # the container is not the thing that gives up first.
+  --timeout 300s \
   --set-secrets "GOOGLE_OAUTH_CLIENT_SECRET=oauth-client-secret:latest,SESSION_SECRET=session-secret:latest,YOUTUBE_API_KEY=youtube-api-key:latest" \
   --set-env-vars "NODE_ENV=production,GCS_BUCKET=${BUCKET},TICK_SECRET=${TICK_SECRET},OPERATOR_SECRET=${OPERATOR_SECRET},AGENT_WALLET_ADDRESS=${AGENT_WALLET_ADDRESS},MCP_API_KEYS=${MCP_API_KEYS},POSTHOG_KEY=${POSTHOG_KEY},POSTHOG_HOST=${POSTHOG_HOST},POSTHOG_INCLUDE_WALLETS=${POSTHOG_INCLUDE_WALLETS},SETTLEMENT_WALLETS=${SETTLEMENT_WALLETS},MAINNET_SETTLEMENT_WALLETS=${MAINNET_SETTLEMENT_WALLETS},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global},GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID},GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}"
 

@@ -19,6 +19,12 @@ import type { Standing } from './standing';
 /** Where a clip was posted. Only these two can be verified without app review. */
 export type Platform = 'youtube' | 'x' | 'instagram';
 
+/** Categories a campaign can be filtered by. Fixed, so a filter can be exhaustive. */
+export const CAMPAIGN_CATEGORIES = [
+  'entertainment', 'technology', 'gaming', 'finance', 'education', 'product', 'other',
+] as const;
+export type CampaignCategory = (typeof CAMPAIGN_CATEGORIES)[number];
+
 export type CampaignStatus =
   /** Written down, nothing behind it yet. */
   | 'draft'
@@ -51,7 +57,32 @@ export function isLaunched(status: CampaignStatus): boolean {
 
 export interface Campaign {
   readonly campaignId: string;
-  /** Natural language, written by the operator. What the agent judges against. */
+  /**
+   * Who is paying, shown on the card beside the campaign.
+   *
+   * Separate from `ownerId`, which is an account identifier and not something
+   * a creator should be shown. A clipper deciding whether to spend an evening
+   * wants to know whose brand it is.
+   */
+  readonly brandName?: string;
+  /**
+   * The campaign's name. Defaults from `brandName` rather than being another
+   * field a brand has to fill — the convention every clipping marketplace
+   * already uses is "<Brand> Clipping", and a title nobody wrote is worse than
+   * one derived consistently.
+   */
+  readonly title?: string;
+  /**
+   * A fixed set rather than free text. Categories exist to be filtered on, and
+   * free text produces "Tech", "tech", "Technology" and "AI/Tech" for one
+   * thing, which filters into four buckets that each look empty.
+   */
+  readonly category?: CampaignCategory;
+  /**
+   * What the clip must show. This is the specification Gemini judges against,
+   * not marketing copy — which is why it is required and the fields above are
+   * not.
+   */
   readonly brief: string;
   /** Total the campaign may ever disburse. A hard ceiling, never raised by the agent. */
   readonly poolUsdc: Decimal;

@@ -1422,7 +1422,7 @@ export class CampaignRuntime {
   }
 
   async handleBrandEnquiry(request: Request): Promise<Response> {
-    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    const clientIp = this.clientAddress(request);
     if (!this.rateLimiter.consume(clientIp)) {
       return Response.json({ error: 'Too many submissions — try again shortly.' }, { status: 429 });
     }
@@ -1523,7 +1523,7 @@ export class CampaignRuntime {
    * caller is told to wait rather than quietly dropped.
    */
   async handleAgentCampaign(request: Request): Promise<Response> {
-    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    const clientIp = this.clientAddress(request);
     if (!this.rateLimiter.consume(clientIp)) {
       return Response.json({ error: 'too many campaigns opened — try again shortly' }, { status: 429 });
     }
@@ -1655,6 +1655,27 @@ export class CampaignRuntime {
    * endpoint is public and an agent could otherwise walk around the sign-in
    * by speaking JSON-RPC instead of HTML.
    */
+  /**
+   * The caller's address, as the proxy saw it — not as the caller claims.
+   *
+   * This read the whole `x-forwarded-for` header and used it as the rate-limit
+   * key. Cloud Run *appends* the real client address to whatever arrived, so a
+   * caller who sends their own header gets `<anything they like>, <real ip>` —
+   * a different key on every request, and no limit at all. Rotating a fake
+   * value defeated the limiter on campaign creation, clip submission and the
+   * enquiry form.
+   *
+   * The last entry is the one the proxy added, and it is the only one an
+   * attacker cannot forge: they can prepend as much as they like and the real
+   * address is still appended after it.
+   */
+  private clientAddress(request: Request): string {
+    const header = request.headers.get('x-forwarded-for');
+    if (!header) return 'anonymous';
+    const hops = header.split(',').map((h) => h.trim()).filter(Boolean);
+    return hops[hops.length - 1] ?? 'anonymous';
+  }
+
   private submitBypass(request: Request): boolean {
     const owner = request.headers.get('x-mcp-owner');
     // 'public' is what the MCP layer reports for a tool needing no key, so
@@ -1696,7 +1717,7 @@ export class CampaignRuntime {
       );
     }
 
-    const clientIp = request.headers.get('x-forwarded-for') ?? 'anonymous';
+    const clientIp = this.clientAddress(request);
     if (!this.rateLimiter.consume(clientIp)) {
       telemetry.recordHttpRequest('/api/submissions', 429);
       return Response.json({ error: 'Rate limit exceeded — try again shortly' }, { status: 429 });

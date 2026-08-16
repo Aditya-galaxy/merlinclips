@@ -347,6 +347,7 @@ footer a:hover{color:var(--pop);text-decoration:underline}
 .wc{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:16px 17px 14px}
 /* The showcase renders real campaigns now, so a card is a link to the page
    that lists them. A campaign a creator cannot open is a poster. */
+.wc-art{width:100%;height:104px;object-fit:cover;border-radius:9px;margin-bottom:12px;display:block}
 a.wc{text-decoration:none;color:inherit;display:block;
      transition:transform .15s ease,border-color .15s ease}
 a.wc:hover{transform:translateY(-2px);border-color:var(--pop)}

@@ -78,6 +78,8 @@ describe('the campaigns page reads the API it is served', () => {
     const served = [
       'campaignId', 'brief', 'status', 'cpmUsdc', 'poolUsdc', 'remainingUsdc',
       'perCreatorCapUsdc', 'dwellHours', 'platforms', 'creators', 'funding',
+      'brandName', 'title', 'category', 'approvalRate', 'judged', 'approved',
+      'paidViews', 'spentUsdc',
     ];
     for (const field of [...page.matchAll(/\bc\.([a-zA-Z]+)/g)].map((m) => m[1]!)) {
       expect(served).toContain(field);

@@ -582,6 +582,27 @@ export class CampaignRuntime {
         let views = 0n;
         for (const s of subs) views += this.store.viewsPaidTo(s.submissionId);
         const spent = this.store.spentOnCampaign(c.campaignId);
+
+        // How often this brand's brief is actually satisfied.
+        //
+        // Judged, not submitted, is the denominator. A clip waiting on the
+        // tick has not been refused, and counting it as one would make every
+        // campaign look strict for the hours between submission and verdict.
+        //
+        // Null rather than zero when nothing has been judged yet. "0%
+        // approval" on a campaign that has judged nothing reads as a brand
+        // refusing everyone, and it is the number a creator would use to skip
+        // it — a new campaign would be unable to attract the first clip that
+        // would give it a rate.
+        let judged = 0;
+        let approved = 0;
+        for (const s of subs) {
+          const verdict = this.store.latestVerdict(s.submissionId);
+          if (!verdict) continue;
+          judged += 1;
+          if (verdict.pass) approved += 1;
+        }
+
         return {
           campaignId: c.campaignId,
           // Who is paying and what to call it. Absent on campaigns opened
@@ -598,6 +619,9 @@ export class CampaignRuntime {
           remainingUsdc: this.store.remainingPool(c.campaignId).toString(),
           perCreatorCapUsdc: c.perCreatorCapUsdc.toString(),
           dwellHours: Math.round(c.dwellMs / 3_600_000),
+          judged,
+          approved,
+          approvalRate: judged > 0 ? Math.round((approved / judged) * 100) : null,
           platforms: c.platforms,
           startsAt: c.startsAt,
           endsAt: c.endsAt,

@@ -109,6 +109,12 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
   .camp .row1 { flex-direction:column; gap:8px; }
   .top nav { gap:14px; }
 }
+
+.cq-art { width:100%; height:132px; object-fit:cover; border-radius:10px;
+          margin:-4px 0 16px; display:block; }
+.cq-by { font-size:12.5px; font-weight:650; letter-spacing:.02em;
+         text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.cq-spec { font-size:13.5px; color:var(--text-2); margin:6px 0 8px; }
 </style>
 </head>
 <body>
@@ -193,8 +199,15 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
 
     return ''
       + '<article class="camp" data-id="' + esc(c.campaignId) + '">'
+      +   '<img class="cq-art" src="/campaign-art/'
+      +     encodeURIComponent(c.brandName || c.campaignId) + '.svg" alt="" loading="lazy" />'
       +   '<div class="row1">'
-      +     '<div><p class="brief">' + esc(c.brief) + '</p>' + badge + '</div>'
+      +     '<div>'
+      +       (c.brandName ? '<div class="cq-by">' + esc(c.brandName) + '</div>' : '')
+      +       '<p class="brief">' + esc(c.title || c.brief) + '</p>'
+      +       (c.title ? '<p class="cq-spec">' + esc(c.brief) + '</p>' : '')
+      +       badge
+      +     '</div>'
       +     '<div class="rate">' + usd(c.cpmUsdc) + '<span> /1k</span></div>'
       +   '</div>'
       +   '<div class="bar"><i style="width:' + used.toFixed(1) + '%"></i></div>'
@@ -204,6 +217,9 @@ body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans
       +     '<span>Max per creator <b>' + usd(c.perCreatorCapUsdc) + '</b></span>'
       +     '<span><b>' + num(c.creators) + '</b> clipping</span>'
       +     '<span>' + esc((c.platforms || []).join(', ')) + '</span>'
+      +     (c.approvalRate === null || c.approvalRate === undefined
+            ? '<span>Approval <b>—</b> <em style="font-style:normal;color:var(--muted)">no clips judged yet</em></span>'
+            : '<span>Approval <b>' + c.approvalRate + '%</b> of ' + c.judged + ' judged</span>')
       +   '</div>'
       +   '<details class="open">'
       +     '<summary>Submit a clip</summary>'

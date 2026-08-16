@@ -228,7 +228,19 @@ const server = Bun.serve({
     // it did not.
     const OAUTH = googleConfig(Bun.env as Record<string, string | undefined>);
     const SESSION_SECRET = Bun.env.SESSION_SECRET?.trim();
-    const SECURE_COOKIES = url.protocol === 'https:';
+    // The proxy's protocol, not the container's.
+    //
+    // Cloud Run terminates TLS and forwards to the container over plain http,
+    // so `url.protocol` is always "http:" here and this was always false in
+    // production — the session and OAuth-state cookies went out without
+    // `Secure`, meaning a browser would send them over an unencrypted request.
+    // The site is https-only, so exploiting it needs an active downgrade, but
+    // the flag costs nothing and is exactly what it is for.
+    //
+    // x-forwarded-proto is set by the proxy. Falling back to the container's
+    // own view keeps local http development working.
+    const SECURE_COOKIES =
+      (request.headers.get('x-forwarded-proto') ?? url.protocol.replace(':', '')) === 'https';
 
     if (url.pathname === '/auth/google') {
       if (!OAUTH) {

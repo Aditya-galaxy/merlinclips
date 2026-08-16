@@ -617,7 +617,7 @@
         var pool = Number(c.poolUsdc || 0), left = Number(c.remainingUsdc || 0);
         var used = pool > 0 ? Math.max(0, Math.min(100, ((pool - left) / pool) * 100)) : 0;
         var backed = c.funding && c.funding.coverage === 'covered';
-        var art = '/campaign-art/' + encodeURIComponent(c.brandName || c.campaignId) + '.svg';
+        var art = '/campaign-art/v2/' + encodeURIComponent(c.brandName || c.campaignId) + '.svg';
         var rate = c.approvalRate === null || c.approvalRate === undefined
           ? '<div><span>Approval</span><b>—</b></div>'
           : '<div><span>Approval</span><b>' + c.approvalRate + '%</b></div>';

@@ -42,6 +42,17 @@ function hash(input: string): number {
  * placeholder rather than as a mark. Non-letters are dropped so "@brand" and
  * "brand" produce the same thing.
  */
+/**
+ * Bumped whenever the drawing changes.
+ *
+ * The art is served `immutable` for a year, which is right for a URL whose
+ * content is fixed — and a lie for one whose content depends on a generator we
+ * edit. Changing the type size shipped a fix that could not reach anyone who
+ * had already loaded a card. The version is part of the path, so a change to
+ * the generator is a change to the URL and every cache misses exactly once.
+ */
+export const WORDMARK_VERSION = 2;
+
 export function initialsOf(name: string): string {
   const words = name
     .split(/[^A-Za-z0-9]+/)

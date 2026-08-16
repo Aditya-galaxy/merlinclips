@@ -364,9 +364,11 @@ const server = Bun.serve({
     // browser caches it. Immutable: the same name always produces the same
     // image, which is the property the whole thing is built on.
     if (url.pathname.startsWith('/campaign-art/')) {
-      const name = decodeURIComponent(url.pathname.slice('/campaign-art/'.length))
-        .replace(/\.svg$/, '')
-        .slice(0, 60);
+      // /campaign-art/<version>/<name>.svg — the version is what makes the
+      // immutable cache header honest. A path without one is an older card
+      // still in someone's markup; serve it rather than 404ing them.
+      const rest = decodeURIComponent(url.pathname.slice('/campaign-art/'.length));
+      const name = rest.replace(/^v\d+\//, '').replace(/\.svg$/, '').slice(0, 60);
       return new Response(wordmarkSvg(name), {
         headers: {
           'content-type': 'image/svg+xml; charset=utf-8',
